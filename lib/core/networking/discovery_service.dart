@@ -5,7 +5,7 @@ import 'dart:io';
 import 'discovery.dart';
 
 class BifrostDiscoveryService {
-  Future<List<BifrostDevice>> discover({Duration timeout = const Duration(seconds: 3), String? manualHost, int? manualPort}) async {
+  Future<List<BifrostDevice>> discover({Duration timeout = const Duration(seconds: 3), String? manualHost, int? manualPort, String? localDeviceId}) async {
     if (manualHost != null) return _manual(manualHost, manualPort ?? 43821);
     final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
     socket.broadcastEnabled = true;
@@ -23,7 +23,7 @@ class BifrostDiscoveryService {
               final json = jsonDecode(utf8.decode(packet.data)) as Map<String, dynamic>;
               if (json['message'] == 'BIFROST_DISCOVER_V1' && json['port'] is int) {
                 final device = BifrostDevice.fromJson(json, host: packet.address.address);
-                if (device.port > 0 && device.id != 'local-device') devices[device.id] = device;
+                if (device.port > 0 && device.id != localDeviceId) devices[device.id] = device;
               }
             } catch (_) {}
           }

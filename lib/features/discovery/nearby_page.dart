@@ -3,6 +3,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/networking/discovery.dart';
 import '../../core/networking/discovery_service.dart';
+import '../../core/networking/device_runtime.dart';
 
 class NearbyPage extends StatefulWidget {
   const NearbyPage({this.autoDiscover = true, super.key});
@@ -26,7 +27,8 @@ class _NearbyPageState extends State<NearbyPage> {
   Future<void> _discover() async {
     setState(() { _searching = true; _error = null; });
     try {
-      final devices = await _service.discover();
+      await BifrostDeviceRuntime.instance.ensureStarted();
+      final devices = await _service.discover(localDeviceId: BifrostDeviceRuntime.instance.deviceId);
       if (mounted) setState(() { _devices = devices; _searching = false; });
     } catch (_) {
       if (mounted) setState(() { _searching = false; _error = 'Discovery could not start. You can connect by IP address instead.'; });
@@ -37,7 +39,7 @@ class _NearbyPageState extends State<NearbyPage> {
     final result = await showDialog<(String, int)?>(context: context, builder: (_) => const _ManualConnectionDialog());
     if (result == null) return;
     setState(() { _searching = true; _error = null; });
-    final devices = await _service.discover(manualHost: result.$1, manualPort: result.$2);
+    final devices = await _service.discover(manualHost: result.$1, manualPort: result.$2, localDeviceId: BifrostDeviceRuntime.instance.deviceId);
     if (!mounted) return;
     setState(() { _devices = devices; _searching = false; _error = devices.isEmpty ? 'Could not reach that address. Check the IP, port, and Wi-Fi connection.' : null; });
   }
