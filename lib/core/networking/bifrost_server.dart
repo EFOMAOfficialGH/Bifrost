@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 
 import 'checksum.dart';
+import 'discovery_service.dart';
 import 'protocol.dart';
 
 class BifrostServer {
@@ -14,6 +15,7 @@ class BifrostServer {
   final String deviceName;
   final String deviceId;
   HttpServer? _server;
+  BifrostDiscoveryResponder? _discovery;
   final Map<String, BifrostTransferOffer> _offers = {};
 
   int get port => _server?.port ?? 0;
@@ -25,6 +27,8 @@ class BifrostServer {
     _server = securityContext == null
         ? await HttpServer.bind(bindAddress, port)
         : await HttpServer.bindSecure(bindAddress, port, securityContext);
+    _discovery = BifrostDiscoveryResponder(deviceId: deviceId, name: deviceName, deviceType: Platform.isWindows ? 'windows' : 'android', httpPort: this.port);
+    await _discovery!.start();
     unawaited(_serve());
   }
 
@@ -108,6 +112,8 @@ class BifrostServer {
   }
 
   Future<void> close() async {
+    _discovery?.close();
+    _discovery = null;
     await _server?.close(force: true);
     _server = null;
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'features/send/network_test_page.dart';
+import 'features/discovery/nearby_page.dart';
 import 'core/theme/app_theme.dart';
 
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.dark);
@@ -12,7 +13,8 @@ void main() {
 }
 
 class BifrostApp extends ConsumerWidget {
-  const BifrostApp({super.key});
+  const BifrostApp({this.enableDiscovery = true, super.key});
+  final bool enableDiscovery;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -23,13 +25,14 @@ class BifrostApp extends ConsumerWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
-      home: const BifrostShell(),
+      home: BifrostShell(enableDiscovery: enableDiscovery),
     );
   }
 }
 
 class BifrostShell extends StatefulWidget {
-  const BifrostShell({super.key});
+  const BifrostShell({this.enableDiscovery = true, super.key});
+  final bool enableDiscovery;
 
   @override
   State<BifrostShell> createState() => _BifrostShellState();
@@ -38,17 +41,16 @@ class BifrostShell extends StatefulWidget {
 class _BifrostShellState extends State<BifrostShell> {
   int _selectedIndex = 0;
 
-  static const _pages = <Widget>[
-    HomePage(),
-    HistoryPage(),
-    SettingsPage(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final pages = <Widget>[
+      NearbyPage(autoDiscover: widget.enableDiscovery),
+      const HistoryPage(),
+      const SettingsPage(),
+    ];
     return Scaffold(
-      body: SafeArea(child: _pages[_selectedIndex]),
+      body: SafeArea(child: pages[_selectedIndex]),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) => setState(() => _selectedIndex = index),
