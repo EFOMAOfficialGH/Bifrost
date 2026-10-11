@@ -1,4 +1,4 @@
-package com.bifrost.bifrost
+package com.bifrost.app
 
 import io.flutter.embedding.android.FlutterActivity
 
