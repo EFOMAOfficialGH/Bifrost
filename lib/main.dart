@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'features/send/network_test_page.dart';
 import 'features/discovery/nearby_page.dart';
+import 'features/receive/incoming_offer_listener.dart';
+import 'core/networking/device_runtime.dart';
 import 'core/theme/app_theme.dart';
 
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.dark);
+final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +28,7 @@ class BifrostApp extends ConsumerWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
-      home: BifrostShell(enableDiscovery: enableDiscovery),
+      home: IncomingOfferListener(child: BifrostShell(enableDiscovery: enableDiscovery)),
     );
   }
 }
@@ -140,15 +143,39 @@ class HistoryPage extends StatelessWidget {
   Widget build(BuildContext context) => const EmptyPage(icon: Icons.history, title: 'Transfer history', message: 'Completed transfers will appear here.');
 }
 
-class SettingsPage extends ConsumerWidget {
+class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends ConsumerState<SettingsPage> {
+  late final TextEditingController _nameController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: ref.read(deviceNameProvider));
+  }
+
+  @override
+  void dispose() { _nameController.dispose(); super.dispose(); }
+
+  void _saveName() {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) return;
+    ref.read(deviceNameProvider.notifier).state = name;
+    BifrostDeviceRuntime.instance.updateDeviceName(name);
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Device name updated.')));
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final mode = ref.watch(themeModeProvider);
     return ListView(padding: const EdgeInsets.all(24), children: [
       Text('Settings', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
       const SizedBox(height: 24),
-      const ListTile(leading: Icon(Icons.badge_outlined), title: Text('Device name'), subtitle: Text('Bifrost Phone')),
+      TextField(controller: _nameController, textInputAction: TextInputAction.done, onSubmitted: (_) => _saveName(), decoration: InputDecoration(labelText: 'Device name', prefixIcon: const Icon(Icons.badge_outlined), suffixIcon: IconButton(tooltip: 'Save device name', onPressed: _saveName, icon: const Icon(Icons.check)))),
       const ListTile(leading: Icon(Icons.folder_outlined), title: Text('Save location'), subtitle: Text('Configured in a later milestone')),
       ListTile(leading: const Icon(Icons.lan_outlined), title: const Text('Networking test'), subtitle: const Text('Milestone 2 local receiver'), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NetworkTestPage()))),
       SwitchListTile(value: mode == ThemeMode.dark, onChanged: (value) => ref.read(themeModeProvider.notifier).state = value ? ThemeMode.dark : ThemeMode.light, title: const Text('Dark theme'), secondary: const Icon(Icons.dark_mode_outlined)),

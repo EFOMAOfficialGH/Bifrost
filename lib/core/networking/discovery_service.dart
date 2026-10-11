@@ -11,7 +11,13 @@ class BifrostDiscoveryService {
     socket.broadcastEnabled = true;
     final devices = <String, BifrostDevice>{};
     final request = utf8.encode(encodeDiscoveryRequest());
-    socket.send(request, InternetAddress('255.255.255.255'), bifrostDiscoveryPort);
+    final broadcast = InternetAddress('255.255.255.255');
+    final multicast = InternetAddress('224.0.0.251');
+    for (var attempt = 0; attempt < 3; attempt++) {
+      socket.send(request, broadcast, bifrostDiscoveryPort);
+      socket.send(request, multicast, bifrostDiscoveryPort);
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+    }
     final deadline = DateTime.now().add(timeout);
     try {
       await for (final event in socket.timeout(timeout)) {
@@ -56,15 +62,18 @@ class BifrostDiscoveryService {
 class BifrostDiscoveryResponder {
   BifrostDiscoveryResponder({required this.deviceId, required this.name, required this.deviceType, required this.httpPort});
   final String deviceId;
-  final String name;
+  String name;
   final String deviceType;
   final int httpPort;
   RawDatagramSocket? _socket;
+
+  void updateName(String value) => name = value;
 
   Future<void> start() async {
     try {
       _socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, bifrostDiscoveryPort, reuseAddress: true);
       _socket!.broadcastEnabled = true;
+      _socket!.joinMulticast(InternetAddress('224.0.0.251'));
       _socket!.listen((event) {
         if (event != RawSocketEvent.read) return;
         Datagram? packet;

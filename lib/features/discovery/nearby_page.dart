@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
+import '../../core/networking/bifrost_client.dart';
 import '../../core/networking/discovery.dart';
 import '../../core/networking/discovery_service.dart';
 import '../../core/networking/device_runtime.dart';
@@ -16,6 +20,8 @@ class _NearbyPageState extends State<NearbyPage> {
   final _service = BifrostDiscoveryService();
   List<BifrostDevice> _devices = const [];
   bool _searching = false;
+  bool _sending = false;
+  String? _transferStatus;
   String? _error;
 
   @override
@@ -65,9 +71,10 @@ class _NearbyPageState extends State<NearbyPage> {
               const SizedBox(height: 6),
               Text(_searching ? 'Searching this Wi-Fi network…' : 'Devices running Bifrost on this local network appear here.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant)),
               const SizedBox(height: 20),
+              if (_transferStatus != null) Card(child: Padding(padding: const EdgeInsets.all(14), child: Text(_transferStatus!))),
               if (_error != null) Card(color: colors.errorContainer, child: Padding(padding: const EdgeInsets.all(16), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.warning_amber, color: colors.onErrorContainer), const SizedBox(width: 12), Expanded(child: Text(_error!, style: TextStyle(color: colors.onErrorContainer)))]))),
               if (_devices.isEmpty && !_searching) Card(child: Padding(padding: const EdgeInsets.all(18), child: Row(children: [Icon(Icons.radar, color: colors.primary), const SizedBox(width: 12), const Expanded(child: Text('No nearby devices found yet. Try refresh, manual IP, or check the troubleshooting guide.'))]))),
-              for (final device in _devices) Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(leading: CircleAvatar(backgroundColor: colors.primaryContainer, child: Icon(device.type == 'windows' ? Icons.computer : Icons.phone_android, color: colors.onPrimaryContainer)), title: Text(device.name), subtitle: Text('${device.host}:${device.port} • ${device.source}'), trailing: IconButton(tooltip: 'Show connection QR', icon: const Icon(Icons.qr_code_2), onPressed: () => _showQr(device)))),
+              for (final device in _devices) Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(onTap: () => _selectDevice(device), leading: CircleAvatar(backgroundColor: colors.primaryContainer, child: Icon(device.type == 'windows' ? Icons.computer : Icons.phone_android, color: colors.onPrimaryContainer)), title: Text(device.name), subtitle: Text('${device.host}:${device.port} • ${device.source}'), trailing: IconButton(tooltip: 'Show connection QR', icon: const Icon(Icons.qr_code_2), onPressed: () => _showQr(device)))),
               const SizedBox(height: 16),
               SizedBox(width: double.infinity, child: OutlinedButton.icon(onPressed: _manualConnect, icon: const Icon(Icons.pin_drop_outlined), label: const Padding(padding: EdgeInsets.symmetric(vertical: 13), child: Text('Connect by IP address')))),
               const SizedBox(height: 10),
@@ -80,6 +87,28 @@ class _NearbyPageState extends State<NearbyPage> {
   }
 
   void _showQr(BifrostDevice device) => showDialog<void>(context: context, builder: (_) => AlertDialog(title: Text(device.name), content: Column(mainAxisSize: MainAxisSize.min, children: [QrImageView(data: device.connectionCode, size: 220), const SizedBox(height: 12), SelectableText(device.connectionCode, textAlign: TextAlign.center), const SizedBox(height: 8), const Text('Use this code with a future Bifrost scanner, or enter the address manually.', textAlign: TextAlign.center)]), actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close'))]));
+
+  Future<void> _selectDevice(BifrostDevice device) async {
+    if (_sending) return;
+    final result = await FilePicker.platform.pickFiles(allowMultiple: true, withData: false);
+    if (result == null || result.files.isEmpty) return;
+    final files = result.files.where((file) => file.path != null).map((file) => File(file.path!)).toList(growable: false);
+    if (files.isEmpty) return;
+    setState(() { _sending = true; _transferStatus = 'Sending ${files.length} file${files.length == 1 ? '' : 's'} to ${device.name}… Accept or decline on the other device.'; });
+    final client = BifrostClient();
+    try {
+      for (var i = 0; i < files.length; i++) {
+        setState(() => _transferStatus = 'Sending file ${i + 1} of ${files.length} to ${device.name}…');
+        await client.sendFile(server: device.baseUri, file: files[i], transferId: 'transfer-${DateTime.now().microsecondsSinceEpoch}', fileId: 'file-$i');
+      }
+      if (mounted) setState(() => _transferStatus = 'Transfer complete: ${files.length} file${files.length == 1 ? '' : 's'} sent.');
+    } catch (error) {
+      if (mounted) setState(() => _transferStatus = 'Transfer stopped: the other device may have declined, or the connection was lost.');
+    } finally {
+      client.close();
+      if (mounted) setState(() => _sending = false);
+    }
+  }
 }
 
 class _ManualConnectionDialog extends StatefulWidget { const _ManualConnectionDialog(); @override State<_ManualConnectionDialog> createState() => _ManualConnectionDialogState(); }

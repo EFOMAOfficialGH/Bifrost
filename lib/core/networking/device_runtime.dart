@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'bifrost_server.dart';
+import 'offer_broker.dart';
 
 class BifrostDeviceRuntime {
   BifrostDeviceRuntime._();
@@ -10,6 +11,7 @@ class BifrostDeviceRuntime {
   Future<void>? _starting;
 
   String get deviceId => _server?.deviceId ?? '';
+  String get deviceName => _server?.deviceName ?? 'Bifrost Device';
   int get port => _server?.port ?? 0;
   bool get isRunning => _server != null;
 
@@ -20,7 +22,7 @@ class BifrostDeviceRuntime {
   Future<void> _start() async {
     final directory = await Directory.systemTemp.createTemp('bifrost-receive-');
     final id = 'device-${DateTime.now().microsecondsSinceEpoch}-${identityHashCode(this)}';
-    final server = BifrostServer(saveDirectory: directory, deviceName: 'Bifrost Device', deviceId: id);
+    final server = BifrostServer(saveDirectory: directory, deviceName: 'Bifrost Device', deviceId: id, onOffer: BifrostOfferBroker.instance.request);
     await server.start(address: InternetAddress.anyIPv4);
     _server = server;
   }
@@ -30,4 +32,6 @@ class BifrostDeviceRuntime {
     _server = null;
     _starting = null;
   }
+
+  void updateDeviceName(String value) => _server?.updateDeviceName(value);
 }
