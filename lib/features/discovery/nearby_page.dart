@@ -90,9 +90,9 @@ class _NearbyPageState extends State<NearbyPage> {
 
   Future<void> _selectDevice(BifrostDevice device) async {
     if (_sending) return;
-    final result = await FilePicker.platform.pickFiles(allowMultiple: true, withData: false);
-    if (result == null || result.files.isEmpty) return;
-    final files = result.files.where((file) => file.path != null).map((file) => File(file.path!)).toList(growable: false);
+    final picked = await FilePicker.pickFiles();
+    if (picked.isEmpty) return;
+    final files = picked.where((file) => file.path != null).map((file) => File(file.path!)).toList(growable: false);
     if (files.isEmpty) return;
     setState(() { _sending = true; _transferStatus = 'Sending ${files.length} file${files.length == 1 ? '' : 's'} to ${device.name}… Accept or decline on the other device.'; });
     final client = BifrostClient();
