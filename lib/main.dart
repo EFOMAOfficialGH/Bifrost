@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'features/send/network_test_page.dart';
 import 'core/theme/app_theme.dart';
 
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.dark);
@@ -147,6 +148,7 @@ class SettingsPage extends ConsumerWidget {
       const SizedBox(height: 24),
       const ListTile(leading: Icon(Icons.badge_outlined), title: Text('Device name'), subtitle: Text('Bifrost Phone')),
       const ListTile(leading: Icon(Icons.folder_outlined), title: Text('Save location'), subtitle: Text('Configured in a later milestone')),
+      ListTile(leading: const Icon(Icons.lan_outlined), title: const Text('Networking test'), subtitle: const Text('Milestone 2 local receiver'), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NetworkTestPage()))),
       SwitchListTile(value: mode == ThemeMode.dark, onChanged: (value) => ref.read(themeModeProvider.notifier).state = value ? ThemeMode.dark : ThemeMode.light, title: const Text('Dark theme'), secondary: const Icon(Icons.dark_mode_outlined)),
       const Divider(height: 32),
       const ListTile(leading: Icon(Icons.info_outline), title: Text('About Bifrost'), subtitle: Text('Milestone 1 • Local-only file sharing')),
