@@ -9,12 +9,13 @@ import 'discovery_service.dart';
 import 'protocol.dart';
 
 class BifrostServer {
-  BifrostServer({required this.saveDirectory, this.deviceName = 'Bifrost Device', this.deviceId = 'local-device', this.onOffer, this.onFileProgress, this.onFileReceived});
+  BifrostServer({required this.saveDirectory, this.deviceName = 'Bifrost Device', this.deviceId = 'local-device', this.onOffer, this.onOfferWithSender, this.onFileProgress, this.onFileReceived});
 
   final Directory saveDirectory;
   String deviceName;
   final String deviceId;
   final Future<bool> Function(BifrostTransferOffer offer)? onOffer;
+  final Future<bool> Function(BifrostTransferOffer offer, String? senderDeviceId)? onOfferWithSender;
   final void Function(BifrostFileOffer file, int received, int total)? onFileProgress;
   final Future<void> Function(BifrostFileOffer file, String path)? onFileReceived;
   HttpServer? _server;
@@ -62,7 +63,8 @@ class BifrostServer {
   Future<void> _offer(HttpRequest request) async {
     final body = await utf8.decoder.bind(request).join();
     final offer = BifrostTransferOffer.fromJson(jsonDecode(body) as Map<String, dynamic>);
-    final accepted = await (onOffer?.call(offer) ?? Future<bool>.value(true));
+    final senderDeviceId = request.headers.value('x-bifrost-device-id');
+    final accepted = await (onOfferWithSender?.call(offer, senderDeviceId) ?? onOffer?.call(offer) ?? Future<bool>.value(true));
     if (!accepted) return _json(request, 409, {'transferId': offer.transferId, 'accepted': false});
     _offers[offer.transferId] = offer;
     _json(request, 202, {'transferId': offer.transferId, 'accepted': true});

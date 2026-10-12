@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -148,16 +149,39 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   List<TransferRecord> _records = const [];
-  @override void initState() { super.initState(); _load(); }
+  final _active = <String, TransferRecord>{};
+  StreamSubscription<TransferRecord>? _activitySubscription;
+  @override void initState() { super.initState(); _load(); _activitySubscription = AppStorage.instance.activities.listen((record) { if (!mounted) return; setState(() { if (record.status == 'In progress') { _active[record.id] = record; } else { _active.remove(record.id); _records = [record, ..._records.where((item) => item.id != record.id)]; } }); }); }
   Future<void> _load() async { final records = await AppStorage.instance.history(); if (mounted) setState(() => _records = records); }
+  @override void dispose() { _activitySubscription?.cancel(); super.dispose(); }
+  Future<void> _clear() async { await AppStorage.instance.clearHistory(); if (mounted) setState(() => _records = const []); }
   @override
-  Widget build(BuildContext context) => _records.isEmpty
+  Widget build(BuildContext context) => _records.isEmpty && _active.isEmpty
       ? const EmptyPage(icon: Icons.history, title: 'Transfer history', message: 'Completed transfers will appear here.')
       : ListView(padding: const EdgeInsets.all(24), children: [
-          Text('Transfer history', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
+          Row(children: [Expanded(child: Text('Transfer history', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700))), if (_records.isNotEmpty) IconButton(tooltip: 'Clear history', onPressed: _clear, icon: const Icon(Icons.delete_sweep_outlined))]),
           const SizedBox(height: 20),
+          for (final record in _active.values) _historyTile(context, record),
           for (final record in _records) Card(child: ListTile(leading: Icon(record.status == 'Completed' ? Icons.check_circle : Icons.error_outline, color: record.status == 'Completed' ? Colors.green : Theme.of(context).colorScheme.error), title: Text(record.fileName), subtitle: Text('${record.direction} • ${record.status} • ${_historyBytes(record.bytes)}\n${record.peer} • ${record.time.toLocal()}'))),
         ]);
+
+  Widget _historyTile(BuildContext context, TransferRecord record) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              const Icon(Icons.sync, size: 20),
+              const SizedBox(width: 10),
+              Expanded(child: Text(record.fileName, style: const TextStyle(fontWeight: FontWeight.w600))),
+              Text('${(record.progress * 100).round()}%'),
+            ]),
+            const SizedBox(height: 10),
+            LinearProgressIndicator(value: record.progress),
+            const SizedBox(height: 6),
+            Text('${record.direction} • ${record.peer}'),
+          ]),
+        ),
+      );
 }
 
 class SettingsPage extends ConsumerStatefulWidget {
@@ -174,6 +198,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: ref.read(deviceNameProvider));
+    AppStorage.instance.deviceName().then((name) { if (!mounted) return; _nameController.text = name; ref.read(deviceNameProvider.notifier).state = name; });
     AppStorage.instance.saveDirectoryPath().then((path) { if (mounted) setState(() => _savePath = path); });
   }
 

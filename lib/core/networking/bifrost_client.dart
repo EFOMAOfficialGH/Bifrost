@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,11 +9,12 @@ class BifrostClient {
   BifrostClient({HttpClient? httpClient}) : _http = httpClient ?? HttpClient();
   final HttpClient _http;
 
-  Future<void> sendFile({required Uri server, required File file, String? remoteName, String transferId = 'transfer-1', String fileId = 'file-1', void Function(int sent, int total)? onProgress}) async {
+  Future<void> sendFile({required Uri server, required File file, String? remoteName, String transferId = 'transfer-1', String fileId = 'file-1', String? senderDeviceId, void Function(int sent, int total)? onProgress}) async {
     final digest = await sha256File(file);
     final offer = BifrostTransferOffer(files: [BifrostFileOffer(fileId: fileId, name: remoteName ?? file.uri.pathSegments.last, size: await file.length(), sha256: digest)], transferId: transferId);
     final offerRequest = await _http.postUrl(server.replace(path: '/bifrost/v1/offers'));
     offerRequest.headers.contentType = ContentType.json;
+    if (senderDeviceId != null) offerRequest.headers.set('X-Bifrost-Device-Id', senderDeviceId);
     offerRequest.write(offer.encode());
     final offerResponse = await offerRequest.close();
     final offerBody = await utf8.decoder.bind(offerResponse).join();
@@ -23,11 +25,12 @@ class BifrostClient {
     request.headers.set('X-Bifrost-Filename', offer.files.single.name);
     request.headers.set('X-Bifrost-SHA256', digest);
     var sent = 0;
-    await for (final chunk in file.openRead()) {
-      request.add(chunk);
+    final stream = file.openRead().transform(StreamTransformer<List<int>, List<int>>.fromHandlers(handleData: (chunk, sink) {
       sent += chunk.length;
       onProgress?.call(sent, offer.files.single.size);
-    }
+      sink.add(chunk);
+    }));
+    await request.addStream(stream);
     final response = await request.close();
     final responseBody = await utf8.decoder.bind(response).join();
     if (response.statusCode != 201) throw StateError('Receiver rejected the file: $responseBody');

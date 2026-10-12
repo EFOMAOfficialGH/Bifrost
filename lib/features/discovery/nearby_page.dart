@@ -23,6 +23,7 @@ class _NearbyPageState extends State<NearbyPage> {
   List<BifrostDevice> _devices = const [];
   bool _searching = false;
   bool _sending = false;
+  double _progress = 0;
   String? _transferStatus;
   String? _error;
 
@@ -73,7 +74,7 @@ class _NearbyPageState extends State<NearbyPage> {
               const SizedBox(height: 6),
               Text(_searching ? 'Searching this Wi-Fi network…' : 'Devices running Bifrost on this local network appear here.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant)),
               const SizedBox(height: 20),
-              if (_transferStatus != null) Card(child: Padding(padding: const EdgeInsets.all(14), child: Text(_transferStatus!))),
+              if (_transferStatus != null) Card(child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(_transferStatus!), if (_sending) ...[const SizedBox(height: 10), LinearProgressIndicator(value: _progress)]]))),
               if (_error != null) Card(color: colors.errorContainer, child: Padding(padding: const EdgeInsets.all(16), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.warning_amber, color: colors.onErrorContainer), const SizedBox(width: 12), Expanded(child: Text(_error!, style: TextStyle(color: colors.onErrorContainer)))]))),
               if (_devices.isEmpty && !_searching) Card(child: Padding(padding: const EdgeInsets.all(18), child: Row(children: [Icon(Icons.radar, color: colors.primary), const SizedBox(width: 12), const Expanded(child: Text('No nearby devices found yet. Try refresh, manual IP, or check the troubleshooting guide.'))]))),
               for (final device in _devices) Card(margin: const EdgeInsets.only(bottom: 10), child: ListTile(onTap: () => _selectDevice(device), leading: CircleAvatar(backgroundColor: colors.primaryContainer, child: Icon(device.type == 'windows' ? Icons.computer : Icons.phone_android, color: colors.onPrimaryContainer)), title: Text(device.name), subtitle: Text('${device.host}:${device.port} • ${device.source}'), trailing: IconButton(tooltip: 'Show connection QR', icon: const Icon(Icons.qr_code_2), onPressed: () => _showQr(device)))),
@@ -96,23 +97,28 @@ class _NearbyPageState extends State<NearbyPage> {
     if (picked.isEmpty) return;
     final files = picked.where((file) => file.path != null).map((file) => File(file.path!)).toList(growable: false);
     if (files.isEmpty) return;
-    setState(() { _sending = true; _transferStatus = 'Sending ${files.length} file${files.length == 1 ? '' : 's'} to ${device.name}… Accept or decline on the other device.'; });
+    if (!mounted) return;
+    setState(() { _sending = true; _progress = 0; _transferStatus = 'Starting transfer to ${device.name}…'; });
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Transfer started to ${device.name}')));
     final client = BifrostClient();
     try {
       for (var i = 0; i < files.length; i++) {
         setState(() => _transferStatus = 'Sending file ${i + 1} of ${files.length} to ${device.name}…');
         final size = await files[i].length();
+        final activityId = 'send-${DateTime.now().microsecondsSinceEpoch}';
+        AppStorage.instance.begin(TransferRecord(id: activityId, fileName: files[i].uri.pathSegments.last, bytes: size, direction: 'Sent', status: 'In progress', peer: device.name, time: DateTime.now(), progress: 0));
         final notificationId = DateTime.now().millisecondsSinceEpoch.remainder(1 << 31);
-        await client.sendFile(server: device.baseUri, file: files[i], transferId: 'transfer-${DateTime.now().microsecondsSinceEpoch}', fileId: 'file-$i', onProgress: (sent, total) {
-          if (mounted) setState(() => _transferStatus = 'Sending ${files[i].uri.pathSegments.last}: ${total == 0 ? 100 : (sent * 100 ~/ total)}%');
+        await client.sendFile(server: device.baseUri, file: files[i], transferId: 'transfer-${DateTime.now().microsecondsSinceEpoch}', fileId: 'file-$i', senderDeviceId: BifrostDeviceRuntime.instance.deviceId, onProgress: (sent, total) {
+          if (mounted) setState(() { _progress = total == 0 ? 1 : sent / total; _transferStatus = 'Sending ${files[i].uri.pathSegments.last}: ${total == 0 ? 100 : (sent * 100 ~/ total)}%'; });
+          AppStorage.instance.update(activityId, sent, total);
           TransferNotifications.instance.progress(id: notificationId, title: 'Sending ${files[i].uri.pathSegments.last}', sent: sent, total: total);
         });
-        await AppStorage.instance.addHistory(TransferRecord(id: 'file-$i', fileName: files[i].uri.pathSegments.last, bytes: size, direction: 'Sent', status: 'Completed', peer: device.name, time: DateTime.now()));
+        await AppStorage.instance.finish(TransferRecord(id: activityId, fileName: files[i].uri.pathSegments.last, bytes: size, direction: 'Sent', status: 'Completed', peer: device.name, time: DateTime.now()));
         await TransferNotifications.instance.complete(id: notificationId, title: 'Sent ${files[i].uri.pathSegments.last}', success: true);
       }
       if (mounted) setState(() => _transferStatus = 'Transfer complete: ${files.length} file${files.length == 1 ? '' : 's'} sent.');
     } catch (error) {
-      await AppStorage.instance.addHistory(TransferRecord(id: 'failed-${DateTime.now().microsecondsSinceEpoch}', fileName: files.first.uri.pathSegments.last, bytes: await files.first.length(), direction: 'Sent', status: 'Failed or declined', peer: device.name, time: DateTime.now()));
+      await AppStorage.instance.finish(TransferRecord(id: 'failed-${DateTime.now().microsecondsSinceEpoch}', fileName: files.first.uri.pathSegments.last, bytes: await files.first.length(), direction: 'Sent', status: 'Failed or declined', peer: device.name, time: DateTime.now()));
       if (mounted) setState(() => _transferStatus = 'Transfer stopped: the other device may have declined, or the connection was lost.');
     } finally {
       client.close();

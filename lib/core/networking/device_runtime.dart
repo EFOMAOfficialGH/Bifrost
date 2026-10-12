@@ -27,13 +27,20 @@ class BifrostDeviceRuntime {
     final id = 'device-${DateTime.now().microsecondsSinceEpoch}-${identityHashCode(this)}';
     final name = await AppStorage.instance.deviceName();
     await TransferNotifications.instance.initialize();
-    final server = BifrostServer(saveDirectory: directory, deviceName: name, deviceId: id, onOffer: BifrostOfferBroker.instance.request, onFileProgress: (file, received, total) {
+    final server = BifrostServer(saveDirectory: directory, deviceName: name, deviceId: id, onOfferWithSender: (offer, senderId) async {
+      if (senderId != null && await AppStorage.instance.isTrusted(senderId)) return true;
+      return BifrostOfferBroker.instance.request(offer, senderId);
+    }, onFileProgress: (file, received, total) {
+      if (!AppStorage.instance.activeTransfers.any((item) => item.id == file.fileId)) {
+        AppStorage.instance.begin(TransferRecord(id: file.fileId, fileName: file.name, bytes: total, direction: 'Received', status: 'In progress', peer: 'Nearby device', time: DateTime.now(), progress: 0));
+      }
+      AppStorage.instance.update(file.fileId, received, total);
       TransferNotifications.instance.progress(id: file.fileId.hashCode, title: 'Receiving ${file.name}', sent: received, total: total);
     }, onFileReceived: (file, path) async {
-      await AppStorage.instance.addHistory(TransferRecord(id: file.fileId, fileName: file.name, bytes: file.size, direction: 'Received', status: 'Completed', peer: 'Nearby device', time: DateTime.now()));
+      await AppStorage.instance.finish(TransferRecord(id: file.fileId, fileName: file.name, bytes: file.size, direction: 'Received', status: 'Completed', peer: 'Nearby device', time: DateTime.now()));
       await TransferNotifications.instance.complete(id: file.fileId.hashCode, title: 'Received ${file.name}', success: true);
     });
-    await server.start(address: InternetAddress.anyIPv4);
+    await server.start(address: InternetAddress.anyIPv4, port: Platform.isWindows ? 43821 : 0);
     _server = server;
   }
 
