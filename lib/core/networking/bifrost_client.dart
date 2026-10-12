@@ -8,7 +8,7 @@ class BifrostClient {
   BifrostClient({HttpClient? httpClient}) : _http = httpClient ?? HttpClient();
   final HttpClient _http;
 
-  Future<void> sendFile({required Uri server, required File file, String? remoteName, String transferId = 'transfer-1', String fileId = 'file-1'}) async {
+  Future<void> sendFile({required Uri server, required File file, String? remoteName, String transferId = 'transfer-1', String fileId = 'file-1', void Function(int sent, int total)? onProgress}) async {
     final digest = await sha256File(file);
     final offer = BifrostTransferOffer(files: [BifrostFileOffer(fileId: fileId, name: remoteName ?? file.uri.pathSegments.last, size: await file.length(), sha256: digest)], transferId: transferId);
     final offerRequest = await _http.postUrl(server.replace(path: '/bifrost/v1/offers'));
@@ -22,7 +22,12 @@ class BifrostClient {
     request.contentLength = offer.files.single.size;
     request.headers.set('X-Bifrost-Filename', offer.files.single.name);
     request.headers.set('X-Bifrost-SHA256', digest);
-    await request.addStream(file.openRead());
+    var sent = 0;
+    await for (final chunk in file.openRead()) {
+      request.add(chunk);
+      sent += chunk.length;
+      onProgress?.call(sent, offer.files.single.size);
+    }
     final response = await request.close();
     final responseBody = await utf8.decoder.bind(response).join();
     if (response.statusCode != 201) throw StateError('Receiver rejected the file: $responseBody');

@@ -2,11 +2,21 @@
 
 Bifrost is a local-network file sharing app for Android and Windows. It is designed to transfer files directly between nearby devices over the same Wi-Fi network, without accounts, cloud storage, ads, telemetry, or internet calls.
 
-> **Current status: Milestone 1.** The project shell, theme, navigation, empty screens, and cloud build workflows are in place. Networking and real file transfer are intentionally not implemented yet.
+> **Current status: Android↔Windows transfer verified.** Local discovery, file selection, Accept/Decline, checksum verification, and bidirectional Android-to-Windows and Windows-to-Android transfers have been manually tested. The current build is still an integration prototype, not a polished release.
 
 ## What works now
 
-The project targets Android and Windows, uses application ID `com.bifrost.app`, and requires Android 8.0 (API 26) or newer. It includes Bifrost dark and light themes, Nearby, History, and Settings screens, a responsive starter layout, and an original Bifrost mark. It does not yet access files or the network.
+The project targets Android and Windows, uses application ID `com.bifrost.app`, and requires Android 8.0 (API 26) or newer. It includes Bifrost dark and light themes, Nearby, History, Settings, local discovery, manual-IP fallback, file selection, incoming Accept/Decline requests, streaming, and SHA-256 verification.
+
+## Current limitations
+
+- Save location is now configurable and persisted, but Android storage permissions and background behavior still need more device testing.
+- Transfer progress is now visible in-app and on Android notifications; Windows currently shows in-app progress only.
+- Incoming notifications are not instant or reliable when the app is not in the foreground.
+- Transfer History now records completed and failed transfers locally, but it needs more UI polish and filtering.
+- Device names and save locations are persisted locally.
+- QR display exists, but camera QR scanning is not implemented.
+- Background receiving and a persistent Android foreground service are not implemented.
 
 ## Build locally (optional)
 
@@ -37,7 +47,7 @@ The APK in this milestone is a CI smoke build signed with a temporary debug key.
 
 ## Milestones
 
-Milestone 1 establishes the project shell and cloud builds. Milestone 2 adds the networking core and one-file transfer. Milestone 3 adds discovery, manual IP, QR connection, and troubleshooting. Milestone 4 adds the full multi-file send/receive flow. Milestone 5 adds Android and Windows integration. Milestone 6 adds security, certificates, pairing, and its review. Milestone 7 adds polish, localization, accessibility, and final documentation.
+Milestone 1 established the project shell and cloud builds. Milestone 2 added the networking core and one-file transfer. Milestone 3 added discovery, manual IP, QR details, and troubleshooting. The current integration build adds file selection and Accept/Decline transfers across Android and Windows. Next priorities are configurable save locations, progress UI and Android notifications, working History, background receiving, and release polish.
 
 ## Privacy promise
 

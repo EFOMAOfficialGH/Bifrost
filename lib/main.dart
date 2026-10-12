@@ -1,11 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
 
 import 'features/send/network_test_page.dart';
 import 'features/discovery/nearby_page.dart';
 import 'features/receive/incoming_offer_listener.dart';
 import 'core/networking/device_runtime.dart';
 import 'core/theme/app_theme.dart';
+import 'core/storage/app_storage.dart';
 
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.dark);
 final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
@@ -137,10 +141,23 @@ class HomePage extends StatelessWidget {
   }
 }
 
-class HistoryPage extends StatelessWidget {
+class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
+  @override State<HistoryPage> createState() => _HistoryPageState();
+}
+
+class _HistoryPageState extends State<HistoryPage> {
+  List<TransferRecord> _records = const [];
+  @override void initState() { super.initState(); _load(); }
+  Future<void> _load() async { final records = await AppStorage.instance.history(); if (mounted) setState(() => _records = records); }
   @override
-  Widget build(BuildContext context) => const EmptyPage(icon: Icons.history, title: 'Transfer history', message: 'Completed transfers will appear here.');
+  Widget build(BuildContext context) => _records.isEmpty
+      ? const EmptyPage(icon: Icons.history, title: 'Transfer history', message: 'Completed transfers will appear here.')
+      : ListView(padding: const EdgeInsets.all(24), children: [
+          Text('Transfer history', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 20),
+          for (final record in _records) Card(child: ListTile(leading: Icon(record.status == 'Completed' ? Icons.check_circle : Icons.error_outline, color: record.status == 'Completed' ? Colors.green : Theme.of(context).colorScheme.error), title: Text(record.fileName), subtitle: Text('${record.direction} • ${record.status} • ${_historyBytes(record.bytes)}\n${record.peer} • ${record.time.toLocal()}'))),
+        ]);
 }
 
 class SettingsPage extends ConsumerStatefulWidget {
@@ -151,11 +168,13 @@ class SettingsPage extends ConsumerStatefulWidget {
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
   late final TextEditingController _nameController;
+  String? _savePath;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: ref.read(deviceNameProvider));
+    AppStorage.instance.saveDirectoryPath().then((path) { if (mounted) setState(() => _savePath = path); });
   }
 
   @override
@@ -169,6 +188,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Device name updated.')));
   }
 
+  Future<void> _chooseSaveLocation() async {
+    final path = await FilePicker.getDirectoryPath(dialogTitle: 'Choose Bifrost save location');
+    if (path == null) return;
+    await BifrostDeviceRuntime.instance.updateSaveDirectory(Directory(path));
+    if (mounted) setState(() => _savePath = path);
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Save location updated.')));
+  }
+
   @override
   Widget build(BuildContext context) {
     final mode = ref.watch(themeModeProvider);
@@ -176,7 +203,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       Text('Settings', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
       const SizedBox(height: 24),
       TextField(controller: _nameController, textInputAction: TextInputAction.done, onSubmitted: (_) => _saveName(), decoration: InputDecoration(labelText: 'Device name', prefixIcon: const Icon(Icons.badge_outlined), suffixIcon: IconButton(tooltip: 'Save device name', onPressed: _saveName, icon: const Icon(Icons.check)))),
-      const ListTile(leading: Icon(Icons.folder_outlined), title: Text('Save location'), subtitle: Text('Configured in a later milestone')),
+      ListTile(leading: const Icon(Icons.folder_outlined), title: const Text('Save location'), subtitle: Text(_savePath ?? 'Temporary folder'), trailing: const Icon(Icons.chevron_right), onTap: _chooseSaveLocation),
       ListTile(leading: const Icon(Icons.lan_outlined), title: const Text('Networking test'), subtitle: const Text('Milestone 2 local receiver'), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NetworkTestPage()))),
       SwitchListTile(value: mode == ThemeMode.dark, onChanged: (value) => ref.read(themeModeProvider.notifier).state = value ? ThemeMode.dark : ThemeMode.light, title: const Text('Dark theme'), secondary: const Icon(Icons.dark_mode_outlined)),
       const Divider(height: 32),
@@ -184,6 +211,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     ]);
   }
 }
+
+String _historyBytes(int bytes) => bytes < 1024 * 1024 ? '${(bytes / 1024).toStringAsFixed(1)} KB' : '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
 
 class EmptyPage extends StatelessWidget {
   const EmptyPage({required this.icon, required this.title, required this.message, super.key});

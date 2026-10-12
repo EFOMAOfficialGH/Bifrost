@@ -8,6 +8,8 @@ import '../../core/networking/bifrost_client.dart';
 import '../../core/networking/discovery.dart';
 import '../../core/networking/discovery_service.dart';
 import '../../core/networking/device_runtime.dart';
+import '../../core/notifications/transfer_notifications.dart';
+import '../../core/storage/app_storage.dart';
 
 class NearbyPage extends StatefulWidget {
   const NearbyPage({this.autoDiscover = true, super.key});
@@ -99,10 +101,18 @@ class _NearbyPageState extends State<NearbyPage> {
     try {
       for (var i = 0; i < files.length; i++) {
         setState(() => _transferStatus = 'Sending file ${i + 1} of ${files.length} to ${device.name}…');
-        await client.sendFile(server: device.baseUri, file: files[i], transferId: 'transfer-${DateTime.now().microsecondsSinceEpoch}', fileId: 'file-$i');
+        final size = await files[i].length();
+        final notificationId = DateTime.now().millisecondsSinceEpoch.remainder(1 << 31);
+        await client.sendFile(server: device.baseUri, file: files[i], transferId: 'transfer-${DateTime.now().microsecondsSinceEpoch}', fileId: 'file-$i', onProgress: (sent, total) {
+          if (mounted) setState(() => _transferStatus = 'Sending ${files[i].uri.pathSegments.last}: ${total == 0 ? 100 : (sent * 100 ~/ total)}%');
+          TransferNotifications.instance.progress(id: notificationId, title: 'Sending ${files[i].uri.pathSegments.last}', sent: sent, total: total);
+        });
+        await AppStorage.instance.addHistory(TransferRecord(id: 'file-$i', fileName: files[i].uri.pathSegments.last, bytes: size, direction: 'Sent', status: 'Completed', peer: device.name, time: DateTime.now()));
+        await TransferNotifications.instance.complete(id: notificationId, title: 'Sent ${files[i].uri.pathSegments.last}', success: true);
       }
       if (mounted) setState(() => _transferStatus = 'Transfer complete: ${files.length} file${files.length == 1 ? '' : 's'} sent.');
     } catch (error) {
+      await AppStorage.instance.addHistory(TransferRecord(id: 'failed-${DateTime.now().microsecondsSinceEpoch}', fileName: files.first.uri.pathSegments.last, bytes: await files.first.length(), direction: 'Sent', status: 'Failed or declined', peer: device.name, time: DateTime.now()));
       if (mounted) setState(() => _transferStatus = 'Transfer stopped: the other device may have declined, or the connection was lost.');
     } finally {
       client.close();

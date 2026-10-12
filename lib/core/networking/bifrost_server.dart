@@ -9,12 +9,14 @@ import 'discovery_service.dart';
 import 'protocol.dart';
 
 class BifrostServer {
-  BifrostServer({required this.saveDirectory, this.deviceName = 'Bifrost Device', this.deviceId = 'local-device', this.onOffer});
+  BifrostServer({required this.saveDirectory, this.deviceName = 'Bifrost Device', this.deviceId = 'local-device', this.onOffer, this.onFileProgress, this.onFileReceived});
 
   final Directory saveDirectory;
   String deviceName;
   final String deviceId;
   final Future<bool> Function(BifrostTransferOffer offer)? onOffer;
+  final void Function(BifrostFileOffer file, int received, int total)? onFileProgress;
+  final Future<void> Function(BifrostFileOffer file, String path)? onFileReceived;
   HttpServer? _server;
   BifrostDiscoveryResponder? _discovery;
   final Map<String, BifrostTransferOffer> _offers = {};
@@ -80,6 +82,7 @@ class BifrostServer {
         bytes += chunk.length;
         hashSink.add(chunk);
         output.add(chunk);
+        onFileProgress?.call(fileOffer, bytes, fileOffer.size);
       }
       hashSink.close();
       await output.close();
@@ -90,6 +93,7 @@ class BifrostServer {
       }
       final destination = _uniqueFile(fileOffer.name);
       await temp.rename(destination.path);
+      await onFileReceived?.call(fileOffer, destination.path);
       _json(request, 201, {'received': true, 'sha256': digest, 'path': destination.path});
     } catch (_) {
       await output.close();
