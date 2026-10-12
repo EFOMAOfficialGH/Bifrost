@@ -1,0 +1,77 @@
+name: Build Windows package
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze source
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build Windows release
+        run: flutter build windows --release
+
+      - name: Create portable ZIP
+        shell: pwsh
+        run: |
+          Compress-Archive `
+            -Path build/windows/x64/runner/Release/* `
+            -DestinationPath bifrost-windows-portable.zip
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Create installer script
+        shell: pwsh
+        run: |
+          @'
+          [Setup]
+          AppName=Bifrost
+          AppVersion=0.4.0
+          DefaultDirName={autopf}\Bifrost
+          OutputBaseFilename=bifrost-windows-installer
+          ArchitecturesInstallIn64BitMode=x64
+
+          [Files]
+          Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
+
+          [Icons]
+          Name: "{autodesktop}\Bifrost"; Filename: "{app}\bifrost.exe"
+          '@ | Out-File -Encoding utf8 bifrost.iss
+
+      - name: Build installer
+        shell: pwsh
+        run: '& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" bifrost.iss'
+
+      - name: Upload Windows packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: bifrost-windows-build
+          path: |
+            bifrost-windows-portable.zip
+            Output/bifrost-windows-installer.exe
+          if-no-files-found: error
