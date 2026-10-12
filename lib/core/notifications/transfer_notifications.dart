@@ -11,7 +11,7 @@ class TransferNotifications {
   Future<void> initialize() async {
     if (_ready || !Platform.isAndroid) return;
     const settings = InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher'));
-    await _plugin.initialize(settings);
+    await _plugin.initialize(settings: settings);
     final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     await android?.requestNotificationsPermission();
     await android?.createNotificationChannel(const AndroidNotificationChannel('bifrost_transfers', 'Bifrost transfers', description: 'File transfer progress', importance: Importance.low, playSound: false));
@@ -22,13 +22,13 @@ class TransferNotifications {
     if (!Platform.isAndroid) return;
     await initialize();
     final percent = total == 0 ? 0 : ((sent * 100) ~/ total).clamp(0, 100);
-    await _plugin.show(id, title, '$percent% • ${_format(sent)} of ${_format(total)}', NotificationDetails(android: AndroidNotificationDetails('bifrost_transfers', 'Bifrost transfers', channelDescription: 'File transfer progress', ongoing: true, onlyAlertOnce: true, showProgress: true, maxProgress: 100, progress: percent, playSound: false)));
+    await _plugin.show(id: id, title: title, body: '$percent% • ${_format(sent)} of ${_format(total)}', notificationDetails: NotificationDetails(android: AndroidNotificationDetails('bifrost_transfers', 'Bifrost transfers', channelDescription: 'File transfer progress', ongoing: true, onlyAlertOnce: true, showProgress: true, maxProgress: 100, progress: percent, playSound: false)));
   }
 
   Future<void> complete({required int id, required String title, required bool success, String? message}) async {
     if (!Platform.isAndroid) return;
     await initialize();
-    await _plugin.show(id, title, message ?? (success ? 'Transfer complete' : 'Transfer failed'), NotificationDetails(android: AndroidNotificationDetails('bifrost_transfers', 'Bifrost transfers', channelDescription: 'File transfer progress', ongoing: false, autoCancel: true, importance: Importance.defaultImportance)));
+    await _plugin.show(id: id, title: title, body: message ?? (success ? 'Transfer complete' : 'Transfer failed'), notificationDetails: NotificationDetails(android: AndroidNotificationDetails('bifrost_transfers', 'Bifrost transfers', channelDescription: 'File transfer progress', ongoing: false, autoCancel: true, importance: Importance.defaultImportance)));
   }
 }
 
