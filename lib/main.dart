@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:open_filex/open_filex.dart';
 
 import 'features/send/network_test_page.dart';
 import 'features/discovery/nearby_page.dart';
@@ -66,7 +67,7 @@ class _BifrostShellState extends State<BifrostShell> {
       const SettingsPage(),
     ];
     return Scaffold(
-      body: SafeArea(child: pages[_selectedIndex]),
+      body: SafeArea(child: IndexedStack(index: _selectedIndex, children: pages)),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) => setState(() => _selectedIndex = index),
@@ -163,6 +164,27 @@ class _HistoryPageState extends State<HistoryPage> {
   Future<void> _load() async { final records = await AppStorage.instance.history(); if (mounted) setState(() => _records = records); }
   @override void dispose() { _activitySubscription?.cancel(); super.dispose(); }
   Future<void> _clear() async { await AppStorage.instance.clearHistory(); if (mounted) setState(() => _records = const []); }
+
+  Future<void> _showRecordActions(TransferRecord record) async {
+    if (record.path == null) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('This older history entry has no saved file location.')));
+      return;
+    }
+    final action = await showModalBottomSheet<String>(context: context, builder: (sheetContext) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
+      ListTile(leading: const Icon(Icons.open_in_new), title: const Text('Open'), onTap: () => Navigator.pop(sheetContext, 'open')),
+      if (Platform.isWindows) ListTile(leading: const Icon(Icons.folder_open), title: const Text('Open location'), onTap: () => Navigator.pop(sheetContext, 'location')),
+      ListTile(leading: const Icon(Icons.delete_outline), title: const Text('Delete from History'), onTap: () => Navigator.pop(sheetContext, 'delete')),
+    ])));
+    if (!mounted || action == null) return;
+    if (action == 'open') {
+      await OpenFilex.open(record.path!);
+    } else if (action == 'location' && Platform.isWindows) {
+      await Process.run('explorer.exe', ['/select,${record.path!}']);
+    } else if (action == 'delete') {
+      await AppStorage.instance.deleteHistory(record.id);
+      if (mounted) setState(() => _records = _records.where((item) => item.id != record.id).toList(growable: false));
+    }
+  }
   @override
   Widget build(BuildContext context) => _records.isEmpty && _active.isEmpty
       ? const EmptyPage(icon: Icons.history, title: 'Transfer history', message: 'Completed transfers will appear here.')
@@ -170,7 +192,7 @@ class _HistoryPageState extends State<HistoryPage> {
           Row(children: [Expanded(child: Text('Transfer history', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700))), if (_records.isNotEmpty) IconButton(tooltip: 'Clear history', onPressed: _clear, icon: const Icon(Icons.delete_sweep_outlined))]),
           const SizedBox(height: 20),
           for (final record in _active.values) _historyTile(context, record),
-          for (final record in _records) Card(child: ListTile(leading: Icon(record.status == 'Completed' ? Icons.check_circle : Icons.error_outline, color: record.status == 'Completed' ? Colors.green : Theme.of(context).colorScheme.error), title: Text(record.fileName), subtitle: Text('${record.direction} • ${record.status} • ${_historyBytes(record.bytes)}\n${record.peer} • ${record.time.toLocal()}'))),
+          for (final record in _records) Card(child: ListTile(onTap: () => _showRecordActions(record), leading: Icon(record.status == 'Completed' ? Icons.check_circle : Icons.error_outline, color: record.status == 'Completed' ? Colors.green : Theme.of(context).colorScheme.error), title: Text(record.fileName), subtitle: Text('${record.direction} • ${record.status} • ${_historyBytes(record.bytes)}\n${record.peer} • ${record.time.toLocal()}'), trailing: record.path == null ? null : const Icon(Icons.more_vert))),
         ]);
 
   Widget _historyTile(BuildContext context, TransferRecord record) => Card(
@@ -187,6 +209,10 @@ class _HistoryPageState extends State<HistoryPage> {
             LinearProgressIndicator(value: record.progress),
             const SizedBox(height: 6),
             Text('${record.direction} • ${record.peer}'),
+            const SizedBox(height: 10),
+            Align(alignment: Alignment.centerRight, child: OutlinedButton.icon(onPressed: () async {
+              await AppStorage.instance.cancelTransfer(record.id);
+            }, icon: const Icon(Icons.cancel_outlined), label: const Text('Cancel'))),
           ]),
         ),
       );

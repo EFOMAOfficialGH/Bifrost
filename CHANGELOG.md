@@ -16,3 +16,9 @@ Bifrost now creates a random device identity once and stores it separately from 
 Transfers can be cancelled from the sender while they are running. The cancellation is sent to the receiving device, partial files are deleted, and the History entry is marked Cancelled. Windows also has a drop zone for queuing files before choosing a nearby device.
 
 Settings now includes a Background receiving toggle, a persistent Android ready notification while that mode is enabled, and a Trusted devices list with individual removal. Sender names are transmitted with offers so trusted entries can be labeled and refreshed when a device renames itself.
+
+## 0.6.1+7 — Notification cleanup and file actions
+
+Progress notifications now use stable per-transfer IDs and are explicitly removed when a transfer completes, fails, or is cancelled. This prevents abandoned progress bars from accumulating.
+
+History entries now retain their local file path. Tapping an entry offers Open, Delete from History, and Open location on Windows. Phones omit the location option.

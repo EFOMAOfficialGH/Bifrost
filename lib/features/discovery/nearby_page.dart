@@ -123,18 +123,21 @@ class _NearbyPageState extends State<NearbyPage> {
         final size = await file.length();
         final activityId = 'send-${DateTime.now().microsecondsSinceEpoch}';
         AppStorage.instance.begin(TransferRecord(id: activityId, fileName: file.uri.pathSegments.last, bytes: size, direction: 'Sent', status: 'In progress', peer: device.name, time: DateTime.now(), progress: 0));
-        final notificationId = DateTime.now().millisecondsSinceEpoch.remainder(1 << 31);
+        AppStorage.instance.registerCancellation(activityId, () async => cancellation.cancel());
+        final notificationId = activityId.hashCode;
         try {
           await client.sendFile(server: device.baseUri, file: file, transferId: 'transfer-${DateTime.now().microsecondsSinceEpoch}', fileId: 'file-${DateTime.now().microsecondsSinceEpoch}', senderDeviceId: BifrostDeviceRuntime.instance.deviceId, senderDeviceName: BifrostDeviceRuntime.instance.deviceName, cancellation: cancellation, onProgress: (sent, total) {
             if (mounted) setState(() { _progress = total == 0 ? 1 : sent / total; _transferStatus = 'Sending ${file.uri.pathSegments.last}: ${total == 0 ? 100 : (sent * 100 ~/ total)}%'; });
             AppStorage.instance.update(activityId, sent, total);
             TransferNotifications.instance.progress(id: notificationId, title: 'Sending ${file.uri.pathSegments.last}', sent: sent, total: total);
           });
-          await AppStorage.instance.finish(TransferRecord(id: activityId, fileName: file.uri.pathSegments.last, bytes: size, direction: 'Sent', status: 'Completed', peer: device.name, time: DateTime.now()));
+          await AppStorage.instance.finish(TransferRecord(id: activityId, fileName: file.uri.pathSegments.last, bytes: size, direction: 'Sent', status: 'Completed', peer: device.name, time: DateTime.now(), path: file.path));
+          await TransferNotifications.instance.cancel(notificationId);
           await TransferNotifications.instance.complete(id: notificationId, title: 'Sent ${file.uri.pathSegments.last}', success: true);
         } catch (error) {
           final cancelled = error is TransferCancelledException || cancellation.isCancelled;
           await AppStorage.instance.finish(TransferRecord(id: activityId, fileName: file.uri.pathSegments.last, bytes: size, direction: 'Sent', status: cancelled ? 'Cancelled' : 'Failed', peer: device.name, time: DateTime.now(), progress: _progress));
+          await TransferNotifications.instance.cancel(notificationId);
           if (cancelled) rethrow;
           rethrow;
         }

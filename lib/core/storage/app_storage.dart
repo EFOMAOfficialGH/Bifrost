@@ -5,7 +5,7 @@ import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TransferRecord {
-  const TransferRecord({required this.id, required this.fileName, required this.bytes, required this.direction, required this.status, required this.peer, required this.time, this.progress = 1});
+  const TransferRecord({required this.id, required this.fileName, required this.bytes, required this.direction, required this.status, required this.peer, required this.time, this.progress = 1, this.path});
   final String id;
   final String fileName;
   final int bytes;
@@ -14,9 +14,10 @@ class TransferRecord {
   final String peer;
   final DateTime time;
   final double progress;
+  final String? path;
 
-  Map<String, dynamic> toJson() => {'id': id, 'fileName': fileName, 'bytes': bytes, 'direction': direction, 'status': status, 'peer': peer, 'time': time.toIso8601String(), 'progress': progress};
-  factory TransferRecord.fromJson(Map<String, dynamic> json) => TransferRecord(id: json['id'] as String, fileName: json['fileName'] as String, bytes: (json['bytes'] as num).toInt(), direction: json['direction'] as String, status: json['status'] as String, peer: json['peer'] as String, time: DateTime.parse(json['time'] as String), progress: (json['progress'] as num?)?.toDouble() ?? 1);
+  Map<String, dynamic> toJson() => {'id': id, 'fileName': fileName, 'bytes': bytes, 'direction': direction, 'status': status, 'peer': peer, 'time': time.toIso8601String(), 'progress': progress, 'path': path};
+  factory TransferRecord.fromJson(Map<String, dynamic> json) => TransferRecord(id: json['id'] as String, fileName: json['fileName'] as String, bytes: (json['bytes'] as num).toInt(), direction: json['direction'] as String, status: json['status'] as String, peer: json['peer'] as String, time: DateTime.parse(json['time'] as String), progress: (json['progress'] as num?)?.toDouble() ?? 1, path: json['path'] as String?);
 }
 
 class TrustedDevice {
@@ -34,6 +35,7 @@ class AppStorage {
   SharedPreferences? _prefs;
   final _activity = StreamController<TransferRecord>.broadcast();
   final _active = <String, TransferRecord>{};
+  final _cancellers = <String, Future<void> Function()>{};
 
   Future<SharedPreferences> get _preferences async => _prefs ??= await SharedPreferences.getInstance();
   Stream<TransferRecord> get activities => _activity.stream;
@@ -70,6 +72,11 @@ class AppStorage {
 
   Future<void> clearHistory() async => (await _preferences).remove('transferHistory');
 
+  Future<void> deleteHistory(String id) async {
+    final records = (await history()).where((record) => record.id != id).map((record) => jsonEncode(record.toJson())).toList(growable: false);
+    await (await _preferences).setStringList('transferHistory', records);
+  }
+
   Future<List<TrustedDevice>> trustedDevices() async {
     final prefs = await _preferences;
     final structured = prefs.getStringList('trustedDeviceRecords');
@@ -99,6 +106,13 @@ class AppStorage {
     _activity.add(record);
   }
 
+  void registerCancellation(String id, Future<void> Function() cancel) => _cancellers[id] = cancel;
+
+  Future<void> cancelTransfer(String id) async {
+    final cancel = _cancellers[id];
+    if (cancel != null) await cancel();
+  }
+
   void update(String id, int sent, int total) {
     final current = _active[id];
     if (current == null) return;
@@ -110,6 +124,7 @@ class AppStorage {
 
   Future<void> finish(TransferRecord record) async {
     _active.remove(record.id);
+    _cancellers.remove(record.id);
     _activity.add(record);
     await addHistory(record);
   }

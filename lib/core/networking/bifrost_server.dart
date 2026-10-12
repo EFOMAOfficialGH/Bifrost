@@ -9,15 +9,16 @@ import 'discovery_service.dart';
 import 'protocol.dart';
 
 class BifrostServer {
-  BifrostServer({required this.saveDirectory, this.deviceName = 'Bifrost Device', this.deviceId = 'local-device', this.onOffer, this.onOfferWithSender, this.onFileProgress, this.onFileReceived});
+  BifrostServer({required this.saveDirectory, this.deviceName = 'Bifrost Device', this.deviceId = 'local-device', this.onOffer, this.onOfferWithSender, this.onFileProgress, this.onFileReceived, this.onFileCancelled});
 
   final Directory saveDirectory;
   String deviceName;
   final String deviceId;
   final Future<bool> Function(BifrostTransferOffer offer)? onOffer;
   final Future<bool> Function(BifrostTransferOffer offer, String? senderDeviceId, String? senderDeviceName)? onOfferWithSender;
-  final void Function(BifrostFileOffer file, int received, int total)? onFileProgress;
+  final void Function(BifrostFileOffer file, int received, int total, String transferId)? onFileProgress;
   final Future<void> Function(BifrostFileOffer file, String path)? onFileReceived;
+  final Future<void> Function(BifrostFileOffer file)? onFileCancelled;
   HttpServer? _server;
   BifrostDiscoveryResponder? _discovery;
   final Map<String, BifrostTransferOffer> _offers = {};
@@ -53,8 +54,7 @@ class BifrostServer {
       if (request.method == 'POST' && path == '/bifrost/v1/offers') return await _offer(request);
       final cancelMatch = RegExp(r'^/bifrost/v1/transfers/([^/]+)/cancel$').firstMatch(path);
       if (request.method == 'POST' && cancelMatch != null) {
-        _cancelled.add(cancelMatch.group(1)!);
-        _offers.remove(cancelMatch.group(1)!);
+        await cancelTransfer(cancelMatch.group(1)!);
         return _json(request, 200, {'cancelled': true});
       }
       final match = RegExp(r'^/bifrost/v1/transfers/([^/]+)/files/([^/]+)$').firstMatch(path);
@@ -62,6 +62,14 @@ class BifrostServer {
       _json(request, 404, {'error': 'Route not found'});
     } catch (_) {
       _json(request, 400, {'error': 'Request could not be processed'});
+    }
+  }
+
+  Future<void> cancelTransfer(String transferId) async {
+    _cancelled.add(transferId);
+    final offer = _offers.remove(transferId);
+    for (final file in offer?.files ?? const <BifrostFileOffer>[]) {
+      await onFileCancelled?.call(file);
     }
   }
 
@@ -92,7 +100,7 @@ class BifrostServer {
         bytes += chunk.length;
         hashSink.add(chunk);
         output.add(chunk);
-        onFileProgress?.call(fileOffer, bytes, fileOffer.size);
+        onFileProgress?.call(fileOffer, bytes, fileOffer.size, transferId);
       }
       hashSink.close();
       await output.close();

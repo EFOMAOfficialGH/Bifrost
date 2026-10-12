@@ -33,6 +33,12 @@ class TransferNotifications {
     await _plugin.show(id: id, title: title, body: message ?? (success ? 'Transfer complete' : 'Transfer failed'), notificationDetails: NotificationDetails(android: AndroidNotificationDetails('bifrost_transfers', 'Bifrost transfers', channelDescription: 'File transfer progress', ongoing: false, autoCancel: true, importance: Importance.defaultImportance)));
   }
 
+  Future<void> cancel(int id) async {
+    if (!Platform.isAndroid) return;
+    await initialize();
+    await _plugin.cancel(id: id);
+  }
+
   Future<void> incoming({required int id, required String title, required String body}) async {
     if (!Platform.isAndroid) return;
     await initialize();

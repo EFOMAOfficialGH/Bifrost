@@ -25,21 +25,27 @@ class BifrostDeviceRuntime {
     final id = await AppStorage.instance.deviceId();
     final name = await AppStorage.instance.deviceName();
     await TransferNotifications.instance.initialize();
-    final server = BifrostServer(saveDirectory: directory, deviceName: name, deviceId: id, onOfferWithSender: (offer, senderId, senderName) async {
+    late BifrostServer server;
+    server = BifrostServer(saveDirectory: directory, deviceName: name, deviceId: id, onOfferWithSender: (offer, senderId, senderName) async {
       if (senderId != null && await AppStorage.instance.isTrusted(senderId)) {
         await AppStorage.instance.touchTrusted(senderId, senderName ?? 'Trusted device');
         return true;
       }
       return BifrostOfferBroker.instance.request(offer, senderId, senderName);
-    }, onFileProgress: (file, received, total) {
+    }, onFileProgress: (file, received, total, transferId) {
       if (!AppStorage.instance.activeTransfers.any((item) => item.id == file.fileId)) {
         AppStorage.instance.begin(TransferRecord(id: file.fileId, fileName: file.name, bytes: total, direction: 'Received', status: 'In progress', peer: 'Nearby device', time: DateTime.now(), progress: 0));
+        AppStorage.instance.registerCancellation(file.fileId, () => server.cancelTransfer(transferId));
       }
       AppStorage.instance.update(file.fileId, received, total);
       TransferNotifications.instance.progress(id: file.fileId.hashCode, title: 'Receiving ${file.name}', sent: received, total: total);
     }, onFileReceived: (file, path) async {
-      await AppStorage.instance.finish(TransferRecord(id: file.fileId, fileName: file.name, bytes: file.size, direction: 'Received', status: 'Completed', peer: 'Nearby device', time: DateTime.now()));
+      await AppStorage.instance.finish(TransferRecord(id: file.fileId, fileName: file.name, bytes: file.size, direction: 'Received', status: 'Completed', peer: 'Nearby device', time: DateTime.now(), path: path));
+      await TransferNotifications.instance.cancel(file.fileId.hashCode);
       await TransferNotifications.instance.complete(id: file.fileId.hashCode, title: 'Received ${file.name}', success: true);
+    }, onFileCancelled: (file) async {
+      await AppStorage.instance.finish(TransferRecord(id: file.fileId, fileName: file.name, bytes: file.size, direction: 'Received', status: 'Cancelled', peer: 'Nearby device', time: DateTime.now(), progress: 0));
+      await TransferNotifications.instance.cancel(file.fileId.hashCode);
     });
     await server.start(address: InternetAddress.anyIPv4, port: Platform.isWindows ? 43821 : 0);
     _server = server;
