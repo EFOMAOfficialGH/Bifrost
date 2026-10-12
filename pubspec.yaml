@@ -15,7 +15,7 @@ dependencies:
   shelf: 1.4.2
   qr_flutter: 4.1.0
   file_picker: 13.1.0
-  desktop_drop: ^0.5.0
+  desktop_drop: ^0.8.4
   shared_preferences: 2.5.3
   flutter_local_notifications: 22.3.2
 
