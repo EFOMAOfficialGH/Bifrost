@@ -15,6 +15,8 @@ class TransferNotifications {
     final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     await android?.requestNotificationsPermission();
     await android?.createNotificationChannel(const AndroidNotificationChannel('bifrost_transfers', 'Bifrost transfers', description: 'File transfer progress', importance: Importance.low, playSound: false));
+    await android?.createNotificationChannel(const AndroidNotificationChannel('bifrost_incoming', 'Incoming transfers', description: 'Incoming file transfer requests', importance: Importance.high, playSound: true));
+    await android?.createNotificationChannel(const AndroidNotificationChannel('bifrost_background', 'Background receiving', description: 'Keeps Bifrost available while the app is in the background', importance: Importance.low, playSound: false));
     _ready = true;
   }
 
@@ -29,6 +31,24 @@ class TransferNotifications {
     if (!Platform.isAndroid) return;
     await initialize();
     await _plugin.show(id: id, title: title, body: message ?? (success ? 'Transfer complete' : 'Transfer failed'), notificationDetails: NotificationDetails(android: AndroidNotificationDetails('bifrost_transfers', 'Bifrost transfers', channelDescription: 'File transfer progress', ongoing: false, autoCancel: true, importance: Importance.defaultImportance)));
+  }
+
+  Future<void> incoming({required int id, required String title, required String body}) async {
+    if (!Platform.isAndroid) return;
+    await initialize();
+    await _plugin.show(id: id, title: title, body: body, notificationDetails: const NotificationDetails(android: AndroidNotificationDetails('bifrost_incoming', 'Incoming transfers', channelDescription: 'Incoming file transfer requests', importance: Importance.high, priority: Priority.high, autoCancel: true, playSound: true)));
+  }
+
+  Future<void> backgroundReady() async {
+    if (!Platform.isAndroid) return;
+    await initialize();
+    await _plugin.show(id: 987654, title: 'Bifrost is ready', body: 'Listening for nearby file transfers', notificationDetails: const NotificationDetails(android: AndroidNotificationDetails('bifrost_background', 'Background receiving', channelDescription: 'Keeps Bifrost available while the app is in the background', ongoing: true, autoCancel: false, onlyAlertOnce: true, importance: Importance.low, playSound: false)));
+  }
+
+  Future<void> clearBackgroundReady() async {
+    if (!Platform.isAndroid) return;
+    await initialize();
+    await _plugin.cancel(id: 987654);
   }
 }
 

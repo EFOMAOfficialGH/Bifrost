@@ -50,6 +50,14 @@ class _BifrostShellState extends State<BifrostShell> {
   int _selectedIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    AppStorage.instance.backgroundActivity().then((enabled) {
+      if (enabled) BifrostDeviceRuntime.instance.ensureStarted();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final pages = <Widget>[
@@ -193,6 +201,8 @@ class SettingsPage extends ConsumerStatefulWidget {
 class _SettingsPageState extends ConsumerState<SettingsPage> {
   late final TextEditingController _nameController;
   String? _savePath;
+  List<TrustedDevice> _trusted = const [];
+  bool _backgroundActivity = false;
 
   @override
   void initState() {
@@ -200,6 +210,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     _nameController = TextEditingController(text: ref.read(deviceNameProvider));
     AppStorage.instance.deviceName().then((name) { if (!mounted) return; _nameController.text = name; ref.read(deviceNameProvider.notifier).state = name; });
     AppStorage.instance.saveDirectoryPath().then((path) { if (mounted) setState(() => _savePath = path); });
+    AppStorage.instance.trustedDevices().then((devices) { if (mounted) setState(() => _trusted = devices); });
+    AppStorage.instance.backgroundActivity().then((enabled) { if (mounted) setState(() => _backgroundActivity = enabled); });
   }
 
   @override
@@ -221,6 +233,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Save location updated.')));
   }
 
+  Future<void> _toggleBackground(bool enabled) async {
+    setState(() => _backgroundActivity = enabled);
+    await BifrostDeviceRuntime.instance.setBackgroundActivity(enabled);
+  }
+
+  Future<void> _removeTrusted(TrustedDevice device) async {
+    await AppStorage.instance.setTrusted(device.id, false);
+    if (mounted) setState(() => _trusted = _trusted.where((item) => item.id != device.id).toList(growable: false));
+  }
+
   @override
   Widget build(BuildContext context) {
     final mode = ref.watch(themeModeProvider);
@@ -230,6 +252,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       TextField(controller: _nameController, textInputAction: TextInputAction.done, onSubmitted: (_) => _saveName(), decoration: InputDecoration(labelText: 'Device name', prefixIcon: const Icon(Icons.badge_outlined), suffixIcon: IconButton(tooltip: 'Save device name', onPressed: _saveName, icon: const Icon(Icons.check)))),
       ListTile(leading: const Icon(Icons.folder_outlined), title: const Text('Save location'), subtitle: Text(_savePath ?? 'Temporary folder'), trailing: const Icon(Icons.chevron_right), onTap: _chooseSaveLocation),
       ListTile(leading: const Icon(Icons.lan_outlined), title: const Text('Networking test'), subtitle: const Text('Milestone 2 local receiver'), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NetworkTestPage()))),
+      SwitchListTile(value: _backgroundActivity, onChanged: _toggleBackground, title: const Text('Background receiving'), subtitle: const Text('Keep Bifrost listening while the app is in the background.'), secondary: const Icon(Icons.notifications_active_outlined)),
+      const SizedBox(height: 12),
+      Text('Trusted devices', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+      const SizedBox(height: 6),
+      if (_trusted.isEmpty) const ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.verified_user_outlined), title: Text('No trusted devices'), subtitle: Text('Trust a device when accepting its first transfer.')),
+      for (final device in _trusted) ListTile(contentPadding: EdgeInsets.zero, leading: const Icon(Icons.verified_user), title: Text(device.name), subtitle: Text('ID ${device.id.substring(0, device.id.length > 19 ? 19 : device.id.length)}…'), trailing: IconButton(tooltip: 'Remove trusted device', icon: const Icon(Icons.delete_outline), onPressed: () => _removeTrusted(device))),
       SwitchListTile(value: mode == ThemeMode.dark, onChanged: (value) => ref.read(themeModeProvider.notifier).state = value ? ThemeMode.dark : ThemeMode.light, title: const Text('Dark theme'), secondary: const Icon(Icons.dark_mode_outlined)),
       const Divider(height: 32),
       const ListTile(leading: Icon(Icons.info_outline), title: Text('About Bifrost'), subtitle: Text('Milestone 1 • Local-only file sharing')),

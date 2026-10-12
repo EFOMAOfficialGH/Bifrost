@@ -17,19 +17,20 @@ class BifrostDeviceRuntime {
   int get port => _server?.port ?? 0;
   bool get isRunning => _server != null;
 
-  Future<void> ensureStarted() {
-    return _starting ??= _start();
-  }
+  Future<void> ensureStarted() => _starting ??= _start();
 
   Future<void> _start() async {
     final configured = await AppStorage.instance.saveDirectoryPath();
     final directory = configured == null ? await Directory.systemTemp.createTemp('bifrost-receive-') : Directory(configured);
-    final id = 'device-${DateTime.now().microsecondsSinceEpoch}-${identityHashCode(this)}';
+    final id = await AppStorage.instance.deviceId();
     final name = await AppStorage.instance.deviceName();
     await TransferNotifications.instance.initialize();
-    final server = BifrostServer(saveDirectory: directory, deviceName: name, deviceId: id, onOfferWithSender: (offer, senderId) async {
-      if (senderId != null && await AppStorage.instance.isTrusted(senderId)) return true;
-      return BifrostOfferBroker.instance.request(offer, senderId);
+    final server = BifrostServer(saveDirectory: directory, deviceName: name, deviceId: id, onOfferWithSender: (offer, senderId, senderName) async {
+      if (senderId != null && await AppStorage.instance.isTrusted(senderId)) {
+        await AppStorage.instance.touchTrusted(senderId, senderName ?? 'Trusted device');
+        return true;
+      }
+      return BifrostOfferBroker.instance.request(offer, senderId, senderName);
     }, onFileProgress: (file, received, total) {
       if (!AppStorage.instance.activeTransfers.any((item) => item.id == file.fileId)) {
         AppStorage.instance.begin(TransferRecord(id: file.fileId, fileName: file.name, bytes: total, direction: 'Received', status: 'In progress', peer: 'Nearby device', time: DateTime.now(), progress: 0));
@@ -42,6 +43,7 @@ class BifrostDeviceRuntime {
     });
     await server.start(address: InternetAddress.anyIPv4, port: Platform.isWindows ? 43821 : 0);
     _server = server;
+    if (await AppStorage.instance.backgroundActivity()) await TransferNotifications.instance.backgroundReady();
   }
 
   Future<void> close() async {
@@ -53,6 +55,16 @@ class BifrostDeviceRuntime {
   void updateDeviceName(String value) {
     AppStorage.instance.setDeviceName(value);
     _server?.updateDeviceName(value);
+  }
+
+  Future<void> setBackgroundActivity(bool enabled) async {
+    await AppStorage.instance.setBackgroundActivity(enabled);
+    if (enabled) {
+      await ensureStarted();
+      await TransferNotifications.instance.backgroundReady();
+    } else {
+      await TransferNotifications.instance.clearBackgroundReady();
+    }
   }
 
   Future<void> updateSaveDirectory(Directory directory) async {

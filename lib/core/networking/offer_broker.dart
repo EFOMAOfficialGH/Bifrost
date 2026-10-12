@@ -3,9 +3,10 @@ import 'dart:async';
 import 'protocol.dart';
 
 class IncomingOffer {
-  const IncomingOffer(this.offer, this.senderDeviceId);
+  const IncomingOffer(this.offer, this.senderDeviceId, this.senderDeviceName);
   final BifrostTransferOffer offer;
   final String? senderDeviceId;
+  final String? senderDeviceName;
 }
 
 class BifrostOfferBroker {
@@ -16,10 +17,10 @@ class BifrostOfferBroker {
   final _pending = <String, Completer<bool>>{};
   Stream<IncomingOffer> get offers => _events.stream;
 
-  Future<bool> request(BifrostTransferOffer offer, [String? senderDeviceId]) {
+  Future<bool> request(BifrostTransferOffer offer, [String? senderDeviceId, String? senderDeviceName]) {
     final completer = Completer<bool>();
     _pending[offer.transferId] = completer;
-    _events.add(IncomingOffer(offer, senderDeviceId));
+    _events.add(IncomingOffer(offer, senderDeviceId, senderDeviceName));
     return completer.future.timeout(const Duration(minutes: 2), onTimeout: () => false).whenComplete(() => _pending.remove(offer.transferId));
   }
 

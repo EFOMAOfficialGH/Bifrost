@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/networking/offer_broker.dart';
+import '../../core/notifications/transfer_notifications.dart';
 import '../../core/storage/app_storage.dart';
 
 class IncomingOfferListener extends StatefulWidget {
@@ -24,6 +25,7 @@ class _IncomingOfferListenerState extends State<IncomingOfferListener> {
 
   void _showOffer(IncomingOffer incoming) {
     if (!mounted || _dialogOpen) return;
+    TransferNotifications.instance.incoming(id: incoming.offer.transferId.hashCode, title: 'Incoming transfer', body: '${incoming.offer.files.length} file${incoming.offer.files.length == 1 ? '' : 's'} is ready for approval');
     _dialogOpen = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final offer = incoming.offer;
@@ -46,7 +48,7 @@ class _IncomingOfferListenerState extends State<IncomingOfferListener> {
             ),
           ) ??
           (false, false);
-      if (decision.$2 && incoming.senderDeviceId != null) await AppStorage.instance.setTrusted(incoming.senderDeviceId!, true);
+      if (decision.$2 && incoming.senderDeviceId != null) await AppStorage.instance.setTrusted(incoming.senderDeviceId!, true, name: incoming.senderDeviceName ?? 'Trusted device');
       BifrostOfferBroker.instance.decide(offer.transferId, decision.$1);
       if (decision.$1 && mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transfer started')));
       _dialogOpen = false;
