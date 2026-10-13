@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:desktop_drop/desktop_drop.dart';
@@ -126,11 +127,25 @@ class _NearbyPageState extends State<NearbyPage> {
         AppStorage.instance.registerCancellation(activityId, () async => cancellation.cancel());
         final notificationId = activityId.hashCode;
         try {
-          await client.sendFile(server: device.baseUri, file: file, transferId: 'transfer-${DateTime.now().microsecondsSinceEpoch}', fileId: 'file-${DateTime.now().microsecondsSinceEpoch}', senderDeviceId: BifrostDeviceRuntime.instance.deviceId, senderDeviceName: BifrostDeviceRuntime.instance.deviceName, cancellation: cancellation, onProgress: (sent, total) {
-            if (mounted) setState(() { _progress = total == 0 ? 1 : sent / total; _transferStatus = 'Sending ${file.uri.pathSegments.last}: ${total == 0 ? 100 : (sent * 100 ~/ total)}%'; });
-            AppStorage.instance.update(activityId, sent, total);
-            TransferNotifications.instance.progress(id: notificationId, title: 'Sending ${file.uri.pathSegments.last}', sent: sent, total: total);
-          });
+          Object? lastError;
+          for (var attempt = 1; attempt <= 3; attempt++) {
+            try {
+              await client.sendFile(server: device.baseUri, file: file, transferId: 'transfer-${DateTime.now().microsecondsSinceEpoch}', fileId: 'file-${DateTime.now().microsecondsSinceEpoch}', senderDeviceId: BifrostDeviceRuntime.instance.deviceId, senderDeviceName: BifrostDeviceRuntime.instance.deviceName, cancellation: cancellation, onProgress: (sent, total) {
+                final current = AppStorage.instance.activeTransfers.where((item) => item.id == activityId).firstOrNull;
+                if (mounted) setState(() { _progress = total == 0 ? 1 : sent / total; final speed = current?.speedBytesPerSecond ?? 0; final eta = current?.etaSeconds; _transferStatus = 'Sending ${file.uri.pathSegments.last}: ${total == 0 ? 100 : (sent * 100 ~/ total)}%${speed > 0 ? ' • ${_formatSpeed(speed)}/s' : ''}${eta != null ? ' • ${_formatEta(eta)} left' : ''}'; });
+                AppStorage.instance.update(activityId, sent, total);
+                TransferNotifications.instance.progress(id: notificationId, title: 'Sending ${file.uri.pathSegments.last}', sent: sent, total: total);
+              });
+              lastError = null;
+              break;
+            } catch (error) {
+              lastError = error;
+              if (cancellation.isCancelled || !_isRetryable(error) || attempt == 3) rethrow;
+              if (mounted) setState(() => _transferStatus = 'Connection interrupted. Retrying ${file.uri.pathSegments.last} (${attempt + 1}/3)…');
+              await Future<void>.delayed(Duration(milliseconds: 500 * attempt));
+            }
+          }
+          if (lastError != null) throw lastError;
           await AppStorage.instance.finish(TransferRecord(id: activityId, fileName: file.uri.pathSegments.last, bytes: size, direction: 'Sent', status: 'Completed', peer: device.name, time: DateTime.now(), path: file.path));
           await TransferNotifications.instance.cancel(notificationId);
           await TransferNotifications.instance.complete(id: notificationId, title: 'Sent ${file.uri.pathSegments.last}', success: true);
@@ -160,6 +175,9 @@ class _NearbyPageState extends State<NearbyPage> {
 }
 
 String _formatBytes(int bytes) => bytes < 1024 * 1024 ? '${(bytes / 1024).toStringAsFixed(1)} KB' : '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+String _formatSpeed(double bytesPerSecond) => _formatBytes(bytesPerSecond.round());
+String _formatEta(int seconds) => seconds < 60 ? '${seconds}s' : '${seconds ~/ 60}m ${seconds % 60}s';
+bool _isRetryable(Object error) => error is SocketException || error is HttpException || error is TimeoutException;
 
 class _ManualConnectionDialog extends StatefulWidget { const _ManualConnectionDialog(); @override State<_ManualConnectionDialog> createState() => _ManualConnectionDialogState(); }
 class _ManualConnectionDialogState extends State<_ManualConnectionDialog> { final _host = TextEditingController(); final _port = TextEditingController(text: '43821'); @override void dispose() { _host.dispose(); _port.dispose(); super.dispose(); } @override Widget build(BuildContext context) => AlertDialog(title: const Text('Connect by IP'), content: Column(mainAxisSize: MainAxisSize.min, children: [TextField(controller: _host, autofocus: true, keyboardType: TextInputType.url, decoration: const InputDecoration(labelText: 'IP address', hintText: '192.168.1.42')), const SizedBox(height: 12), TextField(controller: _port, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Port'))]), actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')), FilledButton(onPressed: () { final port = int.tryParse(_port.text.trim()); if (_host.text.trim().isNotEmpty && port != null) Navigator.pop(context, (_host.text.trim(), port)); }, child: const Text('Connect'))]); }

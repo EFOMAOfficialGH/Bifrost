@@ -1,5 +1,22 @@
 # Bifrost Patch Notes
 
+## Bifrost v0.8.0+10
+
+### Transfer resilience and speed visibility
+
+- Temporary socket, HTTP, and timeout failures retry up to three times.
+- Retries use a short increasing backoff.
+- Deliberate cancellation and receiver rejection are not retried.
+- Nearby transfer status shows measured speed and estimated time remaining.
+- Live History cards show speed and ETA.
+- Android stable-signing workflow condition is compatible with GitHub Actions parsing.
+
+### Verification
+
+- `flutter analyze` passes.
+- All 5 automated tests pass.
+- `git diff --check` passes.
+
 ## Bifrost v0.7.0+9
 
 ### Fixes and Android update support

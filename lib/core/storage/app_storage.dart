@@ -6,7 +6,7 @@ import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TransferRecord {
-  const TransferRecord({required this.id, required this.fileName, required this.bytes, required this.direction, required this.status, required this.peer, required this.time, this.progress = 1, this.path});
+  const TransferRecord({required this.id, required this.fileName, required this.bytes, required this.direction, required this.status, required this.peer, required this.time, this.progress = 1, this.path, this.speedBytesPerSecond = 0, this.etaSeconds});
   final String id;
   final String fileName;
   final int bytes;
@@ -16,9 +16,11 @@ class TransferRecord {
   final DateTime time;
   final double progress;
   final String? path;
+  final double speedBytesPerSecond;
+  final int? etaSeconds;
 
-  Map<String, dynamic> toJson() => {'id': id, 'fileName': fileName, 'bytes': bytes, 'direction': direction, 'status': status, 'peer': peer, 'time': time.toIso8601String(), 'progress': progress, 'path': path};
-  factory TransferRecord.fromJson(Map<String, dynamic> json) => TransferRecord(id: json['id'] as String, fileName: json['fileName'] as String, bytes: (json['bytes'] as num).toInt(), direction: json['direction'] as String, status: json['status'] as String, peer: json['peer'] as String, time: DateTime.parse(json['time'] as String), progress: (json['progress'] as num?)?.toDouble() ?? 1, path: json['path'] as String?);
+  Map<String, dynamic> toJson() => {'id': id, 'fileName': fileName, 'bytes': bytes, 'direction': direction, 'status': status, 'peer': peer, 'time': time.toIso8601String(), 'progress': progress, 'path': path, 'speedBytesPerSecond': speedBytesPerSecond, 'etaSeconds': etaSeconds};
+  factory TransferRecord.fromJson(Map<String, dynamic> json) => TransferRecord(id: json['id'] as String, fileName: json['fileName'] as String, bytes: (json['bytes'] as num).toInt(), direction: json['direction'] as String, status: json['status'] as String, peer: json['peer'] as String, time: DateTime.parse(json['time'] as String), progress: (json['progress'] as num?)?.toDouble() ?? 1, path: json['path'] as String?, speedBytesPerSecond: (json['speedBytesPerSecond'] as num?)?.toDouble() ?? 0, etaSeconds: (json['etaSeconds'] as num?)?.toInt());
 }
 
 class TrustedDevice {
@@ -141,7 +143,10 @@ class AppStorage {
     final current = _active[id];
     if (current == null) return;
     final progress = total == 0 ? 1.0 : (sent / total).clamp(0.0, 1.0);
-    final next = TransferRecord(id: current.id, fileName: current.fileName, bytes: total, direction: current.direction, status: 'In progress', peer: current.peer, time: current.time, progress: progress);
+    final elapsed = DateTime.now().difference(current.time).inMilliseconds / 1000;
+    final speed = elapsed <= 0 ? 0.0 : sent / elapsed;
+    final eta = speed <= 0 ? null : ((total - sent) / speed).ceil().clamp(0, 864000);
+    final next = TransferRecord(id: current.id, fileName: current.fileName, bytes: total, direction: current.direction, status: 'In progress', peer: current.peer, time: current.time, progress: progress, speedBytesPerSecond: speed, etaSeconds: eta);
     _active[id] = next;
     _activity.add(next);
   }

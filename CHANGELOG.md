@@ -32,3 +32,7 @@ Trusted devices now live on their own management page with last-seen information
 ## 0.7.0+9 — Setup migration, Explorer selection, and Android updates
 
 Older installations that have a device name but no configured save folder now receive the setup screen. Windows Open File Location now invokes Explorer through its command shell with the exact quoted file path. Android release builds now support stable keystore signing through GitHub Actions secrets, allowing future APKs to update in place after one migration install.
+
+## 0.8.0+10 — Transfer resilience and speed visibility
+
+Temporary socket, HTTP, and timeout failures now retry up to three times with a short backoff. Deliberate cancellation and receiver rejection still stop immediately. Nearby and live History cards now show measured transfer speed and estimated time remaining. The Android workflow also uses a parser-safe environment-variable condition for stable signing secrets.

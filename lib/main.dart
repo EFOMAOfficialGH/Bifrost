@@ -242,6 +242,7 @@ class _HistoryPageState extends State<HistoryPage> {
             LinearProgressIndicator(value: record.progress),
             const SizedBox(height: 6),
             Text('${record.direction} • ${record.peer}'),
+            if (record.speedBytesPerSecond > 0) Padding(padding: const EdgeInsets.only(top: 4), child: Text('${_formatSpeed(record.speedBytesPerSecond)}/s${record.etaSeconds == null ? '' : ' • ${_formatEta(record.etaSeconds!)} left'}', style: Theme.of(context).textTheme.bodySmall)),
             const SizedBox(height: 10),
             Align(alignment: Alignment.centerRight, child: OutlinedButton.icon(onPressed: () async {
               await AppStorage.instance.cancelTransfer(record.id);
@@ -337,6 +338,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 }
 
 String _historyBytes(int bytes) => bytes < 1024 * 1024 ? '${(bytes / 1024).toStringAsFixed(1)} KB' : '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+String _formatSpeed(double bytesPerSecond) => bytesPerSecond < 1024 * 1024 ? '${(bytesPerSecond / 1024).toStringAsFixed(1)} KB' : '${(bytesPerSecond / (1024 * 1024)).toStringAsFixed(1)} MB';
+String _formatEta(int seconds) => seconds < 60 ? '${seconds}s' : '${seconds ~/ 60}m ${seconds % 60}s';
 
 class EmptyPage extends StatelessWidget {
   const EmptyPage({required this.icon, required this.title, required this.message, super.key});
