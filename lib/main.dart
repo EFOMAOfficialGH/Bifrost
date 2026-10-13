@@ -17,8 +17,10 @@ import 'core/storage/app_storage.dart';
 import 'core/platform/shared_file_bridge.dart';
 
 final appThemeProvider = StateProvider<AppThemeKind>((ref) => AppThemeKind.day);
+final customThemeColorProvider = StateProvider<Color>((ref) => const Color(0xFF3154B8));
+final textColorProvider = StateProvider<Color?>((ref) => null);
 final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
-const bifrostVersion = '0.10.3+15';
+const bifrostVersion = '0.11.1+17';
 
 void main(List<String> args) {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,18 +36,31 @@ class BifrostApp extends ConsumerStatefulWidget {
 }
 
 class _BifrostAppState extends ConsumerState<BifrostApp> {
-  @override void initState() { super.initState(); AppStorage.instance.themeChoice().then((saved) { final kind = AppThemeKind.values.where((item) => item.name == saved).firstOrNull; if (mounted && kind != null) ref.read(appThemeProvider.notifier).state = kind; }); }
+  @override void initState() { super.initState(); _loadAppearance(); }
+  Future<void> _loadAppearance() async {
+    final saved = await AppStorage.instance.themeChoice();
+    final custom = await AppStorage.instance.customThemeColor();
+    final text = await AppStorage.instance.textColor();
+    if (!mounted) return;
+    final kind = AppThemeKind.values.where((item) => item.name == saved).firstOrNull;
+    if (kind != null) ref.read(appThemeProvider.notifier).state = kind;
+    final customColor = _parseColor(custom);
+    if (customColor != null) ref.read(customThemeColorProvider.notifier).state = customColor;
+    ref.read(textColorProvider.notifier).state = _parseColor(text);
+  }
 
   @override
   Widget build(BuildContext context) {
     final enableDiscovery = widget.enableDiscovery;
     final kind = ref.watch(appThemeProvider);
+    final customColor = ref.watch(customThemeColorProvider);
+    final textColor = ref.watch(textColorProvider);
     return MaterialApp(
       title: 'Bifrost',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.forKind(kind),
+      theme: AppTheme.forKind(kind, customColor: customColor, textColor: textColor),
       themeMode: ThemeMode.light,
-      builder: (context, child) => ThemeBackdrop(kind: kind, child: child ?? const SizedBox.shrink()),
+      builder: (context, child) => ThemeBackdrop(kind: kind, customColor: customColor, child: child ?? const SizedBox.shrink()),
       home: BifrostSplash(child: IncomingOfferListener(child: BifrostGate(enableDiscovery: enableDiscovery))),
     );
   }
@@ -65,7 +80,7 @@ class _BifrostSplashState extends State<BifrostSplash> {
 
 class _SplashArtwork extends StatelessWidget {
   const _SplashArtwork({super.key});
-  @override Widget build(BuildContext context) => Scaffold(body: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Text('Bifrost', style: TextStyle(fontFamily: 'MisticalSpring', fontSize: 64, fontWeight: FontWeight.w900, letterSpacing: 1.4, color: Colors.white, shadows: [Shadow(color: Colors.white.withAlpha(180), blurRadius: 24), const Shadow(color: Color(0xAA8A7CFF), blurRadius: 42)])), const SizedBox(height: 8), const Text("You're bridge between worlds", style: TextStyle(fontFamily: 'Helvetica', fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: .3))])));
+  @override Widget build(BuildContext context) => Scaffold(body: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Text('Bifrost', style: TextStyle(fontFamily: 'MisticalSpring', fontSize: 64, fontWeight: FontWeight.w900, letterSpacing: 1.4, color: Colors.white, shadows: [Shadow(color: const Color(0xFFFFD54F).withAlpha(210), blurRadius: 24), const Shadow(color: Color(0xCCFFB300), blurRadius: 42)])), const SizedBox(height: 8), const Text("You're bridge between worlds", style: TextStyle(fontFamily: 'Helvetica', fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: .3))])));
 }
 
 class BifrostGate extends StatefulWidget {
@@ -398,6 +413,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       const SizedBox(height: 12),
       ListTile(leading: const Icon(Icons.verified_user_outlined), title: const Text('Trusted devices'), subtitle: const Text('Manage devices that can send without approval.'), trailing: const Icon(Icons.chevron_right), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const TrustedDevicesPage()))),
       ListTile(leading: const Icon(Icons.palette_outlined), title: const Text('Theme'), subtitle: Text(ref.watch(appThemeProvider).label), trailing: const Icon(Icons.chevron_right), onTap: _chooseTheme),
+      ListTile(leading: Icon(Icons.format_color_text, color: ref.watch(textColorProvider) ?? Theme.of(context).colorScheme.onSurface), title: const Text('Text Color'), subtitle: Text(ref.watch(textColorProvider) == null ? 'Automatic for the selected theme' : _colorHex(ref.watch(textColorProvider)!)), trailing: const Icon(Icons.chevron_right), onTap: _chooseTextColor),
+      ListTile(leading: const Icon(Icons.help_outline), title: const Text('Help & Troubleshooting'), subtitle: const Text('Sending, receiving, sharing, and connection help'), trailing: const Icon(Icons.chevron_right), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const TroubleshootingPage()))),
       const Divider(height: 32),
       ListTile(leading: const Icon(Icons.info_outline), title: const Text('About Bifrost'), subtitle: const Text('Credits, version, and project information'), trailing: const Icon(Icons.chevron_right), onTap: _showAbout),
     ]);
@@ -408,6 +425,28 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     if (selected == null) return;
     ref.read(appThemeProvider.notifier).state = selected;
     await AppStorage.instance.setThemeChoice(selected.name);
+    if (selected == AppThemeKind.customColor) await _chooseCustomColor();
+  }
+
+  Future<void> _chooseCustomColor() async {
+    final selected = await _showColorDialog('Choose theme color', ref.read(customThemeColorProvider));
+    if (selected == null) return;
+    ref.read(customThemeColorProvider.notifier).state = selected;
+    await AppStorage.instance.setCustomThemeColor(_colorHex(selected));
+  }
+
+  Future<void> _chooseTextColor() async {
+    final selected = await _showColorDialog('Choose text color', ref.read(textColorProvider) ?? Theme.of(context).colorScheme.onSurface, allowAutomatic: true);
+    if (selected == null) return;
+    ref.read(textColorProvider.notifier).state = selected;
+    await AppStorage.instance.setTextColor(_colorHex(selected));
+  }
+
+  Future<Color?> _showColorDialog(String title, Color initial, {bool allowAutomatic = false}) async {
+    final controller = TextEditingController(text: _colorHex(initial));
+    final selected = await showDialog<Color?>(context: context, builder: (dialogContext) => AlertDialog(title: Text(title), content: StatefulBuilder(builder: (context, setDialogState) => Column(mainAxisSize: MainAxisSize.min, children: [Wrap(spacing: 10, runSpacing: 10, children: [for (final color in const [Color(0xFF102A43), Color(0xFF3154B8), Color(0xFF6E5AE6), Color(0xFF00897B), Color(0xFF2E7D32), Color(0xFF8D6E63), Color(0xFFFF8F00), Color(0xFFE65100), Color(0xFFC62828), Color(0xFFAD1457), Color(0xFF546E7A), Color(0xFFFFFFFF)]) GestureDetector(onTap: () => Navigator.pop(dialogContext, color), child: CircleAvatar(backgroundColor: color, radius: 20, child: color == Colors.white ? const Icon(Icons.circle_outlined, color: Colors.black54) : null))]), const SizedBox(height: 18), TextField(controller: controller, onChanged: (_) => setDialogState(() {}), decoration: const InputDecoration(labelText: 'Any color (hex)', hintText: '#RRGGBB')), if (_parseColor(controller.text) != null) Padding(padding: const EdgeInsets.only(top: 12), child: Container(height: 28, decoration: BoxDecoration(color: _parseColor(controller.text), borderRadius: BorderRadius.circular(8))))])), actions: [if (allowAutomatic) TextButton(onPressed: () => Navigator.pop(dialogContext, Theme.of(context).colorScheme.onSurface), child: const Text('Use theme default')), TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')), FilledButton(onPressed: () { final color = _parseColor(controller.text); if (color != null) Navigator.pop(dialogContext, color); }, child: const Text('Apply'))]));
+    controller.dispose();
+    return selected;
   }
 
   Future<void> _showAbout() async => showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(
@@ -430,6 +469,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 String _historyBytes(int bytes) => bytes < 1024 * 1024 ? '${(bytes / 1024).toStringAsFixed(1)} KB' : '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
 String _formatSpeed(double bytesPerSecond) => bytesPerSecond < 1024 * 1024 ? '${(bytesPerSecond / 1024).toStringAsFixed(1)} KB' : '${(bytesPerSecond / (1024 * 1024)).toStringAsFixed(1)} MB';
 String _formatEta(int seconds) => seconds < 60 ? '${seconds}s' : '${seconds ~/ 60}m ${seconds % 60}s';
+Color? _parseColor(String? value) { if (value == null) return null; var hex = value.trim().replaceFirst('#', ''); if (hex.length == 6) hex = 'FF$hex'; if (hex.length != 8) return null; final parsed = int.tryParse(hex, radix: 16); return parsed == null ? null : Color(parsed); }
+String _colorHex(Color color) => '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
 
 class EmptyPage extends StatelessWidget {
   const EmptyPage({required this.icon, required this.title, required this.message, super.key});

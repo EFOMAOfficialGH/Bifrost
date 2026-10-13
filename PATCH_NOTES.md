@@ -1,5 +1,21 @@
 # Bifrost Patch Notes
 
+## Bifrost v0.11.1+17
+
+- Replaced the Nearby placeholder logo with the actual launcher artwork.
+- Changed the splash glow to yellow.
+- Added Use Device Time theme mode.
+- Added independent Custom Color atmosphere mode.
+- Added independent Text Color presets and hex input.
+- `flutter analyze` passes and all 5 tests pass.
+
+## Bifrost v0.11.0+16
+
+- Added Settings → Help & Troubleshooting with beginner-friendly guidance.
+- Expanded help for Android Share, Windows sending, save locations, trusted devices, and retries.
+- Corrected Windows installer version metadata.
+- Added `V0.11_TEST_PLAN.md` for real-device validation.
+
 ## Bifrost v0.10.3+15
 
 - Made Settings → About pressable.

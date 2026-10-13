@@ -54,6 +54,10 @@ class AppStorage {
   Future<void> setBackgroundActivity(bool enabled) async => (await _preferences).setBool('backgroundActivity', enabled);
   Future<String> themeChoice() async => (await _preferences).getString('themeChoice') ?? 'day';
   Future<void> setThemeChoice(String choice) async => (await _preferences).setString('themeChoice', choice);
+  Future<String?> customThemeColor() async => (await _preferences).getString('customThemeColor');
+  Future<void> setCustomThemeColor(String value) async => (await _preferences).setString('customThemeColor', value);
+  Future<String?> textColor() async => (await _preferences).getString('textColor');
+  Future<void> setTextColor(String value) async => (await _preferences).setString('textColor', value);
   Future<bool> onboardingComplete() async {
     final prefs = await _preferences;
     if (prefs.getBool('onboardingComplete') == true) return true;

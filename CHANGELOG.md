@@ -77,3 +77,11 @@ The supplied Neon Crystal Bridge icon is registered as a Flutter asset and gener
 - Made the Settings About section pressable.
 - Added the requested EFOMA and Manus AI credit line.
 - Added the app version, local-network description, platform targets, and Flutter/Dart information.
+
+## 0.11.0+16 — Stabilization kickoff
+
+This build begins the real-device quality pass. Settings now exposes a general Help & Troubleshooting page covering sending, Android Share, save locations, trusted devices, connections, and retries. The Windows installer metadata now identifies the v0.11 build correctly. A beginner-friendly real-device test plan is included as V0.11_TEST_PLAN.md.
+
+## 0.11.1+17 — Theme controls and visual polish
+
+The Nearby header now uses the sharp launcher artwork instead of the placeholder mark. The splash glow is yellow. Theme settings now include Use Device Time, a separate Custom Color atmosphere with coordinated gradients and panels, and an independent Text Color picker with presets and any-color hex input. Device-time mode changes between Day, Sunset, and Night automatically.
