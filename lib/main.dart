@@ -16,7 +16,7 @@ import 'core/theme/app_theme.dart';
 import 'core/storage/app_storage.dart';
 import 'core/platform/shared_file_bridge.dart';
 
-final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.dark);
+final appThemeProvider = StateProvider<AppThemeKind>((ref) => AppThemeKind.day);
 final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
 
 void main(List<String> args) {
@@ -25,22 +25,46 @@ void main(List<String> args) {
   runApp(const ProviderScope(child: BifrostApp()));
 }
 
-class BifrostApp extends ConsumerWidget {
+class BifrostApp extends ConsumerStatefulWidget {
   const BifrostApp({this.enableDiscovery = true, super.key});
   final bool enableDiscovery;
 
+  @override ConsumerState<BifrostApp> createState() => _BifrostAppState();
+}
+
+class _BifrostAppState extends ConsumerState<BifrostApp> {
+  @override void initState() { super.initState(); AppStorage.instance.themeChoice().then((saved) { final kind = AppThemeKind.values.where((item) => item.name == saved).firstOrNull; if (mounted && kind != null) ref.read(appThemeProvider.notifier).state = kind; }); }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
+  Widget build(BuildContext context) {
+    final enableDiscovery = widget.enableDiscovery;
+    final kind = ref.watch(appThemeProvider);
     return MaterialApp(
       title: 'Bifrost',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
-      themeMode: themeMode,
-      home: IncomingOfferListener(child: BifrostGate(enableDiscovery: enableDiscovery)),
+      theme: AppTheme.forKind(kind),
+      themeMode: ThemeMode.light,
+      builder: (context, child) => ThemeBackdrop(kind: kind, child: child ?? const SizedBox.shrink()),
+      home: BifrostSplash(child: IncomingOfferListener(child: BifrostGate(enableDiscovery: enableDiscovery))),
     );
   }
+}
+
+class BifrostSplash extends StatefulWidget {
+  const BifrostSplash({required this.child, super.key});
+  final Widget child;
+  @override State<BifrostSplash> createState() => _BifrostSplashState();
+}
+
+class _BifrostSplashState extends State<BifrostSplash> {
+  bool _showApp = false;
+  @override void initState() { super.initState(); Future<void>.delayed(const Duration(milliseconds: 1200), () { if (mounted) setState(() => _showApp = true); }); }
+  @override Widget build(BuildContext context) => AnimatedSwitcher(duration: const Duration(milliseconds: 300), child: _showApp ? widget.child : const _SplashArtwork(key: ValueKey('splash')));
+}
+
+class _SplashArtwork extends StatelessWidget {
+  const _SplashArtwork({super.key});
+  @override Widget build(BuildContext context) => Scaffold(body: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Text('Bifrost', style: TextStyle(fontFamily: 'Impact', fontSize: 58, fontWeight: FontWeight.w900, letterSpacing: 1.4, color: Colors.white, shadows: [Shadow(color: Colors.white.withAlpha(180), blurRadius: 24), const Shadow(color: Color(0xAA8A7CFF), blurRadius: 42)])), const SizedBox(height: 8), const Text("You're bridge between worlds", style: TextStyle(fontFamily: 'Helvetica', fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: .3))])));
 }
 
 class BifrostGate extends StatefulWidget {
@@ -363,7 +387,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final mode = ref.watch(themeModeProvider);
     return ListView(padding: const EdgeInsets.all(24), children: [
       Text('Settings', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
       const SizedBox(height: 24),
@@ -373,10 +396,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       SwitchListTile(value: _backgroundActivity, onChanged: _toggleBackground, title: const Text('Background receiving'), subtitle: const Text('Keep Bifrost listening while the app is in the background.'), secondary: const Icon(Icons.notifications_active_outlined)),
       const SizedBox(height: 12),
       ListTile(leading: const Icon(Icons.verified_user_outlined), title: const Text('Trusted devices'), subtitle: const Text('Manage devices that can send without approval.'), trailing: const Icon(Icons.chevron_right), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const TrustedDevicesPage()))),
-      SwitchListTile(value: mode == ThemeMode.dark, onChanged: (value) => ref.read(themeModeProvider.notifier).state = value ? ThemeMode.dark : ThemeMode.light, title: const Text('Dark theme'), secondary: const Icon(Icons.dark_mode_outlined)),
+      ListTile(leading: const Icon(Icons.palette_outlined), title: const Text('Theme'), subtitle: Text(ref.watch(appThemeProvider).label), trailing: const Icon(Icons.chevron_right), onTap: _chooseTheme),
       const Divider(height: 32),
       const ListTile(leading: Icon(Icons.info_outline), title: Text('About Bifrost'), subtitle: Text('Milestone 1 • Local-only file sharing')),
     ]);
+  }
+
+  Future<void> _chooseTheme() async {
+    final selected = await showDialog<AppThemeKind>(context: context, builder: (dialogContext) => SimpleDialog(title: const Text('Choose a theme'), children: [for (final kind in AppThemeKind.values) SimpleDialogOption(onPressed: () => Navigator.pop(dialogContext, kind), child: ListTile(leading: Icon(kind == AppThemeKind.day ? Icons.wb_sunny_outlined : kind == AppThemeKind.sunset ? Icons.wb_twilight : Icons.nightlight_outlined), title: Text(kind.label), subtitle: Text(kind.description)))]));
+    if (selected == null) return;
+    ref.read(appThemeProvider.notifier).state = selected;
+    await AppStorage.instance.setThemeChoice(selected.name);
   }
 }
 

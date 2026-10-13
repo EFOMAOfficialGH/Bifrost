@@ -1,5 +1,21 @@
 # Bifrost Patch Notes
 
+## Bifrost v0.10.0+12
+
+### Sky themes and branding
+
+- Added illustrated Day, Sunset, and Night themes with clouds, sun, moon, stars, and atmospheric horizons.
+- Added persistent theme selection in Settings.
+- Added a short themed startup splash with Bifrost branding and glow.
+- Added the supplied Neon Crystal Bridge icon to Android and Windows launcher assets.
+- Added launcher icon generation configuration for future builds.
+
+### Verification
+
+- `flutter analyze` passes.
+- All 5 automated tests pass.
+- `git diff --check` passes.
+
 ## Bifrost v0.9.0+11
 
 ### Native sharing and transfer polish

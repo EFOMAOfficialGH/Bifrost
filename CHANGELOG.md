@@ -52,3 +52,11 @@ Temporary socket, HTTP, and timeout failures now retry up to three times with a 
 - Added speed and ETA to Android progress notifications.
 - Improved Windows Open File Location invocation and user feedback.
 - Standardized visible Android and Windows app naming as Bifrost.
+
+## 0.10.0+12 — Bifrost sky themes and branding
+
+Bifrost now has three illustrated visual themes: Day with blue sky, clouds, and sunlight; Sunset with amber-orange sky, clouds, and a setting sun; and Night with deep blue sky, stars, and moonlight. The selected theme is saved across launches and can be changed from Settings.
+
+A short startup splash now appears each time Bifrost opens, matching the active theme and showing the requested bold Bifrost title, tagline, and faint glow.
+
+The supplied Neon Crystal Bridge icon is registered as a Flutter asset and generated into Android launcher icons and the Windows executable icon.
