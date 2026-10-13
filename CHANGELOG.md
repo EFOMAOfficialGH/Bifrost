@@ -71,3 +71,9 @@ The supplied Neon Crystal Bridge icon is registered as a Flutter asset and gener
 
 - Replaced the blurry 32×32 ICO source with the provided 646×648 Lightshot artwork.
 - Cropped it to a clean square source and regenerated Android adaptive icons and the Windows executable icon.
+
+## 0.10.3+15 — About section
+
+- Made the Settings About section pressable.
+- Added the requested EFOMA and Manus AI credit line.
+- Added the app version, local-network description, platform targets, and Flutter/Dart information.

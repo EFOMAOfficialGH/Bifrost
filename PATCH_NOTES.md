@@ -1,5 +1,12 @@
 # Bifrost Patch Notes
 
+## Bifrost v0.10.3+15
+
+- Made Settings → About pressable.
+- Added “Vibecoded by EFOMA using Manus AI”.
+- Added the app version and useful project information.
+- `flutter analyze` passes and all 5 tests pass.
+
 ## Bifrost v0.10.2+14
 
 - Replaced the blurry low-resolution icon with the provided 646×648 artwork.

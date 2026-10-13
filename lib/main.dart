@@ -18,6 +18,7 @@ import 'core/platform/shared_file_bridge.dart';
 
 final appThemeProvider = StateProvider<AppThemeKind>((ref) => AppThemeKind.day);
 final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
+const bifrostVersion = '0.10.3+15';
 
 void main(List<String> args) {
   WidgetsFlutterBinding.ensureInitialized();
@@ -398,7 +399,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ListTile(leading: const Icon(Icons.verified_user_outlined), title: const Text('Trusted devices'), subtitle: const Text('Manage devices that can send without approval.'), trailing: const Icon(Icons.chevron_right), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const TrustedDevicesPage()))),
       ListTile(leading: const Icon(Icons.palette_outlined), title: const Text('Theme'), subtitle: Text(ref.watch(appThemeProvider).label), trailing: const Icon(Icons.chevron_right), onTap: _chooseTheme),
       const Divider(height: 32),
-      const ListTile(leading: Icon(Icons.info_outline), title: Text('About Bifrost'), subtitle: Text('Milestone 1 • Local-only file sharing')),
+      ListTile(leading: const Icon(Icons.info_outline), title: const Text('About Bifrost'), subtitle: const Text('Credits, version, and project information'), trailing: const Icon(Icons.chevron_right), onTap: _showAbout),
     ]);
   }
 
@@ -408,6 +409,22 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     ref.read(appThemeProvider.notifier).state = selected;
     await AppStorage.instance.setThemeChoice(selected.name);
   }
+
+  Future<void> _showAbout() async => showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(
+        title: const Text('Bifrost', style: TextStyle(fontWeight: FontWeight.w800)),
+        content: const Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Vibecoded by EFOMA using Manus AI', style: TextStyle(fontWeight: FontWeight.w600)),
+          SizedBox(height: 18),
+          Text('App Version:    $bifrostVersion'),
+          SizedBox(height: 14),
+          Text('Local-only file sharing for Android and Windows.'),
+          SizedBox(height: 8),
+          Text('Transfers stay on your local network. No internet account is required.'),
+          SizedBox(height: 8),
+          Text('Built with Flutter and Dart.'),
+        ]),
+        actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Close'))],
+      ));
 }
 
 String _historyBytes(int bytes) => bytes < 1024 * 1024 ? '${(bytes / 1024).toStringAsFixed(1)} KB' : '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
