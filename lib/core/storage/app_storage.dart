@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'dart:io';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -47,6 +48,28 @@ class AppStorage {
   Future<void> setDeviceName(String name) async => (await _preferences).setString('deviceName', name);
   Future<bool> backgroundActivity() async => (await _preferences).getBool('backgroundActivity') ?? false;
   Future<void> setBackgroundActivity(bool enabled) async => (await _preferences).setBool('backgroundActivity', enabled);
+  Future<bool> onboardingComplete() async {
+    final prefs = await _preferences;
+    if (prefs.getBool('onboardingComplete') == true) return true;
+    // Existing installations from before the wizard should not be interrupted.
+    if (prefs.containsKey('deviceName') || prefs.containsKey('saveDirectoryPath') || prefs.containsKey('transferHistory')) {
+      await prefs.setBool('onboardingComplete', true);
+      return true;
+    }
+    return false;
+  }
+  Future<void> setOnboardingComplete() async => (await _preferences).setBool('onboardingComplete', true);
+
+  String defaultSaveDirectory() {
+    if (Platform.isWindows) {
+      final profile = Platform.environment['USERPROFILE'];
+      if (profile != null) return '$profile${Platform.pathSeparator}Downloads${Platform.pathSeparator}Bifrost';
+    }
+    if (Platform.isAndroid) return '/storage/emulated/0/Download/Bifrost';
+    final home = Platform.environment['HOME'];
+    if (home != null) return '$home${Platform.pathSeparator}Downloads${Platform.pathSeparator}Bifrost';
+    return '${Directory.systemTemp.path}${Platform.pathSeparator}Bifrost';
+  }
 
   Future<String> deviceId() async {
     final prefs = await _preferences;

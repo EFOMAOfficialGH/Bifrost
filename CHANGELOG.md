@@ -22,3 +22,9 @@ Settings now includes a Background receiving toggle, a persistent Android ready 
 Progress notifications now use stable per-transfer IDs and are explicitly removed when a transfer completes, fails, or is cancelled. This prevents abandoned progress bars from accumulating.
 
 History entries now retain their local file path. Tapping an entry offers Open, Delete from History, and Open location on Windows. Phones omit the location option.
+
+## 0.7.0+8 — Onboarding and device management
+
+New installations now receive a first-run setup screen for choosing a device name and granting or changing the save-folder location. The default is Download/Bifrost on Android and Downloads/Bifrost on Windows, with a safe fallback if the platform does not permit automatic folder creation.
+
+Trusted devices now live on their own management page with last-seen information, immediate refresh, confirmation before removal, and remove-all support. Windows History now labels the action Open File Location and passes Explorer the exact selected file path.

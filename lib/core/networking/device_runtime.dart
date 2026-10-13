@@ -21,7 +21,14 @@ class BifrostDeviceRuntime {
 
   Future<void> _start() async {
     final configured = await AppStorage.instance.saveDirectoryPath();
-    final directory = configured == null ? await Directory.systemTemp.createTemp('bifrost-receive-') : Directory(configured);
+    final preferred = Directory(configured ?? AppStorage.instance.defaultSaveDirectory());
+    late Directory directory;
+    try {
+      await preferred.create(recursive: true);
+      directory = preferred;
+    } catch (_) {
+      directory = await Directory.systemTemp.createTemp('bifrost-receive-');
+    }
     final id = await AppStorage.instance.deviceId();
     final name = await AppStorage.instance.deviceName();
     await TransferNotifications.instance.initialize();

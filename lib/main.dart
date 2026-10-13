@@ -34,9 +34,41 @@ class BifrostApp extends ConsumerWidget {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: themeMode,
-      home: IncomingOfferListener(child: BifrostShell(enableDiscovery: enableDiscovery)),
+      home: IncomingOfferListener(child: BifrostGate(enableDiscovery: enableDiscovery)),
     );
   }
+}
+
+class BifrostGate extends StatefulWidget {
+  const BifrostGate({required this.enableDiscovery, super.key});
+  final bool enableDiscovery;
+  @override State<BifrostGate> createState() => _BifrostGateState();
+}
+
+class _BifrostGateState extends State<BifrostGate> {
+  bool? _complete;
+  @override void initState() { super.initState(); AppStorage.instance.onboardingComplete().then((value) { if (mounted) setState(() => _complete = value); }); }
+  @override Widget build(BuildContext context) {
+    if (_complete == null) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return _complete! ? BifrostShell(enableDiscovery: widget.enableDiscovery) : FirstRunPage(onComplete: () => setState(() => _complete = true));
+  }
+}
+
+class FirstRunPage extends StatefulWidget {
+  const FirstRunPage({required this.onComplete, super.key});
+  final VoidCallback onComplete;
+  @override State<FirstRunPage> createState() => _FirstRunPageState();
+}
+
+class _FirstRunPageState extends State<FirstRunPage> {
+  late final TextEditingController _name;
+  late String _path;
+  bool _saving = false;
+  @override void initState() { super.initState(); _name = TextEditingController(text: 'Bifrost Device'); _path = AppStorage.instance.defaultSaveDirectory(); AppStorage.instance.deviceName().then((value) { if (mounted && value != 'Bifrost Device') setState(() => _name.text = value); }); }
+  @override void dispose() { _name.dispose(); super.dispose(); }
+  Future<void> _chooseLocation() async { final selected = await FilePicker.getDirectoryPath(dialogTitle: 'Choose Bifrost save location', initialDirectory: _path); if (selected != null && mounted) setState(() => _path = selected); }
+  Future<void> _finish() async { final name = _name.text.trim(); if (name.isEmpty) return; setState(() => _saving = true); try { await Directory(_path).create(recursive: true); await AppStorage.instance.setDeviceName(name); await AppStorage.instance.setSaveDirectoryPath(_path); await AppStorage.instance.setOnboardingComplete(); widget.onComplete(); } catch (_) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bifrost could not access that folder. Choose another location.'))); } if (mounted) setState(() => _saving = false); }
+  @override Widget build(BuildContext context) => Scaffold(body: SafeArea(child: ListView(padding: const EdgeInsets.all(28), children: [const SizedBox(height: 48), const BifrostMark(size: 64), const SizedBox(height: 24), Text('Welcome to Bifrost', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)), const SizedBox(height: 8), const Text('Set up your device once. You can change these choices later in Settings.'), const SizedBox(height: 32), TextField(controller: _name, decoration: const InputDecoration(labelText: 'Choose device name', prefixIcon: Icon(Icons.badge_outlined))), const SizedBox(height: 20), Card(child: ListTile(leading: const Icon(Icons.folder_outlined), title: const Text('Save received files to'), subtitle: Text(_path), trailing: const Icon(Icons.chevron_right), onTap: _chooseLocation)), const SizedBox(height: 12), OutlinedButton.icon(onPressed: _saving ? null : _chooseLocation, icon: const Icon(Icons.folder_open), label: const Text('Give access / Change save location')), const SizedBox(height: 28), FilledButton(onPressed: _saving ? null : _finish, child: Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(_saving ? 'Setting up…' : 'Continue')))])));
 }
 
 class BifrostShell extends StatefulWidget {
@@ -172,14 +204,15 @@ class _HistoryPageState extends State<HistoryPage> {
     }
     final action = await showModalBottomSheet<String>(context: context, builder: (sheetContext) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
       ListTile(leading: const Icon(Icons.open_in_new), title: const Text('Open'), onTap: () => Navigator.pop(sheetContext, 'open')),
-      if (Platform.isWindows) ListTile(leading: const Icon(Icons.folder_open), title: const Text('Open location'), onTap: () => Navigator.pop(sheetContext, 'location')),
+      if (Platform.isWindows) ListTile(leading: const Icon(Icons.folder_open), title: const Text('Open File Location'), onTap: () => Navigator.pop(sheetContext, 'location')),
       ListTile(leading: const Icon(Icons.delete_outline), title: const Text('Delete from History'), onTap: () => Navigator.pop(sheetContext, 'delete')),
     ])));
     if (!mounted || action == null) return;
     if (action == 'open') {
       await OpenFilex.open(record.path!);
     } else if (action == 'location' && Platform.isWindows) {
-      await Process.run('explorer.exe', ['/select,${record.path!}']);
+      final windowsPath = record.path!.replaceAll('/', '\\');
+      await Process.run('explorer.exe', ['/select,"$windowsPath"']);
     } else if (action == 'delete') {
       await AppStorage.instance.deleteHistory(record.id);
       if (mounted) setState(() => _records = _records.where((item) => item.id != record.id).toList(growable: false));
@@ -218,6 +251,27 @@ class _HistoryPageState extends State<HistoryPage> {
       );
 }
 
+class TrustedDevicesPage extends StatefulWidget {
+  const TrustedDevicesPage({super.key});
+  @override State<TrustedDevicesPage> createState() => _TrustedDevicesPageState();
+}
+
+class _TrustedDevicesPageState extends State<TrustedDevicesPage> {
+  List<TrustedDevice> _devices = const [];
+  @override void initState() { super.initState(); _load(); }
+  Future<void> _load() async { final devices = await AppStorage.instance.trustedDevices(); if (mounted) setState(() => _devices = devices); }
+  Future<void> _remove(TrustedDevice device) async {
+    final confirmed = await showDialog<bool>(context: context, builder: (dialogContext) => AlertDialog(title: const Text('Remove trusted device?'), content: Text('${device.name} will need approval next time it sends a file.'), actions: [TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Keep')), FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Remove'))])) ?? false;
+    if (!confirmed) return;
+    await AppStorage.instance.setTrusted(device.id, false);
+    if (mounted) setState(() => _devices = _devices.where((item) => item.id != device.id).toList(growable: false));
+  }
+  Future<void> _removeAll() async { for (final device in _devices) { await AppStorage.instance.setTrusted(device.id, false); } if (mounted) setState(() => _devices = const []); }
+  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Trusted devices'), actions: [if (_devices.isNotEmpty) IconButton(tooltip: 'Remove all', onPressed: _removeAll, icon: const Icon(Icons.delete_sweep_outlined))]), body: _devices.isEmpty ? const EmptyPage(icon: Icons.verified_user_outlined, title: 'No trusted devices', message: 'Trust a device when accepting its first transfer and it will appear here.') : ListView(padding: const EdgeInsets.all(16), children: [for (final device in _devices) Card(child: ListTile(leading: const Icon(Icons.verified_user), title: Text(device.name), subtitle: Text('Last seen ${_relative(device.lastSeen)}\n${device.id}'), isThreeLine: true, trailing: IconButton(tooltip: 'Remove trusted device', icon: const Icon(Icons.delete_outline), onPressed: () => _remove(device))))]));
+}
+
+String _relative(DateTime time) { final difference = DateTime.now().difference(time); if (difference.inMinutes < 1) return 'just now'; if (difference.inHours < 1) return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago'; if (difference.inDays < 1) return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago'; return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago'; }
+
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
   @override
@@ -227,7 +281,6 @@ class SettingsPage extends ConsumerStatefulWidget {
 class _SettingsPageState extends ConsumerState<SettingsPage> {
   late final TextEditingController _nameController;
   String? _savePath;
-  List<TrustedDevice> _trusted = const [];
   bool _backgroundActivity = false;
 
   @override
@@ -236,7 +289,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     _nameController = TextEditingController(text: ref.read(deviceNameProvider));
     AppStorage.instance.deviceName().then((name) { if (!mounted) return; _nameController.text = name; ref.read(deviceNameProvider.notifier).state = name; });
     AppStorage.instance.saveDirectoryPath().then((path) { if (mounted) setState(() => _savePath = path); });
-    AppStorage.instance.trustedDevices().then((devices) { if (mounted) setState(() => _trusted = devices); });
     AppStorage.instance.backgroundActivity().then((enabled) { if (mounted) setState(() => _backgroundActivity = enabled); });
   }
 
@@ -264,10 +316,6 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     await BifrostDeviceRuntime.instance.setBackgroundActivity(enabled);
   }
 
-  Future<void> _removeTrusted(TrustedDevice device) async {
-    await AppStorage.instance.setTrusted(device.id, false);
-    if (mounted) setState(() => _trusted = _trusted.where((item) => item.id != device.id).toList(growable: false));
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -276,14 +324,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       Text('Settings', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
       const SizedBox(height: 24),
       TextField(controller: _nameController, textInputAction: TextInputAction.done, onSubmitted: (_) => _saveName(), decoration: InputDecoration(labelText: 'Device name', prefixIcon: const Icon(Icons.badge_outlined), suffixIcon: IconButton(tooltip: 'Save device name', onPressed: _saveName, icon: const Icon(Icons.check)))),
-      ListTile(leading: const Icon(Icons.folder_outlined), title: const Text('Save location'), subtitle: Text(_savePath ?? 'Temporary folder'), trailing: const Icon(Icons.chevron_right), onTap: _chooseSaveLocation),
+      ListTile(leading: const Icon(Icons.folder_outlined), title: const Text('Save location'), subtitle: Text(_savePath ?? AppStorage.instance.defaultSaveDirectory()), trailing: const Icon(Icons.chevron_right), onTap: _chooseSaveLocation),
       ListTile(leading: const Icon(Icons.lan_outlined), title: const Text('Networking test'), subtitle: const Text('Milestone 2 local receiver'), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NetworkTestPage()))),
       SwitchListTile(value: _backgroundActivity, onChanged: _toggleBackground, title: const Text('Background receiving'), subtitle: const Text('Keep Bifrost listening while the app is in the background.'), secondary: const Icon(Icons.notifications_active_outlined)),
       const SizedBox(height: 12),
-      Text('Trusted devices', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-      const SizedBox(height: 6),
-      if (_trusted.isEmpty) const ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.verified_user_outlined), title: Text('No trusted devices'), subtitle: Text('Trust a device when accepting its first transfer.')),
-      for (final device in _trusted) ListTile(contentPadding: EdgeInsets.zero, leading: const Icon(Icons.verified_user), title: Text(device.name), subtitle: Text('ID ${device.id.substring(0, device.id.length > 19 ? 19 : device.id.length)}…'), trailing: IconButton(tooltip: 'Remove trusted device', icon: const Icon(Icons.delete_outline), onPressed: () => _removeTrusted(device))),
+      ListTile(leading: const Icon(Icons.verified_user_outlined), title: const Text('Trusted devices'), subtitle: const Text('Manage devices that can send without approval.'), trailing: const Icon(Icons.chevron_right), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const TrustedDevicesPage()))),
       SwitchListTile(value: mode == ThemeMode.dark, onChanged: (value) => ref.read(themeModeProvider.notifier).state = value ? ThemeMode.dark : ThemeMode.light, title: const Text('Dark theme'), secondary: const Icon(Icons.dark_mode_outlined)),
       const Divider(height: 32),
       const ListTile(leading: Icon(Icons.info_outline), title: Text('About Bifrost'), subtitle: Text('Milestone 1 • Local-only file sharing')),
