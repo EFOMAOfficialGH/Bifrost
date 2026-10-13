@@ -60,3 +60,14 @@ Bifrost now has three illustrated visual themes: Day with blue sky, clouds, and 
 A short startup splash now appears each time Bifrost opens, matching the active theme and showing the requested bold Bifrost title, tagline, and faint glow.
 
 The supplied Neon Crystal Bridge icon is registered as a Flutter asset and generated into Android launcher icons and the Windows executable icon.
+
+## 0.10.1+13 — Custom splash typography
+
+- Added the supplied Mistical Spring font to the application assets.
+- Applied Mistical Spring to the themed Bifrost startup title.
+- Kept the tagline in a bold readable system font for clarity.
+
+## 0.10.2+14 — High-resolution launcher icon
+
+- Replaced the blurry 32×32 ICO source with the provided 646×648 Lightshot artwork.
+- Cropped it to a clean square source and regenerated Android adaptive icons and the Windows executable icon.

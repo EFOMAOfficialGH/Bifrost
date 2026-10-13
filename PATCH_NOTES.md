@@ -1,5 +1,18 @@
 # Bifrost Patch Notes
 
+## Bifrost v0.10.2+14
+
+- Replaced the blurry low-resolution icon with the provided 646×648 artwork.
+- Regenerated Android adaptive launcher icons and the Windows executable icon.
+- `flutter analyze` passes and all 5 tests pass.
+
+## Bifrost v0.10.1+13
+
+- Added the supplied Mistical Spring font to the app assets.
+- Applied it to the themed Bifrost startup title.
+- Kept the startup tagline bold and readable.
+- `flutter analyze` passes and all 5 tests pass.
+
 ## Bifrost v0.10.0+12
 
 ### Sky themes and branding

@@ -64,7 +64,7 @@ class _BifrostSplashState extends State<BifrostSplash> {
 
 class _SplashArtwork extends StatelessWidget {
   const _SplashArtwork({super.key});
-  @override Widget build(BuildContext context) => Scaffold(body: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Text('Bifrost', style: TextStyle(fontFamily: 'Impact', fontSize: 58, fontWeight: FontWeight.w900, letterSpacing: 1.4, color: Colors.white, shadows: [Shadow(color: Colors.white.withAlpha(180), blurRadius: 24), const Shadow(color: Color(0xAA8A7CFF), blurRadius: 42)])), const SizedBox(height: 8), const Text("You're bridge between worlds", style: TextStyle(fontFamily: 'Helvetica', fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: .3))])));
+  @override Widget build(BuildContext context) => Scaffold(body: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Text('Bifrost', style: TextStyle(fontFamily: 'MisticalSpring', fontSize: 64, fontWeight: FontWeight.w900, letterSpacing: 1.4, color: Colors.white, shadows: [Shadow(color: Colors.white.withAlpha(180), blurRadius: 24), const Shadow(color: Color(0xAA8A7CFF), blurRadius: 42)])), const SizedBox(height: 8), const Text("You're bridge between worlds", style: TextStyle(fontFamily: 'Helvetica', fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: .3))])));
 }
 
 class BifrostGate extends StatefulWidget {
