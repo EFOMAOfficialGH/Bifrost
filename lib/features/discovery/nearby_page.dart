@@ -11,6 +11,7 @@ import '../../core/networking/discovery.dart';
 import '../../core/networking/discovery_service.dart';
 import '../../core/networking/device_runtime.dart';
 import '../../core/notifications/transfer_notifications.dart';
+import '../../core/platform/shared_file_bridge.dart';
 import '../../core/storage/app_storage.dart';
 
 class NearbyPage extends StatefulWidget {
@@ -31,11 +32,20 @@ class _NearbyPageState extends State<NearbyPage> {
   String? _transferStatus;
   String? _error;
   TransferCancellation? _cancellation;
+  final _queueStatuses = <String, String>{};
+  StreamSubscription<List<String>>? _sharedFilesSubscription;
 
   @override
   void initState() {
     super.initState();
+    _sharedFilesSubscription = SharedFileBridge.instance.files.listen(_queueSharedFiles);
+    unawaited(SharedFileBridge.instance.initialize());
     if (widget.autoDiscover) _discover();
+  }
+
+  void _queueSharedFiles(List<String> paths) {
+    _queueDropped(paths.map(File.new).where((file) => file.existsSync()).toList(growable: false));
+    if (mounted && paths.isNotEmpty) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${paths.length} file${paths.length == 1 ? '' : 's'} added from Android Share')));
   }
 
   Future<void> _discover() async {
@@ -65,8 +75,11 @@ class _NearbyPageState extends State<NearbyPage> {
 
   void _queueDropped(List<File> files) {
     if (files.isEmpty || _sending) return;
-    setState(() { _queuedFiles = [..._queuedFiles, ...files]; _transferStatus = '${_queuedFiles.length} file${_queuedFiles.length == 1 ? '' : 's'} ready. Select a device to send.'; });
+    setState(() { _queuedFiles = [..._queuedFiles, ...files]; for (final file in files) { _queueStatuses[file.path] = 'Queued'; } _transferStatus = '${_queuedFiles.length} file${_queuedFiles.length == 1 ? '' : 's'} ready. Select a device to send.'; });
   }
+
+  @override
+  void dispose() { _sharedFilesSubscription?.cancel(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +98,7 @@ class _NearbyPageState extends State<NearbyPage> {
           AnimatedContainer(duration: const Duration(milliseconds: 180), width: double.infinity, padding: const EdgeInsets.all(18), decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), color: _dragging ? colors.primaryContainer : colors.surfaceContainerHighest, border: Border.all(color: _dragging ? colors.primary : colors.outlineVariant, width: _dragging ? 2 : 1)), child: Row(children: [Icon(Icons.file_upload_outlined, color: _dragging ? colors.primary : colors.onSurfaceVariant), const SizedBox(width: 12), Expanded(child: Text(_dragging ? 'Drop files here' : 'On Windows, drop files here to queue them. On phone, use the button below.')), TextButton(onPressed: _sending ? null : () async { final files = await _pickFiles(); _queueDropped(files); }, child: const Text('Choose'))])),
           if (_queuedFiles.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Card(child: Column(children: [for (final file in _queuedFiles) ListTile(dense: true, leading: const Icon(Icons.insert_drive_file_outlined), title: Text(file.uri.pathSegments.last), subtitle: Text(_formatBytes(file.lengthSync())), trailing: IconButton(icon: const Icon(Icons.close), tooltip: 'Remove', onPressed: _sending ? null : () => setState(() => _queuedFiles = _queuedFiles.where((item) => item.path != file.path).toList()))), ListTile(leading: const Icon(Icons.clear_all), title: const Text('Clear queued files'), onTap: _sending ? null : () => setState(() => _queuedFiles = const []) )])),
+            Card(child: Column(children: [for (final file in _queuedFiles) ListTile(dense: true, leading: Icon(_queueStatuses[file.path] == 'Completed' ? Icons.check_circle : _queueStatuses[file.path] == 'Failed' ? Icons.error_outline : Icons.insert_drive_file_outlined), title: Text(file.uri.pathSegments.last), subtitle: Text('${_formatBytes(file.lengthSync())} • ${_queueStatuses[file.path] ?? 'Queued'}'), trailing: IconButton(icon: const Icon(Icons.close), tooltip: 'Remove', onPressed: _sending ? null : () => setState(() { _queuedFiles = _queuedFiles.where((item) => item.path != file.path).toList(); _queueStatuses.remove(file.path); }))), ListTile(leading: const Icon(Icons.clear_all), title: const Text('Clear queued files'), onTap: _sending ? null : () => setState(() { _queuedFiles = const []; _queueStatuses.clear(); }) )])),
           ],
           const SizedBox(height: 20),
           if (_transferStatus != null) Card(child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(_transferStatus!), if (_sending) ...[const SizedBox(height: 10), LinearProgressIndicator(value: _progress), const SizedBox(height: 10), OutlinedButton.icon(onPressed: _cancelTransfer, icon: const Icon(Icons.cancel_outlined), label: const Text('Cancel transfer'))]]))),
@@ -118,12 +131,15 @@ class _NearbyPageState extends State<NearbyPage> {
     final client = BifrostClient();
     final cancellation = TransferCancellation();
     _cancellation = cancellation;
+    var completedCount = 0;
+    var failedCount = 0;
     try {
       for (var i = 0; i < files.length; i++) {
         final file = files[i];
         final size = await file.length();
+        if (mounted) setState(() => _queueStatuses[file.path] = 'Sending');
         final activityId = 'send-${DateTime.now().microsecondsSinceEpoch}';
-        AppStorage.instance.begin(TransferRecord(id: activityId, fileName: file.uri.pathSegments.last, bytes: size, direction: 'Sent', status: 'In progress', peer: device.name, time: DateTime.now(), progress: 0));
+        AppStorage.instance.begin(TransferRecord(id: activityId, fileName: file.uri.pathSegments.last, bytes: size, direction: 'Sent', status: 'In progress', peer: device.name, time: DateTime.now(), progress: 0, peerHost: device.host, peerPort: device.port));
         AppStorage.instance.registerCancellation(activityId, () async => cancellation.cancel());
         final notificationId = activityId.hashCode;
         try {
@@ -131,10 +147,10 @@ class _NearbyPageState extends State<NearbyPage> {
           for (var attempt = 1; attempt <= 3; attempt++) {
             try {
               await client.sendFile(server: device.baseUri, file: file, transferId: 'transfer-${DateTime.now().microsecondsSinceEpoch}', fileId: 'file-${DateTime.now().microsecondsSinceEpoch}', senderDeviceId: BifrostDeviceRuntime.instance.deviceId, senderDeviceName: BifrostDeviceRuntime.instance.deviceName, cancellation: cancellation, onProgress: (sent, total) {
+                AppStorage.instance.update(activityId, sent, total);
                 final current = AppStorage.instance.activeTransfers.where((item) => item.id == activityId).firstOrNull;
                 if (mounted) setState(() { _progress = total == 0 ? 1 : sent / total; final speed = current?.speedBytesPerSecond ?? 0; final eta = current?.etaSeconds; _transferStatus = 'Sending ${file.uri.pathSegments.last}: ${total == 0 ? 100 : (sent * 100 ~/ total)}%${speed > 0 ? ' • ${_formatSpeed(speed)}/s' : ''}${eta != null ? ' • ${_formatEta(eta)} left' : ''}'; });
-                AppStorage.instance.update(activityId, sent, total);
-                TransferNotifications.instance.progress(id: notificationId, title: 'Sending ${file.uri.pathSegments.last}', sent: sent, total: total);
+                TransferNotifications.instance.progress(id: notificationId, title: 'Sending ${file.uri.pathSegments.last}', sent: sent, total: total, speedBytesPerSecond: current?.speedBytesPerSecond ?? 0, etaSeconds: current?.etaSeconds);
               });
               lastError = null;
               break;
@@ -146,18 +162,21 @@ class _NearbyPageState extends State<NearbyPage> {
             }
           }
           if (lastError != null) throw lastError;
-          await AppStorage.instance.finish(TransferRecord(id: activityId, fileName: file.uri.pathSegments.last, bytes: size, direction: 'Sent', status: 'Completed', peer: device.name, time: DateTime.now(), path: file.path));
+          await AppStorage.instance.finish(TransferRecord(id: activityId, fileName: file.uri.pathSegments.last, bytes: size, direction: 'Sent', status: 'Completed', peer: device.name, time: DateTime.now(), path: file.path, peerHost: device.host, peerPort: device.port));
+          completedCount++;
+          if (mounted) setState(() => _queueStatuses[file.path] = 'Completed');
           await TransferNotifications.instance.cancel(notificationId);
           await TransferNotifications.instance.complete(id: notificationId, title: 'Sent ${file.uri.pathSegments.last}', success: true);
         } catch (error) {
           final cancelled = error is TransferCancelledException || cancellation.isCancelled;
-          await AppStorage.instance.finish(TransferRecord(id: activityId, fileName: file.uri.pathSegments.last, bytes: size, direction: 'Sent', status: cancelled ? 'Cancelled' : 'Failed', peer: device.name, time: DateTime.now(), progress: _progress));
+          await AppStorage.instance.finish(TransferRecord(id: activityId, fileName: file.uri.pathSegments.last, bytes: size, direction: 'Sent', status: cancelled ? 'Cancelled' : 'Failed', peer: device.name, time: DateTime.now(), progress: _progress, path: file.path, peerHost: device.host, peerPort: device.port));
+          if (mounted) setState(() => _queueStatuses[file.path] = cancelled ? 'Cancelled' : 'Failed');
           await TransferNotifications.instance.cancel(notificationId);
           if (cancelled) rethrow;
-          rethrow;
+          failedCount++;
         }
       }
-      if (mounted) setState(() { _queuedFiles = const []; _transferStatus = 'Transfer complete: ${files.length} file${files.length == 1 ? '' : 's'} sent.'; });
+      if (mounted) setState(() { if (failedCount == 0) { _queuedFiles = const []; _queueStatuses.clear(); } _transferStatus = failedCount == 0 ? 'Transfer complete: $completedCount file${completedCount == 1 ? '' : 's'} sent.' : 'Batch finished: $completedCount completed, $failedCount failed. Failed files remain queued.'; });
     } catch (error) {
       if (mounted) setState(() => _transferStatus = error is TransferCancelledException ? 'Transfer cancelled.' : 'Transfer stopped: the other device may have declined, or the connection was lost.');
     } finally {

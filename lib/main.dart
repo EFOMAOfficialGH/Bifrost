@@ -10,14 +10,18 @@ import 'features/send/network_test_page.dart';
 import 'features/discovery/nearby_page.dart';
 import 'features/receive/incoming_offer_listener.dart';
 import 'core/networking/device_runtime.dart';
+import 'core/networking/bifrost_client.dart';
+import 'core/notifications/transfer_notifications.dart';
 import 'core/theme/app_theme.dart';
 import 'core/storage/app_storage.dart';
+import 'core/platform/shared_file_bridge.dart';
 
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.dark);
 final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
 
-void main() {
+void main(List<String> args) {
   WidgetsFlutterBinding.ensureInitialized();
+  if (Platform.isWindows) SharedFileBridge.instance.seed(args);
   runApp(const ProviderScope(child: BifrostApp()));
 }
 
@@ -197,22 +201,61 @@ class _HistoryPageState extends State<HistoryPage> {
   @override void dispose() { _activitySubscription?.cancel(); super.dispose(); }
   Future<void> _clear() async { await AppStorage.instance.clearHistory(); if (mounted) setState(() => _records = const []); }
 
-  Future<void> _showRecordActions(TransferRecord record) async {
-    if (record.path == null) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('This older history entry has no saved file location.')));
-      return;
+  Future<void> _showDetails(TransferRecord record) async => showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(title: Text(record.fileName), content: Text('Status: ${record.status}\nDirection: ${record.direction}\nDevice: ${record.peer}\nSize: ${_historyBytes(record.bytes)}\nTime: ${record.time.toLocal()}${record.speedBytesPerSecond > 0 ? '\nSpeed: ${_formatSpeed(record.speedBytesPerSecond)}/s' : ''}${record.path == null ? '' : '\nPath: ${record.path}'}'), actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Close'))]));
+
+  Future<void> _retryRecord(TransferRecord record) async {
+    if (record.path == null || record.peerHost == null || record.peerPort == null) return;
+    final file = File(record.path!);
+    if (!file.existsSync()) return;
+    final cancellation = TransferCancellation();
+    final client = BifrostClient();
+    final notificationId = record.id.hashCode;
+    final size = await file.length();
+    AppStorage.instance.begin(TransferRecord(id: record.id, fileName: record.fileName, bytes: size, direction: 'Sent', status: 'In progress', peer: record.peer, time: DateTime.now(), progress: 0, path: record.path, peerHost: record.peerHost, peerPort: record.peerPort));
+    AppStorage.instance.registerCancellation(record.id, () async => cancellation.cancel());
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Retrying ${record.fileName}…')));
+    try {
+      await client.sendFile(server: Uri.parse('http://${record.peerHost}:${record.peerPort}'), file: file, transferId: 'transfer-${DateTime.now().microsecondsSinceEpoch}', fileId: 'file-${DateTime.now().microsecondsSinceEpoch}', senderDeviceId: BifrostDeviceRuntime.instance.deviceId, senderDeviceName: BifrostDeviceRuntime.instance.deviceName, cancellation: cancellation, onProgress: (sent, total) { AppStorage.instance.update(record.id, sent, total); final current = AppStorage.instance.activeTransfers.where((item) => item.id == record.id).firstOrNull; TransferNotifications.instance.progress(id: notificationId, title: 'Retrying ${record.fileName}', sent: sent, total: total, speedBytesPerSecond: current?.speedBytesPerSecond ?? 0, etaSeconds: current?.etaSeconds); });
+      await AppStorage.instance.finish(TransferRecord(id: record.id, fileName: record.fileName, bytes: size, direction: 'Sent', status: 'Completed', peer: record.peer, time: DateTime.now(), path: record.path, peerHost: record.peerHost, peerPort: record.peerPort));
+      await TransferNotifications.instance.cancel(notificationId);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Retry completed successfully.')));
+    } catch (error) {
+      final cancelled = error is TransferCancelledException || cancellation.isCancelled;
+      await AppStorage.instance.finish(TransferRecord(id: record.id, fileName: record.fileName, bytes: size, direction: 'Sent', status: cancelled ? 'Cancelled' : 'Failed', peer: record.peer, time: DateTime.now(), path: record.path, peerHost: record.peerHost, peerPort: record.peerPort));
+      await TransferNotifications.instance.cancel(notificationId);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(cancelled ? 'Retry cancelled.' : 'Retry failed: ${error.toString()}')));
+    } finally {
+      cancellation.dispose();
+      client.close();
+      await _load();
     }
+  }
+
+  Future<void> _showRecordActions(TransferRecord record) async {
+    final path = record.path;
+    final exists = path != null && File(path).existsSync();
+    final isApk = path != null && path.toLowerCase().endsWith('.apk');
     final action = await showModalBottomSheet<String>(context: context, builder: (sheetContext) => SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [
-      ListTile(leading: const Icon(Icons.open_in_new), title: const Text('Open'), onTap: () => Navigator.pop(sheetContext, 'open')),
-      if (Platform.isWindows) ListTile(leading: const Icon(Icons.folder_open), title: const Text('Open File Location'), onTap: () => Navigator.pop(sheetContext, 'location')),
+      ListTile(leading: const Icon(Icons.info_outline), title: const Text('Transfer details'), onTap: () => Navigator.pop(sheetContext, 'details')),
+      if (exists) ListTile(leading: Icon(isApk ? Icons.install_mobile : Icons.open_in_new), title: Text(isApk ? 'Install APK' : 'Open'), onTap: () => Navigator.pop(sheetContext, 'open')),
+      if (exists && Platform.isWindows) ListTile(leading: const Icon(Icons.folder_open), title: const Text('Open File Location'), onTap: () => Navigator.pop(sheetContext, 'location')),
+      if (exists && record.status == 'Failed' && record.direction == 'Sent' && record.peerHost != null) ListTile(leading: const Icon(Icons.refresh), title: const Text('Retry transfer'), onTap: () => Navigator.pop(sheetContext, 'retry')),
+      if (!exists) const ListTile(leading: Icon(Icons.warning_amber), title: Text('File is no longer available'), subtitle: Text('The saved file may have been moved or deleted.')),
       ListTile(leading: const Icon(Icons.delete_outline), title: const Text('Delete from History'), onTap: () => Navigator.pop(sheetContext, 'delete')),
     ])));
     if (!mounted || action == null) return;
-    if (action == 'open') {
-      await OpenFilex.open(record.path!);
+    if (action == 'details') {
+      await _showDetails(record);
+    } else if (action == 'retry') {
+      await _retryRecord(record);
+    } else if (action == 'open') {
+      final result = await OpenFilex.open(path!, type: isApk ? 'application/vnd.android.package-archive' : null);
+      if (mounted && result.type != ResultType.done) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result.message)));
     } else if (action == 'location' && Platform.isWindows) {
       final windowsPath = record.path!.replaceAll('/', '\\');
-      await Process.run('cmd.exe', ['/c', 'explorer.exe /select,"$windowsPath"']);
+      final parent = File(windowsPath).parent.path;
+      await Process.run('explorer.exe', ['/select,$windowsPath']);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Opened file location: $parent')));
     } else if (action == 'delete') {
       await AppStorage.instance.deleteHistory(record.id);
       if (mounted) setState(() => _records = _records.where((item) => item.id != record.id).toList(growable: false));

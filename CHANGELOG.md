@@ -36,3 +36,19 @@ Older installations that have a device name but no configured save folder now re
 ## 0.8.0+10 — Transfer resilience and speed visibility
 
 Temporary socket, HTTP, and timeout failures now retry up to three times with a short backoff. Deliberate cancellation and receiver rejection still stop immediately. Nearby and live History cards now show measured transfer speed and estimated time remaining. The Android workflow also uses a parser-safe environment-variable condition for stable signing secrets.
+
+## 0.9.0+11 — Native sharing and transfer polish
+
+- Added Android Share menu support for single and multiple files.
+- Added Android shared-file queue handling with safe temporary copies.
+- Added Windows Explorer Send with Bifrost installer integration.
+- Added APK-aware Install APK History action with the correct Android MIME type.
+- Added missing-file warnings and stale History cleanup.
+- Added per-file queue states: Queued, Sending, Completed, Failed, and Cancelled.
+- Added peer address persistence for failed sent transfers.
+- Added Retry transfer from History for failed sent files.
+- Added transfer details dialog with status, device, size, time, speed, and path.
+- Added batch completion summaries while keeping failed files queued.
+- Added speed and ETA to Android progress notifications.
+- Improved Windows Open File Location invocation and user feedback.
+- Standardized visible Android and Windows app naming as Bifrost.

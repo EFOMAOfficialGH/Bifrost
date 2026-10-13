@@ -20,11 +20,12 @@ class TransferNotifications {
     _ready = true;
   }
 
-  Future<void> progress({required int id, required String title, required int sent, required int total}) async {
+  Future<void> progress({required int id, required String title, required int sent, required int total, double speedBytesPerSecond = 0, int? etaSeconds}) async {
     if (!Platform.isAndroid) return;
     await initialize();
     final percent = total == 0 ? 0 : ((sent * 100) ~/ total).clamp(0, 100);
-    await _plugin.show(id: id, title: title, body: '$percent% • ${_format(sent)} of ${_format(total)}', notificationDetails: NotificationDetails(android: AndroidNotificationDetails('bifrost_transfers', 'Bifrost transfers', channelDescription: 'File transfer progress', ongoing: true, onlyAlertOnce: true, showProgress: true, maxProgress: 100, progress: percent, playSound: false)));
+    final details = speedBytesPerSecond > 0 ? ' • ${_format(speedBytesPerSecond.round())}/s${etaSeconds == null ? '' : ' • ${etaSeconds}s left'}' : '';
+    await _plugin.show(id: id, title: title, body: '$percent% • ${_format(sent)} of ${_format(total)}$details', notificationDetails: NotificationDetails(android: AndroidNotificationDetails('bifrost_transfers', 'Bifrost transfers', channelDescription: 'File transfer progress', ongoing: true, onlyAlertOnce: true, showProgress: true, maxProgress: 100, progress: percent, playSound: false)));
   }
 
   Future<void> complete({required int id, required String title, required bool success, String? message}) async {

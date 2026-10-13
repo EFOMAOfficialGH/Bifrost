@@ -1,5 +1,25 @@
 # Bifrost Patch Notes
 
+## Bifrost v0.9.0+11
+
+### Native sharing and transfer polish
+
+- Android Share menu support for single and multiple files.
+- Windows Explorer Send with Bifrost installer integration.
+- APK-aware Install APK History action.
+- Missing-file warnings and stale History cleanup.
+- Per-file queue states and batch completion summaries.
+- Retry failed sent transfers from History.
+- Transfer details dialog with status, device, size, time, speed, and path.
+- Speed and ETA in Android progress notifications.
+- Improved Windows file-location invocation and Bifrost naming.
+
+### Verification
+
+- `flutter analyze` passes.
+- All 5 automated tests pass.
+- `git diff --check` passes.
+
 ## Bifrost v0.8.0+10
 
 ### Transfer resilience and speed visibility
