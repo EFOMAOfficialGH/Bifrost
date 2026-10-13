@@ -42,7 +42,7 @@ jobs:
           storePassword=$BIFROST_KEYSTORE_PASSWORD
           keyPassword=$BIFROST_KEY_PASSWORD
           keyAlias=$BIFROST_KEY_ALIAS
-          storeFile=bifrost-upload.jks
+          storeFile=../bifrost-upload.jks
           EOF
 
       - name: Build release APK
