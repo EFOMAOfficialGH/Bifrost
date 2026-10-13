@@ -1,3 +1,11 @@
+import java.util.Properties
+
+val signingProperties = Properties()
+val signingPropertiesFile = rootProject.file("key.properties")
+if (signingPropertiesFile.exists()) {
+    signingPropertiesFile.inputStream().use { signingProperties.load(it) }
+}
+
 plugins {
     id("com.android.application")
     id("dev.flutter.flutter-gradle-plugin")
@@ -24,9 +32,15 @@ android {
 
     buildTypes {
         release {
-            // Milestone 1 uses the debug signing key for CI smoke builds.
-            // A private release keystore will be configured before publishing.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (signingPropertiesFile.exists()) signingConfigs.create("bifrostRelease") else signingConfigs.getByName("debug")
+            if (signingPropertiesFile.exists()) {
+                signingConfigs.getByName("bifrostRelease").apply {
+                    storeFile = file(signingProperties["storeFile"] as String)
+                    storePassword = signingProperties["storePassword"] as String
+                    keyAlias = signingProperties["keyAlias"] as String
+                    keyPassword = signingProperties["keyPassword"] as String
+                }
+            }
         }
     }
 }

@@ -51,8 +51,9 @@ class AppStorage {
   Future<bool> onboardingComplete() async {
     final prefs = await _preferences;
     if (prefs.getBool('onboardingComplete') == true) return true;
-    // Existing installations from before the wizard should not be interrupted.
-    if (prefs.containsKey('deviceName') || prefs.containsKey('saveDirectoryPath') || prefs.containsKey('transferHistory')) {
+    // Existing installations that already chose a save folder should not be interrupted.
+    // Older installs with only a device name still need the new folder setup.
+    if (prefs.containsKey('saveDirectoryPath')) {
       await prefs.setBool('onboardingComplete', true);
       return true;
     }

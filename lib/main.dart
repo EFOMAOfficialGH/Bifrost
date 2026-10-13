@@ -212,7 +212,7 @@ class _HistoryPageState extends State<HistoryPage> {
       await OpenFilex.open(record.path!);
     } else if (action == 'location' && Platform.isWindows) {
       final windowsPath = record.path!.replaceAll('/', '\\');
-      await Process.run('explorer.exe', ['/select,"$windowsPath"']);
+      await Process.run('cmd.exe', ['/c', 'explorer.exe /select,"$windowsPath"']);
     } else if (action == 'delete') {
       await AppStorage.instance.deleteHistory(record.id);
       if (mounted) setState(() => _records = _records.where((item) => item.id != record.id).toList(growable: false));

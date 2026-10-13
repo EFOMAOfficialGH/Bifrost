@@ -28,3 +28,7 @@ History entries now retain their local file path. Tapping an entry offers Open, 
 New installations now receive a first-run setup screen for choosing a device name and granting or changing the save-folder location. The default is Download/Bifrost on Android and Downloads/Bifrost on Windows, with a safe fallback if the platform does not permit automatic folder creation.
 
 Trusted devices now live on their own management page with last-seen information, immediate refresh, confirmation before removal, and remove-all support. Windows History now labels the action Open File Location and passes Explorer the exact selected file path.
+
+## 0.7.0+9 — Setup migration, Explorer selection, and Android updates
+
+Older installations that have a device name but no configured save folder now receive the setup screen. Windows Open File Location now invokes Explorer through its command shell with the exact quoted file path. Android release builds now support stable keystore signing through GitHub Actions secrets, allowing future APKs to update in place after one migration install.
