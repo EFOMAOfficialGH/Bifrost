@@ -28,7 +28,7 @@ jobs:
       - name: Run tests
         run: flutter test
 
-            - name: Configure stable Android signing
+      - name: Configure stable Android signing
         if: env.BIFROST_KEYSTORE_BASE64 != ''
         shell: bash
         env:
@@ -44,7 +44,6 @@ jobs:
           keyAlias=$BIFROST_KEY_ALIAS
           storeFile=bifrost-upload.jks
           EOF
-
 
       - name: Build release APK
         run: flutter build apk --release
