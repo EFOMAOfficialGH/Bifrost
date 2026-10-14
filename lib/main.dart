@@ -21,7 +21,7 @@ final appThemeProvider = StateProvider<AppThemeKind>((ref) => AppThemeKind.day);
 final customThemeColorProvider = StateProvider<Color>((ref) => const Color(0xFF3154B8));
 final textColorProvider = StateProvider<Color?>((ref) => null);
 final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
-const bifrostVersion = '0.11.3+20';
+const bifrostVersion = '0.11.3+21';
 
 void main(List<String> args) {
   WidgetsFlutterBinding.ensureInitialized();
@@ -368,6 +368,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   String? _savePath;
   bool _backgroundActivity = false;
   bool _checkingForUpdates = false;
+  bool _updateDownloading = false;
 
   @override
   void initState() {
@@ -417,7 +418,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ListTile(leading: const Icon(Icons.palette_outlined), title: const Text('Theme'), subtitle: Text(ref.watch(appThemeProvider).label), trailing: const Icon(Icons.chevron_right), onTap: _chooseTheme),
       ListTile(leading: Icon(Icons.format_color_text, color: ref.watch(textColorProvider) ?? Theme.of(context).colorScheme.onSurface), title: const Text('Text Color'), subtitle: Text(ref.watch(textColorProvider) == null ? 'Automatic for the selected theme' : _colorHex(ref.watch(textColorProvider)!)), trailing: const Icon(Icons.chevron_right), onTap: _chooseTextColor),
       ListTile(leading: const Icon(Icons.help_outline), title: const Text('Help & Troubleshooting'), subtitle: const Text('Sending, receiving, sharing, and connection help'), trailing: const Icon(Icons.chevron_right), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const TroubleshootingPage()))),
-      ListTile(leading: const Icon(Icons.system_update_outlined), title: const Text('Check for updates'), subtitle: Text(_checkingForUpdates ? 'Checking GitHub Releases…' : 'Download updates without opening GitHub'), trailing: _checkingForUpdates ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.chevron_right), onTap: _checkingForUpdates ? null : _checkForUpdates),
+      ListTile(leading: const Icon(Icons.system_update_outlined), title: const Text('Check for updates'), subtitle: Text(_checkingForUpdates ? 'Checking GitHub Releases…' : _updateDownloading ? 'Downloading update… You can leave Bifrost open in the background.' : 'Download updates without opening GitHub'), trailing: _checkingForUpdates || _updateDownloading ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.chevron_right), onTap: _checkingForUpdates || _updateDownloading ? null : _checkForUpdates),
       const Divider(height: 32),
       ListTile(leading: const Icon(Icons.info_outline), title: const Text('About Bifrost'), subtitle: const Text('Credits, version, and project information'), trailing: const Icon(Icons.chevron_right), onTap: _showAbout),
     ]);
@@ -461,7 +462,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You are using the latest compatible Bifrost version.')));
       } else {
         final asset = Platform.isAndroid ? release.apkUrl : Platform.isWindows ? release.windowsUrl : null;
-        await showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(title: Text('Bifrost ${release.version} is available'), content: SingleChildScrollView(child: Text(asset == null ? 'A release exists, but it has no installer for this platform.' : (release.notes.trim().isEmpty ? 'A new Bifrost update is ready to download.' : release.notes))), actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Later')), if (asset != null) FilledButton(onPressed: () { Navigator.pop(dialogContext); _downloadAndInstall(release, asset); }, child: const Text('Download and install'))]));
+        final size = Platform.isAndroid ? release.apkSizeBytes : release.windowsSizeBytes;
+        await showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(title: Text('Bifrost ${release.version} is available'), content: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [Text(asset == null ? 'A release exists, but it has no installer for this platform.' : 'Download size: ${_formatUpdateBytes(size)}'), if (asset != null) const Padding(padding: EdgeInsets.only(top: 8), child: Text('The download can continue while Bifrost is in the background.')), if (release.notes.trim().isNotEmpty) Padding(padding: const EdgeInsets.only(top: 18), child: Text(release.notes))])), actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Later')), if (asset != null) FilledButton(onPressed: () { Navigator.pop(dialogContext); _downloadAndInstall(release, asset); }, child: const Text('Download and install'))]));
       }
     } catch (error) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not check GitHub Releases: $error')));
@@ -472,17 +474,52 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   Future<void> _downloadAndInstall(BifrostRelease release, String url) async {
     if (!mounted) return;
-    showDialog<void>(context: context, barrierDismissible: false, builder: (_) => const AlertDialog(content: Row(children: [CircularProgressIndicator(), SizedBox(width: 20), Expanded(child: Text('Downloading update inside Bifrost…'))])));
+    setState(() => _updateDownloading = true);
+    var received = 0;
+    var total = Platform.isAndroid ? release.apkSizeBytes ?? 0 : release.windowsSizeBytes ?? 0;
+    var speed = 0.0;
+    var etaSeconds = 0;
+    var lastPaint = DateTime.fromMillisecondsSinceEpoch(0);
+    StateSetter? dialogSetState;
+    var dialogOpen = true;
+    var userCancelled = false;
+    unawaited(showDialog<void>(context: context, barrierDismissible: false, builder: (dialogContext) => StatefulBuilder(builder: (context, setDialogState) {
+      dialogSetState = setDialogState;
+      final percent = total == 0 ? null : (received / total).clamp(0.0, 1.0);
+      return AlertDialog(title: Text('Downloading Bifrost ${release.version}'), content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [LinearProgressIndicator(value: percent), const SizedBox(height: 14), Text(total == 0 ? '${_formatUpdateBytes(received)} downloaded' : '${(percent! * 100).toStringAsFixed(0)}% • ${_formatUpdateBytes(received)} of ${_formatUpdateBytes(total)}'), if (speed > 0) Padding(padding: const EdgeInsets.only(top: 6), child: Text('${_formatSpeed(speed)}/s${etaSeconds > 0 ? ' • ${_formatEta(etaSeconds)} left' : ''}')), const SizedBox(height: 10), const Text('You can leave Bifrost open in the background; progress will remain in the notification.')]), actions: [TextButton(onPressed: () { userCancelled = true; BifrostUpdateService.instance.cancelDownload(); Navigator.pop(dialogContext); }, child: const Text('Cancel'))]);
+    })).then((_) => dialogOpen = false));
     try {
-      final file = await BifrostUpdateService.instance.download(url, onProgress: (received, total) {});
-      if (mounted && Navigator.of(context).canPop()) Navigator.of(context).pop();
+      final started = DateTime.now();
+      final file = await BifrostUpdateService.instance.download(url, onProgress: (downloaded, reportedTotal) {
+        received = downloaded;
+        if (reportedTotal != null) total = reportedTotal;
+        final elapsed = DateTime.now().difference(started).inMilliseconds;
+        speed = received / ((elapsed < 1 ? 1 : elapsed) / 1000);
+        etaSeconds = speed > 0 && total > received ? ((total - received) / speed).ceil() : 0;
+        TransferNotifications.instance.updateProgress(received: received, total: total, speedBytesPerSecond: speed, etaSeconds: etaSeconds);
+        final now = DateTime.now();
+        if (dialogSetState != null && now.difference(lastPaint).inMilliseconds >= 120) {
+          lastPaint = now;
+          dialogSetState!(() {});
+        }
+      });
+      await TransferNotifications.instance.updateComplete(version: release.version);
+      if (dialogOpen && mounted) Navigator.of(context).pop();
       if (Platform.isAndroid) {
         await OpenFilex.open(file.path, type: 'application/vnd.android.package-archive');
       } else if (Platform.isWindows) {
         await Process.start('cmd.exe', ['/c', 'start', '', file.path]);
       }
+    } on UpdateDownloadCancelled {
+      await TransferNotifications.instance.clearUpdate();
+      if (dialogOpen && mounted) Navigator.of(context).pop();
+      if (!userCancelled && mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Update download cancelled.')));
     } catch (error) {
-      if (mounted) { if (Navigator.of(context).canPop()) Navigator.of(context).pop(); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Update download failed: $error'))); }
+      await TransferNotifications.instance.clearUpdate();
+      if (dialogOpen && mounted) Navigator.of(context).pop();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Update download failed: $error')));
+    } finally {
+      if (mounted) setState(() => _updateDownloading = false);
     }
   }
 
@@ -504,6 +541,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 }
 
 String _historyBytes(int bytes) => bytes < 1024 * 1024 ? '${(bytes / 1024).toStringAsFixed(1)} KB' : '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+String _formatUpdateBytes(int? bytes) {
+  if (bytes == null || bytes <= 0) return 'unknown size';
+  if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+  if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
+}
 String _formatSpeed(double bytesPerSecond) => bytesPerSecond < 1024 * 1024 ? '${(bytesPerSecond / 1024).toStringAsFixed(1)} KB' : '${(bytesPerSecond / (1024 * 1024)).toStringAsFixed(1)} MB';
 String _formatEta(int seconds) => seconds < 60 ? '${seconds}s' : '${seconds ~/ 60}m ${seconds % 60}s';
 Color? _parseColor(String? value) { if (value == null) return null; var hex = value.trim().replaceFirst('#', ''); if (hex.length == 6) hex = 'FF$hex'; if (hex.length != 8) return null; final parsed = int.tryParse(hex, radix: 16); return parsed == null ? null : Color(parsed); }
