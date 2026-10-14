@@ -31,6 +31,7 @@ class BifrostDeviceRuntime {
     }
     final id = await AppStorage.instance.deviceId();
     final name = await AppStorage.instance.deviceName();
+    TransferNotifications.instance.onBackgroundNotificationTapped = () => setBackgroundActivity(false);
     await TransferNotifications.instance.initialize();
     late BifrostServer server;
     server = BifrostServer(saveDirectory: directory, deviceName: name, deviceId: id, onOfferWithSender: (offer, senderId, senderName) async {
@@ -77,6 +78,7 @@ class BifrostDeviceRuntime {
       await TransferNotifications.instance.backgroundReady();
     } else {
       await TransferNotifications.instance.clearBackgroundReady();
+      await close();
     }
   }
 

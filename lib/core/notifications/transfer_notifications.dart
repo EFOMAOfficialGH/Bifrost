@@ -7,11 +7,14 @@ class TransferNotifications {
   static final instance = TransferNotifications._();
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _ready = false;
+  Future<void> Function()? onBackgroundNotificationTapped;
 
   Future<void> initialize() async {
     if (_ready || !Platform.isAndroid) return;
     const settings = InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher'));
-    await _plugin.initialize(settings: settings);
+    await _plugin.initialize(settings: settings, onDidReceiveNotificationResponse: (response) async {
+      if (response.id == 987654) await onBackgroundNotificationTapped?.call();
+    });
     final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     await android?.requestNotificationsPermission();
     await android?.createNotificationChannel(const AndroidNotificationChannel('bifrost_transfers', 'Bifrost transfers', description: 'File transfer progress', importance: Importance.low, playSound: false));
@@ -49,7 +52,7 @@ class TransferNotifications {
   Future<void> backgroundReady() async {
     if (!Platform.isAndroid) return;
     await initialize();
-    await _plugin.show(id: 987654, title: 'Bifrost is ready', body: 'Listening for nearby file transfers', notificationDetails: const NotificationDetails(android: AndroidNotificationDetails('bifrost_background', 'Background receiving', channelDescription: 'Keeps Bifrost available while the app is in the background', ongoing: true, autoCancel: false, onlyAlertOnce: true, importance: Importance.low, playSound: false)));
+    await _plugin.show(id: 987654, title: 'Bifrost is ready', body: 'Listening for nearby file transfers • Tap to stop', notificationDetails: const NotificationDetails(android: AndroidNotificationDetails('bifrost_background', 'Background receiving', channelDescription: 'Keeps Bifrost available while the app is in the background', ongoing: true, autoCancel: false, onlyAlertOnce: true, importance: Importance.low, playSound: false)));
   }
 
   Future<void> clearBackgroundReady() async {
