@@ -64,6 +64,27 @@ jobs:
           path: Bifrost-Android-*.apk
           if-no-files-found: error
 
+      - name: Generate release notes
+        shell: bash
+        run: |
+          version="$(awk '/^version:/{print $2}' pubspec.yaml)"
+          {
+            echo "# Bifrost build"
+            echo
+            echo "- Version: $version"
+            echo "- Commit: ${GITHUB_SHA:0:7}"
+            echo "- Source: $GITHUB_REF_NAME"
+            echo
+            echo "## Recent changes"
+            git log -10 --pretty=format:'- %s (%h)'
+            echo
+            echo
+            echo "## Included downloads"
+            echo "- Android APK"
+            echo "- Windows installer"
+            echo "- Windows portable ZIP"
+          } > release-notes.md
+
       - name: Publish APK to GitHub Release
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
@@ -72,7 +93,7 @@ jobs:
           name: ${{ startsWith(github.ref, 'refs/tags/v') && format('Bifrost {0}', github.ref_name) || 'Bifrost Latest Build' }}
           prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
           make_latest: false
-          generate_release_notes: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          body_path: release-notes.md
           target_commitish: ${{ github.sha }}
           overwrite_files: true
           files: Bifrost-Android-*.apk
