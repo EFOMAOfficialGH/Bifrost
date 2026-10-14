@@ -15,12 +15,13 @@ import 'core/notifications/transfer_notifications.dart';
 import 'core/theme/app_theme.dart';
 import 'core/storage/app_storage.dart';
 import 'core/platform/shared_file_bridge.dart';
+import 'core/updates/update_service.dart';
 
 final appThemeProvider = StateProvider<AppThemeKind>((ref) => AppThemeKind.day);
 final customThemeColorProvider = StateProvider<Color>((ref) => const Color(0xFF3154B8));
 final textColorProvider = StateProvider<Color?>((ref) => null);
 final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
-const bifrostVersion = '0.11.1+17';
+const bifrostVersion = '0.11.2+18';
 
 void main(List<String> args) {
   WidgetsFlutterBinding.ensureInitialized();
@@ -366,6 +367,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   late final TextEditingController _nameController;
   String? _savePath;
   bool _backgroundActivity = false;
+  bool _checkingForUpdates = false;
 
   @override
   void initState() {
@@ -415,6 +417,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ListTile(leading: const Icon(Icons.palette_outlined), title: const Text('Theme'), subtitle: Text(ref.watch(appThemeProvider).label), trailing: const Icon(Icons.chevron_right), onTap: _chooseTheme),
       ListTile(leading: Icon(Icons.format_color_text, color: ref.watch(textColorProvider) ?? Theme.of(context).colorScheme.onSurface), title: const Text('Text Color'), subtitle: Text(ref.watch(textColorProvider) == null ? 'Automatic for the selected theme' : _colorHex(ref.watch(textColorProvider)!)), trailing: const Icon(Icons.chevron_right), onTap: _chooseTextColor),
       ListTile(leading: const Icon(Icons.help_outline), title: const Text('Help & Troubleshooting'), subtitle: const Text('Sending, receiving, sharing, and connection help'), trailing: const Icon(Icons.chevron_right), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const TroubleshootingPage()))),
+      ListTile(leading: const Icon(Icons.system_update_outlined), title: const Text('Check for updates'), subtitle: Text(_checkingForUpdates ? 'Checking GitHub Releases…' : 'Download updates without opening GitHub'), trailing: _checkingForUpdates ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.chevron_right), onTap: _checkingForUpdates ? null : _checkForUpdates),
       const Divider(height: 32),
       ListTile(leading: const Icon(Icons.info_outline), title: const Text('About Bifrost'), subtitle: const Text('Credits, version, and project information'), trailing: const Icon(Icons.chevron_right), onTap: _showAbout),
     ]);
@@ -447,6 +450,40 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final selected = await showDialog<Color?>(context: context, builder: (dialogContext) => AlertDialog(title: Text(title), content: StatefulBuilder(builder: (context, setDialogState) => Column(mainAxisSize: MainAxisSize.min, children: [Wrap(spacing: 10, runSpacing: 10, children: [for (final color in const [Color(0xFF102A43), Color(0xFF3154B8), Color(0xFF6E5AE6), Color(0xFF00897B), Color(0xFF2E7D32), Color(0xFF8D6E63), Color(0xFFFF8F00), Color(0xFFE65100), Color(0xFFC62828), Color(0xFFAD1457), Color(0xFF546E7A), Color(0xFFFFFFFF)]) GestureDetector(onTap: () => Navigator.pop(dialogContext, color), child: CircleAvatar(backgroundColor: color, radius: 20, child: color == Colors.white ? const Icon(Icons.circle_outlined, color: Colors.black54) : null))]), const SizedBox(height: 18), TextField(controller: controller, onChanged: (_) => setDialogState(() {}), decoration: const InputDecoration(labelText: 'Any color (hex)', hintText: '#RRGGBB')), if (_parseColor(controller.text) != null) Padding(padding: const EdgeInsets.only(top: 12), child: Container(height: 28, decoration: BoxDecoration(color: _parseColor(controller.text), borderRadius: BorderRadius.circular(8))))])), actions: [if (allowAutomatic) TextButton(onPressed: () => Navigator.pop(dialogContext, Theme.of(context).colorScheme.onSurface), child: const Text('Use theme default')), TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')), FilledButton(onPressed: () { final color = _parseColor(controller.text); if (color != null) Navigator.pop(dialogContext, color); }, child: const Text('Apply'))]));
     controller.dispose();
     return selected;
+  }
+
+  Future<void> _checkForUpdates() async {
+    setState(() => _checkingForUpdates = true);
+    try {
+      final release = await BifrostUpdateService.instance.latest(currentVersion: bifrostVersion);
+      if (!mounted) return;
+      if (release == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You are using the latest compatible Bifrost version.')));
+      } else {
+        final asset = Platform.isAndroid ? release.apkUrl : Platform.isWindows ? release.windowsUrl : null;
+        await showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(title: Text('Bifrost ${release.version} is available'), content: SingleChildScrollView(child: Text(asset == null ? 'A release exists, but it has no installer for this platform.' : (release.notes.trim().isEmpty ? 'A new Bifrost update is ready to download.' : release.notes))), actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Later')), if (asset != null) FilledButton(onPressed: () { Navigator.pop(dialogContext); _downloadAndInstall(release, asset); }, child: const Text('Download and install'))]));
+      }
+    } catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not check GitHub Releases: $error')));
+    } finally {
+      if (mounted) setState(() => _checkingForUpdates = false);
+    }
+  }
+
+  Future<void> _downloadAndInstall(BifrostRelease release, String url) async {
+    if (!mounted) return;
+    showDialog<void>(context: context, barrierDismissible: false, builder: (_) => const AlertDialog(content: Row(children: [CircularProgressIndicator(), SizedBox(width: 20), Expanded(child: Text('Downloading update inside Bifrost…'))])));
+    try {
+      final file = await BifrostUpdateService.instance.download(url, onProgress: (received, total) {});
+      if (mounted && Navigator.of(context).canPop()) Navigator.of(context).pop();
+      if (Platform.isAndroid) {
+        await OpenFilex.open(file.path, type: 'application/vnd.android.package-archive');
+      } else if (Platform.isWindows) {
+        await Process.start('cmd.exe', ['/c', 'start', '', file.path]);
+      }
+    } catch (error) {
+      if (mounted) { if (Navigator.of(context).canPop()) Navigator.of(context).pop(); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Update download failed: $error'))); }
+    }
   }
 
   Future<void> _showAbout() async => showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(
