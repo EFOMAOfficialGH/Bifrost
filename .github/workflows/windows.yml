@@ -54,7 +54,7 @@ jobs:
           Name: "{autodesktop}\Bifrost"; Filename: "{app}\bifrost.exe"
           [Registry]
           Root: HKCR; Subkey: "*\shell\Send with Bifrost"; ValueType: string; ValueName: ""; ValueData: "Send with Bifrost"; Flags: uninsdeletekey
-          Root: HKCR; Subkey: "*\shell\Send with Bifrost\command"; ValueType: string; ValueName: ""; ValueData: """{app}\bifrost.exe"" "%1""
+          Root: HKCR; Subkey: "*\shell\Send with Bifrost\command"; ValueType: string; ValueName: ""; ValueData: """{app}\bifrost.exe"" ""%1"""
           '@ | Out-File -Encoding utf8 bifrost.iss
           (Get-Content bifrost.iss) -replace 'VERSION_PLACEHOLDER', $version | Set-Content -Encoding utf8 bifrost.iss
       - name: Build installer
