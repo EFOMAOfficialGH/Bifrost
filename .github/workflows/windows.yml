@@ -66,10 +66,10 @@ jobs:
         run: |
           $version = (Get-Content pubspec.yaml | Select-String '^version:\s*(.+)$').Matches.Groups[1].Value.Trim()
           if ($env:GITHUB_REF -eq 'refs/heads/main' -or $env:GITHUB_REF -eq 'refs/heads/master') {
-            Rename-Item Output\bifrost-windows-installer.exe 'Bifrost-Windows-latest.exe'
+            Move-Item Output\bifrost-windows-installer.exe 'Bifrost-Windows-latest.exe'
             Rename-Item bifrost-windows-portable.zip 'Bifrost-Windows-latest-portable.zip'
           } else {
-            Rename-Item Output\bifrost-windows-installer.exe "Bifrost-Windows-$version.exe"
+            Move-Item Output\bifrost-windows-installer.exe "Bifrost-Windows-$version.exe"
             Rename-Item bifrost-windows-portable.zip "Bifrost-Windows-$version-portable.zip"
           }
 
@@ -105,4 +105,11 @@ jobs:
           if (-not $releaseReady) {
             throw "The Android workflow did not create release $tag within the expected time."
           }
-          gh release upload $tag Bifrost-Windows-*.exe Bifrost-Windows-*.zip --repo $env:GITHUB_REPOSITORY --clobber
+          $assets = @(
+            (Get-ChildItem -File 'Bifrost-Windows-*.exe').FullName
+            (Get-ChildItem -File 'Bifrost-Windows-*.zip').FullName
+          )
+          if ($assets.Count -ne 2) {
+            throw "Expected one Windows installer and one portable ZIP, but found $($assets.Count) files."
+          }
+          gh release upload $tag @assets --repo $env:GITHUB_REPOSITORY --clobber
