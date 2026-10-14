@@ -7,6 +7,10 @@ on:
       - 'v*'
   workflow_dispatch:
 
+concurrency:
+  group: bifrost-windows-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
@@ -25,6 +29,12 @@ jobs:
         run: flutter config --enable-windows-desktop
       - name: Install dependencies
         run: flutter pub get
+      - name: Read app version
+        id: app_version
+        shell: pwsh
+        run: |
+          $version = (Get-Content pubspec.yaml | Select-String '^version:\s*(.+)$').Matches.Groups[1].Value.Trim()
+          "version=$version" >> $env:GITHUB_OUTPUT
       - name: Analyze source
         run: flutter analyze
       - name: Run tests
@@ -65,13 +75,8 @@ jobs:
         shell: pwsh
         run: |
           $version = (Get-Content pubspec.yaml | Select-String '^version:\s*(.+)$').Matches.Groups[1].Value.Trim()
-          if ($env:GITHUB_REF -eq 'refs/heads/main' -or $env:GITHUB_REF -eq 'refs/heads/master') {
-            Move-Item Output\bifrost-windows-installer.exe 'Bifrost-Windows-latest.exe'
-            Rename-Item bifrost-windows-portable.zip 'Bifrost-Windows-latest-portable.zip'
-          } else {
-            Move-Item Output\bifrost-windows-installer.exe "Bifrost-Windows-$version.exe"
-            Rename-Item bifrost-windows-portable.zip "Bifrost-Windows-$version-portable.zip"
-          }
+          Move-Item Output\bifrost-windows-installer.exe "Bifrost-Windows-$version.exe"
+          Rename-Item bifrost-windows-portable.zip "Bifrost-Windows-$version-portable.zip"
 
       - name: Upload Windows packages
         uses: actions/upload-artifact@v4
@@ -91,7 +96,7 @@ jobs:
           if ($env:GITHUB_REF -like 'refs/tags/v*') {
             $tag = $env:GITHUB_REF_NAME
           } else {
-            $tag = 'nightly'
+            $tag = 'v${{ steps.app_version.outputs.version }}'
           }
           $releaseReady = $false
           for ($attempt = 1; $attempt -le 30; $attempt++) {
