@@ -11,10 +11,12 @@ class BifrostDiscoveryService {
     socket.broadcastEnabled = true;
     final devices = <String, BifrostDevice>{};
     final request = utf8.encode(encodeDiscoveryRequest());
-    final broadcast = InternetAddress('255.255.255.255');
+    final broadcasts = await _broadcastAddresses();
     final multicast = InternetAddress('224.0.0.251');
     for (var attempt = 0; attempt < 3; attempt++) {
-      socket.send(request, broadcast, bifrostDiscoveryPort);
+      for (final broadcast in broadcasts) {
+        socket.send(request, broadcast, bifrostDiscoveryPort);
+      }
       socket.send(request, multicast, bifrostDiscoveryPort);
       await Future<void>.delayed(const Duration(milliseconds: 250));
     }
@@ -42,6 +44,24 @@ class BifrostDiscoveryService {
       socket.close();
     }
     return devices.values.toList(growable: false);
+  }
+
+  Future<List<InternetAddress>> _broadcastAddresses() async {
+    final addresses = <String, InternetAddress>{'255.255.255.255': InternetAddress('255.255.255.255')};
+    try {
+      final interfaces = await NetworkInterface.list(type: InternetAddressType.IPv4, includeLoopback: false, includeLinkLocal: false);
+      for (final interface in interfaces) {
+        for (final address in interface.addresses) {
+          final raw = address.rawAddress;
+          if (raw.length != 4) continue;
+          final directed = InternetAddress('${raw[0]}.${raw[1]}.${raw[2]}.255');
+          addresses[directed.address] = directed;
+        }
+      }
+    } on SocketException {
+      // The global broadcast remains available as a fallback.
+    }
+    return addresses.values.toList(growable: false);
   }
 
   Future<List<BifrostDevice>> _manual(String host, int port) async {

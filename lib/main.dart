@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:open_filex/open_filex.dart';
 
-import 'features/send/network_test_page.dart';
 import 'features/discovery/nearby_page.dart';
 import 'features/receive/incoming_offer_listener.dart';
 import 'core/networking/device_runtime.dart';
@@ -21,7 +20,7 @@ final appThemeProvider = StateProvider<AppThemeKind>((ref) => AppThemeKind.day);
 final customThemeColorProvider = StateProvider<Color>((ref) => const Color(0xFF3154B8));
 final textColorProvider = StateProvider<Color?>((ref) => null);
 final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
-const bifrostVersion = '0.12.0+23';
+const bifrostVersion = '0.12.0+25';
 
 void main(List<String> args) {
   WidgetsFlutterBinding.ensureInitialized();
@@ -285,7 +284,7 @@ class _HistoryPageState extends State<HistoryPage> {
   @override void dispose() { _activitySubscription?.cancel(); super.dispose(); }
   Future<void> _clear() async { await AppStorage.instance.clearHistory(); if (mounted) setState(() => _records = const []); }
 
-  Future<void> _showDetails(TransferRecord record) async => showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(title: Text(record.fileName), content: Text('Status: ${record.status}\nDirection: ${record.direction}\nDevice: ${record.peer}\nSize: ${_historyBytes(record.bytes)}\nTime: ${record.time.toLocal()}${record.speedBytesPerSecond > 0 ? '\nSpeed: ${_formatSpeed(record.speedBytesPerSecond)}/s' : ''}${record.path == null ? '' : '\nPath: ${record.path}'}'), actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Close'))]));
+  Future<void> _showDetails(TransferRecord record) async => showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(title: Text(record.fileName), content: Text('Status: ${record.status}\nDirection: ${record.direction}\nDevice: ${record.peer}\nSize: ${_historyBytes(record.bytes)}\nTime: ${_historyTime(record.time)}${record.speedBytesPerSecond > 0 ? '\nSpeed: ${_formatSpeed(record.speedBytesPerSecond)}/s' : ''}${record.path == null ? '' : '\nPath: ${record.path}'}'), actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Close'))]));
 
   Future<void> _retryRecord(TransferRecord record) async {
     if (record.path == null || record.peerHost == null || record.peerPort == null) return;
@@ -352,7 +351,7 @@ class _HistoryPageState extends State<HistoryPage> {
           Row(children: [Expanded(child: Text('Transfer history', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700))), if (_records.isNotEmpty) IconButton(tooltip: 'Clear history', onPressed: _clear, icon: const Icon(Icons.delete_sweep_outlined))]),
           const SizedBox(height: 20),
           for (final record in _active.values) _historyTile(context, record),
-          for (final record in _records) Card(child: ListTile(onTap: () => _showRecordActions(record), leading: Icon(record.status == 'Completed' ? Icons.check_circle : Icons.error_outline, color: record.status == 'Completed' ? Colors.green : Theme.of(context).colorScheme.error), title: Text(record.fileName), subtitle: Text('${record.direction} • ${record.status} • ${_historyBytes(record.bytes)}\n${record.peer} • ${record.time.toLocal()}'), trailing: record.path == null ? null : const Icon(Icons.more_vert))),
+          for (final record in _records) Card(child: ListTile(onTap: () => _showRecordActions(record), leading: Icon(record.status == 'Completed' ? Icons.check_circle : Icons.error_outline, color: record.status == 'Completed' ? Colors.green : Theme.of(context).colorScheme.error), title: Text(record.fileName), subtitle: Text('${record.direction} • ${record.status} • ${_historyBytes(record.bytes)}\n${record.peer} • ${_historyTime(record.time)}'), trailing: record.path == null ? null : const Icon(Icons.more_vert))),
         ]);
 
   Widget _historyTile(BuildContext context, TransferRecord record) => Card(
@@ -399,6 +398,7 @@ class _TrustedDevicesPageState extends State<TrustedDevicesPage> {
 }
 
 String _relative(DateTime time) { final difference = DateTime.now().difference(time); if (difference.inMinutes < 1) return 'just now'; if (difference.inHours < 1) return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago'; if (difference.inDays < 1) return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago'; return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago'; }
+String _historyTime(DateTime time) { final local = time.toLocal(); final hour = local.hour % 12 == 0 ? 12 : local.hour % 12; final minute = local.minute.toString().padLeft(2, '0'); final period = local.hour >= 12 ? 'PM' : 'AM'; return '$hour:$minute $period'; }
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -456,14 +456,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       const SizedBox(height: 24),
       TextField(controller: _nameController, textInputAction: TextInputAction.done, onSubmitted: (_) => _saveName(), decoration: InputDecoration(labelText: 'Device name', prefixIcon: const Icon(Icons.badge_outlined), suffixIcon: IconButton(tooltip: 'Save device name', onPressed: _saveName, icon: const Icon(Icons.check)))),
       ListTile(leading: const Icon(Icons.folder_outlined), title: const Text('Save location'), subtitle: Text(_savePath ?? AppStorage.instance.defaultSaveDirectory()), trailing: const Icon(Icons.chevron_right), onTap: _chooseSaveLocation),
-      ListTile(leading: const Icon(Icons.lan_outlined), title: const Text('Networking test'), subtitle: const Text('Milestone 2 local receiver'), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NetworkTestPage()))),
       SwitchListTile(value: _backgroundActivity, onChanged: _toggleBackground, title: const Text('Background receiving'), subtitle: const Text('Keep Bifrost listening while the app is in the background.'), secondary: const Icon(Icons.notifications_active_outlined)),
       SwitchListTile(value: _automaticUpdateChecks, onChanged: (enabled) async { setState(() => _automaticUpdateChecks = enabled); await AppStorage.instance.setAutomaticUpdateChecks(enabled); }, title: const Text('Automatically check for updates'), subtitle: const Text('Silently check GitHub when Bifrost starts.'), secondary: const Icon(Icons.system_update_alt_outlined)),
       const SizedBox(height: 12),
       ListTile(leading: const Icon(Icons.verified_user_outlined), title: const Text('Trusted devices'), subtitle: const Text('Manage devices that can send without approval.'), trailing: const Icon(Icons.chevron_right), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const TrustedDevicesPage()))),
       ListTile(leading: const Icon(Icons.palette_outlined), title: const Text('Theme'), subtitle: Text(ref.watch(appThemeProvider).label), trailing: const Icon(Icons.chevron_right), onTap: _chooseTheme),
       ListTile(leading: Icon(Icons.format_color_text, color: ref.watch(textColorProvider) ?? Theme.of(context).colorScheme.onSurface), title: const Text('Text Color'), subtitle: Text(ref.watch(textColorProvider) == null ? 'Automatic for the selected theme' : _colorHex(ref.watch(textColorProvider)!)), trailing: const Icon(Icons.chevron_right), onTap: _chooseTextColor),
-      ListTile(leading: const Icon(Icons.help_outline), title: const Text('Help & Troubleshooting'), subtitle: const Text('Sending, receiving, sharing, and connection help'), trailing: const Icon(Icons.chevron_right), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const TroubleshootingPage()))),
       ListTile(leading: const Icon(Icons.system_update_outlined), title: const Text('Check for updates'), subtitle: Text(_checkingForUpdates ? 'Checking GitHub Releases…' : _updateDownloading ? 'Downloading update… You can leave Bifrost open in the background.' : 'Download updates without opening GitHub'), trailing: _checkingForUpdates || _updateDownloading ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.chevron_right), onTap: _checkingForUpdates || _updateDownloading ? null : _checkForUpdates),
       const Divider(height: 32),
       ListTile(leading: const Icon(Icons.info_outline), title: const Text('About Bifrost'), subtitle: const Text('Credits, version, and project information'), trailing: const Icon(Icons.chevron_right), onTap: _showAbout),

@@ -34,13 +34,19 @@ class _NearbyPageState extends State<NearbyPage> {
   TransferCancellation? _cancellation;
   final _queueStatuses = <String, String>{};
   StreamSubscription<List<String>>? _sharedFilesSubscription;
+  Timer? _discoveryTimer;
 
   @override
   void initState() {
     super.initState();
     _sharedFilesSubscription = SharedFileBridge.instance.files.listen(_queueSharedFiles);
     unawaited(SharedFileBridge.instance.initialize());
-    if (widget.autoDiscover) _discover();
+    if (widget.autoDiscover) {
+      _discover();
+      _discoveryTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+        if (mounted && !_searching && !_sending) _discover();
+      });
+    }
   }
 
   void _queueSharedFiles(List<String> paths) {
@@ -79,7 +85,7 @@ class _NearbyPageState extends State<NearbyPage> {
   }
 
   @override
-  void dispose() { _sharedFilesSubscription?.cancel(); super.dispose(); }
+  void dispose() { _discoveryTimer?.cancel(); _sharedFilesSubscription?.cancel(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +114,6 @@ class _NearbyPageState extends State<NearbyPage> {
           const SizedBox(height: 16),
           SizedBox(width: double.infinity, child: OutlinedButton.icon(onPressed: _manualConnect, icon: const Icon(Icons.pin_drop_outlined), label: const Padding(padding: EdgeInsets.symmetric(vertical: 13), child: Text('Connect by IP address'))),),
           const SizedBox(height: 10),
-          SizedBox(width: double.infinity, child: TextButton.icon(onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const TroubleshootingPage())), icon: const Icon(Icons.build_outlined), label: const Text('Troubleshoot discovery'))),
         ]))),
       ]),
     );

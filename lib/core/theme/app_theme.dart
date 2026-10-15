@@ -31,7 +31,7 @@ AppThemeKind resolvedThemeKind(AppThemeKind kind, [DateTime? now]) {
 }
 
 abstract final class AppTheme {
-  static const _seed = Color(0xFF6E5AE6);
+  static const _seed = Color(0xFF008F72);
 
   static ThemeData forKind(AppThemeKind kind, {Color? customColor, Color? textColor}) {
     final visualKind = resolvedThemeKind(kind);
