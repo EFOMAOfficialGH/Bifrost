@@ -30,6 +30,10 @@ android {
         versionName = flutter.versionName
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     buildTypes {
         release {
             signingConfig = if (signingPropertiesFile.exists()) signingConfigs.create("bifrostRelease") else signingConfigs.getByName("debug")
