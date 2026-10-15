@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:flutter/services.dart';
 
 import 'features/discovery/nearby_page.dart';
 import 'features/receive/incoming_offer_listener.dart';
@@ -448,6 +449,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     await BifrostDeviceRuntime.instance.setBackgroundActivity(enabled);
   }
 
+  Future<void> _shareBifrost() async {
+    try {
+      await const MethodChannel('bifrost/share').invokeMethod<void>('shareBifrostApk');
+    } on PlatformException catch (error) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not share Bifrost: ${error.message ?? 'unknown error'}')));
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -464,6 +473,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ListTile(leading: Icon(Icons.format_color_text, color: ref.watch(textColorProvider) ?? Theme.of(context).colorScheme.onSurface), title: const Text('Text Color'), subtitle: Text(ref.watch(textColorProvider) == null ? 'Automatic for the selected theme' : _colorHex(ref.watch(textColorProvider)!)), trailing: const Icon(Icons.chevron_right), onTap: _chooseTextColor),
       ListTile(leading: const Icon(Icons.system_update_outlined), title: const Text('Check for updates'), subtitle: Text(_checkingForUpdates ? 'Checking GitHub Releases…' : _updateDownloading ? 'Downloading update… You can leave Bifrost open in the background.' : 'Download updates without opening GitHub'), trailing: _checkingForUpdates || _updateDownloading ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.chevron_right), onTap: _checkingForUpdates || _updateDownloading ? null : _checkForUpdates),
       const Divider(height: 32),
+      ListTile(leading: const Icon(Icons.share_outlined), title: const Text('Share Bifrost'), subtitle: Text(Platform.isAndroid ? 'Send the installed Bifrost APK using another app' : 'APK sharing is available on Android'), trailing: const Icon(Icons.chevron_right), onTap: Platform.isAndroid ? _shareBifrost : null),
       ListTile(leading: const Icon(Icons.info_outline), title: const Text('About Bifrost'), subtitle: const Text('Credits, version, and project information'), trailing: const Icon(Icons.chevron_right), onTap: _showAbout),
     ]);
   }

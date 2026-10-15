@@ -4,6 +4,7 @@ import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
 import android.provider.OpenableColumns
+import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -17,17 +18,37 @@ class MainActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
         shareChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "bifrost/share")
         shareChannel.setMethodCallHandler { call, result ->
-            if (call.method == "getSharedFiles") {
-                result.success(sharedFiles.toList())
-                sharedFiles.clear()
-            } else {
-                result.notImplemented()
+            when (call.method) {
+                "getSharedFiles" -> {
+                    result.success(sharedFiles.toList())
+                    sharedFiles.clear()
+                }
+                "shareBifrostApk" -> shareInstalledApk(result)
+                else -> result.notImplemented()
             }
         }
         collectSharedFiles(intent)
     }
 
-    override fun onNewIntent(intent: Intent) {
+    private fun shareInstalledApk(result: MethodChannel.Result) {
+        try {
+            val installedApk = File(applicationInfo.sourceDir)
+            val shareableApk = File(cacheDir, "Bifrost-${BuildConfig.VERSION_NAME}.apk")
+            installedApk.copyTo(shareableApk, overwrite = true)
+            val uri = FileProvider.getUriForFile(this, "${BuildConfig.APPLICATION_ID}.fileprovider", shareableApk)
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/vnd.android.package-archive"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(shareIntent, "Share Bifrost"))
+            result.success(null)
+        } catch (error: Exception) {
+            result.error("SHARE_APK_FAILED", error.message, null)
+        }
+    }
+
+    private fun collectSharedFiles(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
         collectSharedFiles(intent)

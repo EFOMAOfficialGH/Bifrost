@@ -33,6 +33,8 @@ Bifrost is a private, local-network file-sharing app for **Android and Windows**
 - Illustrated theme backgrounds
 - Bifrost splash screen with custom branding and glow
 - In-app GitHub Releases updater
+- Share Bifrost from Settings through Android's system Sharesheet
+- Send the current installed Bifrost APK to Bluetooth, messaging apps, cloud storage, or Files
 - Automatic startup update checks
 - Update-size display before downloading
 - Download progress, speed, ETA, and cancellation
@@ -144,6 +146,18 @@ Settings → Automatically check for updates
 ```
 
 It is enabled by default and persists across restarts. Manual checking remains available when automatic checking is disabled.
+
+## Sharing Bifrost
+
+On Android, open:
+
+```text
+Settings → Share Bifrost
+```
+
+Bifrost copies the currently installed APK into a secure temporary share location and opens Android's system Sharesheet. The available destinations depend on the apps installed on the phone and may include Bluetooth, Telegram, WhatsApp, nearby sharing, cloud storage, and Save to Files.
+
+The current Share Bifrost action shares Bifrost itself. Exporting arbitrary installed apps, including complete split-APK or XAPK sets, is planned as a separate installed-app export feature.
 
 ## GitHub Actions release process
 
@@ -257,6 +271,7 @@ Bifrost is designed as local-only software for file transfers. Core transfers do
 - Some hotspots and guest Wi-Fi networks block device-to-device traffic through client isolation.
 - Windows Firewall configuration can affect discovery and incoming transfers.
 - QR display exists, but camera QR scanning is not implemented.
+- Installed-app export for arbitrary apps, including split APK and XAPK handling, is not implemented yet.
 - Resume support for interrupted transfers is still a future improvement.
 - History filtering and search need further polish.
 - Open File Location behavior on Windows needs continued testing across different install locations.
