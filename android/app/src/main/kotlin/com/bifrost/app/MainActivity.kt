@@ -48,7 +48,7 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun collectSharedFiles(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
         collectSharedFiles(intent)
