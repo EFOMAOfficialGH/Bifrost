@@ -52,6 +52,8 @@ class AppStorage {
   Future<void> setDeviceName(String name) async => (await _preferences).setString('deviceName', name);
   Future<bool> backgroundActivity() async => (await _preferences).getBool('backgroundActivity') ?? false;
   Future<void> setBackgroundActivity(bool enabled) async => (await _preferences).setBool('backgroundActivity', enabled);
+  Future<bool> automaticUpdateChecks() async => (await _preferences).getBool('automaticUpdateChecks') ?? true;
+  Future<void> setAutomaticUpdateChecks(bool enabled) async => (await _preferences).setBool('automaticUpdateChecks', enabled);
   Future<String> themeChoice() async => (await _preferences).getString('themeChoice') ?? 'day';
   Future<void> setThemeChoice(String choice) async => (await _preferences).setString('themeChoice', choice);
   Future<String?> customThemeColor() async => (await _preferences).getString('customThemeColor');

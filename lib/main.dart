@@ -21,7 +21,7 @@ final appThemeProvider = StateProvider<AppThemeKind>((ref) => AppThemeKind.day);
 final customThemeColorProvider = StateProvider<Color>((ref) => const Color(0xFF3154B8));
 final textColorProvider = StateProvider<Color?>((ref) => null);
 final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
-const bifrostVersion = '0.11.3+21';
+const bifrostVersion = '0.12.0+23';
 
 void main(List<String> args) {
   WidgetsFlutterBinding.ensureInitialized();
@@ -126,6 +126,7 @@ class BifrostShell extends StatefulWidget {
 
 class _BifrostShellState extends State<BifrostShell> {
   int _selectedIndex = 0;
+  bool _startupUpdateChecked = false;
 
   @override
   void initState() {
@@ -133,6 +134,48 @@ class _BifrostShellState extends State<BifrostShell> {
     AppStorage.instance.backgroundActivity().then((enabled) {
       if (enabled) BifrostDeviceRuntime.instance.ensureStarted();
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkForUpdatesAtStartup());
+  }
+
+  Future<void> _checkForUpdatesAtStartup() async {
+    if (_startupUpdateChecked || !mounted) return;
+    _startupUpdateChecked = true;
+    if (!await AppStorage.instance.automaticUpdateChecks() || !mounted) return;
+    try {
+      final release = await BifrostUpdateService.instance.latest(currentVersion: bifrostVersion);
+      if (!mounted || release == null) return;
+      final url = Platform.isAndroid ? release.apkUrl : Platform.isWindows ? release.windowsUrl : null;
+      if (url == null) return;
+      final download = await showDialog<bool>(context: context, builder: (dialogContext) => AlertDialog(title: Text('Bifrost ${release.version} is available'), content: Text('A new update is ready. Download size: ${_formatUpdateBytes(Platform.isAndroid ? release.apkSizeBytes : release.windowsSizeBytes)}. You can choose Not now and check again later.'), actions: [TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Not now')), FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Update'))]));
+      if (download == true && mounted) await _downloadStartupUpdate(release, url);
+    } catch (_) {
+      // Startup checks are silent: network failures must not interrupt app launch.
+    }
+  }
+
+  Future<void> _downloadStartupUpdate(BifrostRelease release, String url) async {
+    var received = 0;
+    var total = Platform.isAndroid ? release.apkSizeBytes ?? 0 : release.windowsSizeBytes ?? 0;
+    var speed = 0.0;
+    var eta = 0;
+    var closed = false;
+    StateSetter? repaint;
+    unawaited(showDialog<void>(context: context, barrierDismissible: false, builder: (dialogContext) => StatefulBuilder(builder: (_, setState) { repaint = setState; final progress = total > 0 ? (received / total).clamp(0.0, 1.0) : null; return AlertDialog(title: Text('Downloading Bifrost ${release.version}'), content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [LinearProgressIndicator(value: progress), const SizedBox(height: 12), Text(total > 0 ? '${(progress! * 100).toStringAsFixed(0)}% • ${_formatUpdateBytes(received)} of ${_formatUpdateBytes(total)}' : '${_formatUpdateBytes(received)} downloaded'), if (speed > 0) Text('${_formatSpeed(speed)}/s${eta > 0 ? ' • ${_formatEta(eta)} left' : ''}'), const SizedBox(height: 10), const Text('The download continues while Bifrost is in the background.')]), actions: [TextButton(onPressed: () { BifrostUpdateService.instance.cancelDownload(); Navigator.pop(dialogContext); }, child: const Text('Cancel'))]); })).then((_) => closed = true));
+    try {
+      final started = DateTime.now();
+      final file = await BifrostUpdateService.instance.download(url, onProgress: (done, reportedTotal) { received = done; if (reportedTotal != null) total = reportedTotal; final seconds = DateTime.now().difference(started).inMilliseconds / 1000; speed = received / (seconds < .1 ? .1 : seconds); eta = speed > 0 && total > received ? ((total - received) / speed).ceil() : 0; TransferNotifications.instance.updateProgress(received: received, total: total, speedBytesPerSecond: speed, etaSeconds: eta); repaint?.call(() {}); });
+      await TransferNotifications.instance.updateComplete(version: release.version);
+      if (!closed && mounted) Navigator.of(context).pop();
+      if (Platform.isAndroid) await OpenFilex.open(file.path, type: 'application/vnd.android.package-archive');
+      if (Platform.isWindows) await Process.start('cmd.exe', ['/c', 'start', '', file.path]);
+    } on UpdateDownloadCancelled {
+      await TransferNotifications.instance.clearUpdate();
+      if (!closed && mounted) Navigator.of(context).pop();
+    } catch (_) {
+      await TransferNotifications.instance.clearUpdate();
+      if (!closed && mounted) Navigator.of(context).pop();
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('The update could not be downloaded. You can try again from Settings.')));
+    }
   }
 
   @override
@@ -369,6 +412,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   bool _backgroundActivity = false;
   bool _checkingForUpdates = false;
   bool _updateDownloading = false;
+  bool _automaticUpdateChecks = true;
 
   @override
   void initState() {
@@ -377,6 +421,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     AppStorage.instance.deviceName().then((name) { if (!mounted) return; _nameController.text = name; ref.read(deviceNameProvider.notifier).state = name; });
     AppStorage.instance.saveDirectoryPath().then((path) { if (mounted) setState(() => _savePath = path); });
     AppStorage.instance.backgroundActivity().then((enabled) { if (mounted) setState(() => _backgroundActivity = enabled); });
+    AppStorage.instance.automaticUpdateChecks().then((enabled) { if (mounted) setState(() => _automaticUpdateChecks = enabled); });
   }
 
   @override
@@ -413,6 +458,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ListTile(leading: const Icon(Icons.folder_outlined), title: const Text('Save location'), subtitle: Text(_savePath ?? AppStorage.instance.defaultSaveDirectory()), trailing: const Icon(Icons.chevron_right), onTap: _chooseSaveLocation),
       ListTile(leading: const Icon(Icons.lan_outlined), title: const Text('Networking test'), subtitle: const Text('Milestone 2 local receiver'), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NetworkTestPage()))),
       SwitchListTile(value: _backgroundActivity, onChanged: _toggleBackground, title: const Text('Background receiving'), subtitle: const Text('Keep Bifrost listening while the app is in the background.'), secondary: const Icon(Icons.notifications_active_outlined)),
+      SwitchListTile(value: _automaticUpdateChecks, onChanged: (enabled) async { setState(() => _automaticUpdateChecks = enabled); await AppStorage.instance.setAutomaticUpdateChecks(enabled); }, title: const Text('Automatically check for updates'), subtitle: const Text('Silently check GitHub when Bifrost starts.'), secondary: const Icon(Icons.system_update_alt_outlined)),
       const SizedBox(height: 12),
       ListTile(leading: const Icon(Icons.verified_user_outlined), title: const Text('Trusted devices'), subtitle: const Text('Manage devices that can send without approval.'), trailing: const Icon(Icons.chevron_right), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const TrustedDevicesPage()))),
       ListTile(leading: const Icon(Icons.palette_outlined), title: const Text('Theme'), subtitle: Text(ref.watch(appThemeProvider).label), trailing: const Icon(Icons.chevron_right), onTap: _chooseTheme),
