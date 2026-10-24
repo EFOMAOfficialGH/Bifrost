@@ -1,3 +1,8 @@
+## 0.12.6+28 — Updated app icon
+
+- Replaced the Android and Windows application icons with the supplied artwork.
+- Updated the Nearby tab icon to match the new app branding.
+
 
 ## 0.6.0 — Transfer UX and lifecycle polish
 
