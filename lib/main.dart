@@ -22,7 +22,7 @@ final appThemeProvider = StateProvider<AppThemeKind>((ref) => AppThemeKind.day);
 final customThemeColorProvider = StateProvider<Color>((ref) => const Color(0xFF3154B8));
 final textColorProvider = StateProvider<Color?>((ref) => null);
 final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
-const bifrostVersion = '0.12.5+27';
+const bifrostVersion = '0.12.7+30';
 
 void main(List<String> args) {
   WidgetsFlutterBinding.ensureInitialized();

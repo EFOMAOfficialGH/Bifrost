@@ -1,3 +1,8 @@
+## 0.12.7+30 — Version reporting and update fix
+
+- Corrected the in-app version shown in About and supplied to update checks.
+- Synchronized the package, update-check, About, and current-version documentation values.
+
 ## 0.12.7+29 — Nearby branding correction
 
 - Restored the original radar icon in the bottom Nearby navigation tab.
