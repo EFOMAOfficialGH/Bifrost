@@ -43,7 +43,8 @@ void main() {
 
     expect(find.text('مرحبًا بك في Bifrost'), findsOneWidget);
     await tester.tap(find.byType(DropdownButtonFormField<String>));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
     expect(find.text('English'), findsWidgets);
     expect(find.text('العربية'), findsOneWidget);
     expect(
