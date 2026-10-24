@@ -193,7 +193,7 @@ class _BifrostShellState extends State<BifrostShell> {
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) => setState(() => _selectedIndex = index),
         destinations: [
-          NavigationDestination(icon: Image.asset('assets/icon.png', width: 24, height: 24, fit: BoxFit.cover), selectedIcon: Image.asset('assets/icon.png', width: 24, height: 24, fit: BoxFit.cover), label: 'Nearby'),
+          NavigationDestination(icon: Icon(Icons.radar), label: 'Nearby'),
           NavigationDestination(icon: Icon(Icons.history), label: 'History'),
           NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Settings'),
         ],

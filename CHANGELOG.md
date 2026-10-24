@@ -1,3 +1,8 @@
+## 0.12.7+29 — Nearby branding correction
+
+- Restored the original radar icon in the bottom Nearby navigation tab.
+- Kept the supplied new artwork in the Nearby screen’s upper-left corner and as the Android and Windows app icon.
+
 ## 0.12.6+28 — Updated app icon
 
 - Replaced the Android and Windows application icons with the supplied artwork.
