@@ -647,6 +647,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Future<void> _showAbout() async => showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(
         title: const Text('Bifrost', style: TextStyle(fontWeight: FontWeight.w800)),
         content: const Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('Vibecoded by EFOMA', style: TextStyle(fontWeight: FontWeight.w600)),
+          SizedBox(height: 18),
           Text('App Version:    $bifrostVersion'),
           SizedBox(height: 14),
           Text('Local-only file sharing for Android and Windows.'),
