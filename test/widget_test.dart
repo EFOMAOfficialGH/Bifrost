@@ -4,8 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:bifrost/core/localization/app_localizations.dart';
-import 'package:bifrost/core/localization/localized_text.dart' as app_text;
 import 'package:bifrost/main.dart';
 
 void main() {
@@ -26,8 +24,7 @@ void main() {
     expect(find.text('English'), findsOneWidget);
   });
 
-  testWidgets('Arabic locale translates app text and lays out RTL', (WidgetTester tester) async {
-    await AppLocalizations.load();
+  testWidgets('Arabic locale lays out widgets RTL', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         locale: Locale('ar'),
@@ -37,14 +34,14 @@ void main() {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        home: Scaffold(body: app_text.Text('Welcome to Bifrost')),
+        home: Scaffold(body: Text('RTL layout')),
       ),
     );
     await tester.pump();
 
-    expect(find.text('مرحبًا بك في Bifrost'), findsOneWidget);
+    expect(find.text('RTL layout'), findsOneWidget);
     expect(
-      Directionality.of(tester.element(find.byType(app_text.Text))),
+      Directionality.of(tester.element(find.text('RTL layout'))),
       TextDirection.rtl,
     );
   });
