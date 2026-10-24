@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 import 'features/discovery/nearby_page.dart';
 import 'features/receive/incoming_offer_listener.dart';
@@ -21,7 +22,7 @@ final appThemeProvider = StateProvider<AppThemeKind>((ref) => AppThemeKind.day);
 final customThemeColorProvider = StateProvider<Color>((ref) => const Color(0xFF3154B8));
 final textColorProvider = StateProvider<Color?>((ref) => null);
 final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
-const bifrostVersion = '0.12.0+25';
+const bifrostVersion = '0.12.0+26';
 
 void main(List<String> args) {
   WidgetsFlutterBinding.ensureInitialized();
@@ -450,8 +451,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Future<void> _shareBifrost() async {
+    final destination = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Share Bifrost'),
+        content: const Text('Choose which Bifrost package to share.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, 'android'), child: const Text('Android APK')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, 'windows'), child: const Text('Windows installer')),
+        ],
+      ),
+    );
+    if (destination == null) return;
     try {
-      await const MethodChannel('bifrost/share').invokeMethod<void>('shareBifrostApk');
+      await const MethodChannel('bifrost/share').invokeMethod<void>(destination == 'windows' ? 'shareBifrostWindows' : 'shareBifrostApk');
     } on PlatformException catch (error) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not share Bifrost: ${error.message ?? 'unknown error'}')));
     }
@@ -473,7 +486,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ListTile(leading: Icon(Icons.format_color_text, color: ref.watch(textColorProvider) ?? Theme.of(context).colorScheme.onSurface), title: const Text('Text Color'), subtitle: Text(ref.watch(textColorProvider) == null ? 'Automatic for the selected theme' : _colorHex(ref.watch(textColorProvider)!)), trailing: const Icon(Icons.chevron_right), onTap: _chooseTextColor),
       ListTile(leading: const Icon(Icons.system_update_outlined), title: const Text('Check for updates'), subtitle: Text(_checkingForUpdates ? 'Checking GitHub Releases…' : _updateDownloading ? 'Downloading update… You can leave Bifrost open in the background.' : 'Download updates without opening GitHub'), trailing: _checkingForUpdates || _updateDownloading ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.chevron_right), onTap: _checkingForUpdates || _updateDownloading ? null : _checkForUpdates),
       const Divider(height: 32),
-      ListTile(leading: const Icon(Icons.share_outlined), title: const Text('Share Bifrost'), subtitle: Text(Platform.isAndroid ? 'Send the installed Bifrost APK using another app' : 'APK sharing is available on Android'), trailing: const Icon(Icons.chevron_right), onTap: Platform.isAndroid ? _shareBifrost : null),
+      ListTile(leading: const Icon(Icons.share_outlined), title: const Text('Share Bifrost'), subtitle: Text(Platform.isAndroid ? 'Share the Android APK or Windows installer' : 'Package sharing is available on Android'), trailing: const Icon(Icons.chevron_right), onTap: Platform.isAndroid ? _shareBifrost : null),
       ListTile(leading: const Icon(Icons.info_outline), title: const Text('About Bifrost'), subtitle: const Text('Credits, version, and project information'), trailing: const Icon(Icons.chevron_right), onTap: _showAbout),
     ]);
   }
@@ -482,29 +495,83 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final selected = await showDialog<AppThemeKind>(context: context, builder: (dialogContext) => SimpleDialog(title: const Text('Choose a theme'), children: [for (final kind in AppThemeKind.values) SimpleDialogOption(onPressed: () => Navigator.pop(dialogContext, kind), child: ListTile(leading: Icon(kind == AppThemeKind.day ? Icons.wb_sunny_outlined : kind == AppThemeKind.sunset ? Icons.wb_twilight : Icons.nightlight_outlined), title: Text(kind.label), subtitle: Text(kind.description)))]));
     if (selected == null) return;
     ref.read(appThemeProvider.notifier).state = selected;
+    ref.read(textColorProvider.notifier).state = null;
     await AppStorage.instance.setThemeChoice(selected.name);
+    await AppStorage.instance.clearTextColor();
     if (selected == AppThemeKind.customColor) await _chooseCustomColor();
   }
 
   Future<void> _chooseCustomColor() async {
-    final selected = await _showColorDialog('Choose theme color', ref.read(customThemeColorProvider));
+    final result = await _showColorDialog('Choose theme color', ref.read(customThemeColorProvider));
+    final selected = result?.color;
     if (selected == null) return;
     ref.read(customThemeColorProvider.notifier).state = selected;
     await AppStorage.instance.setCustomThemeColor(_colorHex(selected));
   }
 
   Future<void> _chooseTextColor() async {
-    final selected = await _showColorDialog('Choose text color', ref.read(textColorProvider) ?? Theme.of(context).colorScheme.onSurface, allowAutomatic: true);
-    if (selected == null) return;
-    ref.read(textColorProvider.notifier).state = selected;
-    await AppStorage.instance.setTextColor(_colorHex(selected));
+    final result = await _showColorDialog('Choose text color', ref.read(textColorProvider) ?? Theme.of(context).colorScheme.onSurface, allowAutomatic: true);
+    if (result == null) return;
+    if (result.automatic) {
+      ref.read(textColorProvider.notifier).state = null;
+      await AppStorage.instance.clearTextColor();
+      return;
+    }
+    final color = result.color;
+    if (color == null) return;
+    ref.read(textColorProvider.notifier).state = color;
+    await AppStorage.instance.setTextColor(_colorHex(color));
   }
 
-  Future<Color?> _showColorDialog(String title, Color initial, {bool allowAutomatic = false}) async {
-    final controller = TextEditingController(text: _colorHex(initial));
-    final selected = await showDialog<Color?>(context: context, builder: (dialogContext) => AlertDialog(title: Text(title), content: StatefulBuilder(builder: (context, setDialogState) => Column(mainAxisSize: MainAxisSize.min, children: [Wrap(spacing: 10, runSpacing: 10, children: [for (final color in const [Color(0xFF102A43), Color(0xFF3154B8), Color(0xFF6E5AE6), Color(0xFF00897B), Color(0xFF2E7D32), Color(0xFF8D6E63), Color(0xFFFF8F00), Color(0xFFE65100), Color(0xFFC62828), Color(0xFFAD1457), Color(0xFF546E7A), Color(0xFFFFFFFF)]) GestureDetector(onTap: () => Navigator.pop(dialogContext, color), child: CircleAvatar(backgroundColor: color, radius: 20, child: color == Colors.white ? const Icon(Icons.circle_outlined, color: Colors.black54) : null))]), const SizedBox(height: 18), TextField(controller: controller, onChanged: (_) => setDialogState(() {}), decoration: const InputDecoration(labelText: 'Any color (hex)', hintText: '#RRGGBB')), if (_parseColor(controller.text) != null) Padding(padding: const EdgeInsets.only(top: 12), child: Container(height: 28, decoration: BoxDecoration(color: _parseColor(controller.text), borderRadius: BorderRadius.circular(8))))])), actions: [if (allowAutomatic) TextButton(onPressed: () => Navigator.pop(dialogContext, Theme.of(context).colorScheme.onSurface), child: const Text('Use theme default')), TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')), FilledButton(onPressed: () { final color = _parseColor(controller.text); if (color != null) Navigator.pop(dialogContext, color); }, child: const Text('Apply'))]));
-    controller.dispose();
-    return selected;
+  Future<_ColorDialogResult?> _showColorDialog(String title, Color initial, {bool allowAutomatic = false}) async {
+    var selectedColor = initial;
+    final result = await showDialog<_ColorDialogResult>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: StatefulBuilder(
+          builder: (context, setDialogState) => SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ColorPicker(
+                  pickerColor: selectedColor,
+                  onColorChanged: (color) => setDialogState(() => selectedColor = color),
+                  enableAlpha: false,
+                  displayThumbColor: true,
+                  pickerAreaHeightPercent: .72,
+                  paletteType: PaletteType.hsvWithHue,
+                ),
+                const SizedBox(height: 8),
+                const Align(alignment: Alignment.centerLeft, child: Text('Suggestions')),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    for (final color in const [Color(0xFF102A43), Color(0xFF3154B8), Color(0xFF6E5AE6), Color(0xFF00897B), Color(0xFF2E7D32), Color(0xFF8D6E63), Color(0xFFFF8F00), Color(0xFFE65100), Color(0xFFC62828), Color(0xFFAD1457), Color(0xFF546E7A), Color(0xFFFFFFFF)])
+                      GestureDetector(
+                        onTap: () => setDialogState(() => selectedColor = color),
+                        child: CircleAvatar(
+                          backgroundColor: color,
+                          radius: 20,
+                          child: color == Colors.white ? const Icon(Icons.circle_outlined, color: Colors.black54) : null,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          if (allowAutomatic) TextButton(onPressed: () => Navigator.pop(dialogContext, const _ColorDialogResult.automatic()), child: const Text('Use theme default')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, _ColorDialogResult.color(selectedColor)), child: const Text('Apply')),
+        ],
+      ),
+    );
+    return result;
   }
 
   Future<void> _checkForUpdates() async {
@@ -603,6 +670,13 @@ String _formatUpdateBytes(int? bytes) {
 }
 String _formatSpeed(double bytesPerSecond) => bytesPerSecond < 1024 * 1024 ? '${(bytesPerSecond / 1024).toStringAsFixed(1)} KB' : '${(bytesPerSecond / (1024 * 1024)).toStringAsFixed(1)} MB';
 String _formatEta(int seconds) => seconds < 60 ? '${seconds}s' : '${seconds ~/ 60}m ${seconds % 60}s';
+class _ColorDialogResult {
+  const _ColorDialogResult.color(this.color) : automatic = false;
+  const _ColorDialogResult.automatic() : color = null, automatic = true;
+  final Color? color;
+  final bool automatic;
+}
+
 Color? _parseColor(String? value) { if (value == null) return null; var hex = value.trim().replaceFirst('#', ''); if (hex.length == 6) hex = 'FF$hex'; if (hex.length != 8) return null; final parsed = int.tryParse(hex, radix: 16); return parsed == null ? null : Color(parsed); }
 String _colorHex(Color color) => '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
 

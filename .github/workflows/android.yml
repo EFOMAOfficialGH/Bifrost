@@ -1,25 +1,41 @@
 name: Build Android APK
-
 on:
-  push:
+  workflow_run:
+    workflows: ["Build Windows package"]
+    types: [completed]
     branches: [main, master]
-    tags:
-      - 'v*'
-  workflow_dispatch:
-
 concurrency:
-  group: bifrost-android-${{ github.ref }}
+  group: bifrost-android-${{ github.event.workflow_run.head_branch || github.ref }}
   cancel-in-progress: true
-
 permissions:
+  actions: read
   contents: write
-
 jobs:
   build-android:
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - name: Download matching Windows packages
+        uses: actions/download-artifact@v4
+        with:
+          name: bifrost-windows-build
+          path: windows-artifact
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+      - name: Verify Windows installer package
+        shell: bash
+        run: |
+          installer=$(find windows-artifact -maxdepth 1 -type f -name 'Bifrost-Windows-*.exe' | head -n 1)
+          if [ -z "$installer" ]; then
+            echo "The matching Windows installer artifact was not found. Run the Windows workflow first." >&2
+            exit 1
+          fi
+          mkdir -p android/app/src/main/assets
+          cp "$installer" android/app/src/main/assets/bifrost-windows-installer.exe
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -53,20 +69,20 @@ jobs:
           EOF
       - name: Build release APK
         run: flutter build apk --release
-
       - name: Rename APK with version
         shell: bash
         run: |
           version="$(awk '/^version:/{print $2}' pubspec.yaml)"
           cp build/app/outputs/flutter-apk/app-release.apk "Bifrost-Android-${version}.apk"
-
-      - name: Upload APK
+      - name: Upload APK and Windows packages
         uses: actions/upload-artifact@v4
         with:
-          name: bifrost-android-apk
-          path: Bifrost-Android-*.apk
+          name: bifrost-release-build
+          path: |
+            Bifrost-Android-*.apk
+            windows-artifact/Bifrost-Windows-*.exe
+            windows-artifact/Bifrost-Windows-*.zip
           if-no-files-found: error
-
       - name: Generate release notes
         shell: bash
         run: |
@@ -83,20 +99,22 @@ jobs:
             echo
             echo
             echo "## Included downloads"
-            echo "- Android APK"
+            echo "- Android APK with the matching Windows installer embedded"
             echo "- Windows installer"
             echo "- Windows portable ZIP"
           } > release-notes.md
-
-      - name: Publish APK to GitHub Release
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
+      - name: Publish all packages to GitHub Release
+        if: github.event_name == 'workflow_run'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('v{0}', steps.app_version.outputs.version) }}
-          name: ${{ startsWith(github.ref, 'refs/tags/v') && format('Bifrost {0}', github.ref_name) || format('Bifrost v{0}', steps.app_version.outputs.version) }}
+          tag_name: v${{ steps.app_version.outputs.version }}
+          name: Bifrost v${{ steps.app_version.outputs.version }}
           prerelease: false
           make_latest: true
           body_path: release-notes.md
-          target_commitish: ${{ github.sha }}
+          target_commitish: ${{ github.event.workflow_run.head_sha || github.sha }}
           overwrite_files: true
-          files: Bifrost-Android-*.apk
+          files: |
+            Bifrost-Android-*.apk
+            windows-artifact/Bifrost-Windows-*.exe
+            windows-artifact/Bifrost-Windows-*.zip

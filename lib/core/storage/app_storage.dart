@@ -60,6 +60,7 @@ class AppStorage {
   Future<void> setCustomThemeColor(String value) async => (await _preferences).setString('customThemeColor', value);
   Future<String?> textColor() async => (await _preferences).getString('textColor');
   Future<void> setTextColor(String value) async => (await _preferences).setString('textColor', value);
+  Future<void> clearTextColor() async => (await _preferences).remove('textColor');
   Future<bool> onboardingComplete() async {
     final prefs = await _preferences;
     if (prefs.getBool('onboardingComplete') == true) return true;

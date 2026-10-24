@@ -86,35 +86,3 @@ jobs:
             Bifrost-Windows-*.zip
             Bifrost-Windows-*.exe
           if-no-files-found: error
-
-      - name: Publish Windows packages to GitHub Release
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if ($env:GITHUB_REF -like 'refs/tags/v*') {
-            $tag = $env:GITHUB_REF_NAME
-          } else {
-            $tag = 'v${{ steps.app_version.outputs.version }}'
-          }
-          $releaseReady = $false
-          for ($attempt = 1; $attempt -le 30; $attempt++) {
-            gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
-            if ($LASTEXITCODE -eq 0) {
-              $releaseReady = $true
-              break
-            }
-            Start-Sleep -Seconds 20
-          }
-          if (-not $releaseReady) {
-            throw "The Android workflow did not create release $tag within the expected time."
-          }
-          $assets = @(
-            (Get-ChildItem -File 'Bifrost-Windows-*.exe').FullName
-            (Get-ChildItem -File 'Bifrost-Windows-*.zip').FullName
-          )
-          if ($assets.Count -ne 2) {
-            throw "Expected one Windows installer and one portable ZIP, but found $($assets.Count) files."
-          }
-          gh release upload $tag @assets --repo $env:GITHUB_REPOSITORY --clobber

@@ -2,7 +2,7 @@
 
 Bifrost is a private, local-network file-sharing app for **Android and Windows**. It transfers files directly between nearby devices without accounts, cloud storage, ads, telemetry, or an internet connection for core transfers.
 
-> **Current version: v0.12.0+25**
+> **Current version: v0.12.0+26**
 >
 > Android-to-Android, Android-to-Windows, and Windows-to-Android transfers are implemented. The project is actively evolving toward a polished v1.0 release.
 
@@ -34,7 +34,8 @@ Bifrost is a private, local-network file-sharing app for **Android and Windows**
 - Bifrost splash screen with custom branding and glow
 - In-app GitHub Releases updater
 - Share Bifrost from Settings through Android's system Sharesheet
-- Send the current installed Bifrost APK to Bluetooth, messaging apps, cloud storage, or Files
+- Share the current installed Bifrost APK or the matching Windows installer from Android
+- Send Bifrost packages to Bluetooth, messaging apps, cloud storage, or Files
 - Automatic startup update checks
 - Update-size display before downloading
 - Download progress, speed, ETA, and cancellation
@@ -111,6 +112,8 @@ Bifrost includes these theme options:
 
 Text color can be configured independently in Settings. The splash screen uses the Bifrost branding, Mistical Spring title font, Helvetica-style subtitle, and warm yellow glow.
 
+The text-color picker includes a color wheel above the existing color suggestions. Choosing a different theme resets text color to the selected theme's automatic default; **Use theme default** also clears any saved custom text color.
+
 ## Updating Bifrost
 
 Bifrost checks the public GitHub Releases API for newer compatible releases.
@@ -155,7 +158,9 @@ On Android, open:
 Settings → Share Bifrost
 ```
 
-Bifrost copies the currently installed APK into a secure temporary share location and opens Android's system Sharesheet. The available destinations depend on the apps installed on the phone and may include Bluetooth, Telegram, WhatsApp, nearby sharing, cloud storage, and Save to Files.
+Bifrost shows two choices: share the installed Android APK, or share the matching Windows installer bundled into the Android release. It copies the selected package into a secure temporary share location and opens Android's system Sharesheet. The available destinations depend on the apps installed on the phone and may include Bluetooth, Telegram, WhatsApp, nearby sharing, cloud storage, and Save to Files.
+
+The Android release is built after the matching Windows workflow completes, so the Windows option shares the same versioned installer as the release.
 
 The current Share Bifrost action shares Bifrost itself. Exporting arbitrary installed apps, including complete split-APK or XAPK sets, is planned as a separate installed-app export feature.
 
@@ -175,28 +180,28 @@ They build and publish releases automatically.
 The workflows read the version from `pubspec.yaml`:
 
 ```yaml
-version: 0.12.0+25
+version: 0.12.0+26
 ```
 
 When the versioned source is pushed to `main`, the workflows automatically create or update:
 
 ```text
-Bifrost v0.12.0+25
+Bifrost v0.12.0+26
 ```
 
 The release receives assets similar to:
 
 ```text
-Bifrost-Android-0.12.0+25.apk
-Bifrost-Windows-0.12.0+25.exe
-Bifrost-Windows-0.12.0+25-portable.zip
+Bifrost-Android-0.12.0+26.apk
+Bifrost-Windows-0.12.0+26.exe
+Bifrost-Windows-0.12.0+26-portable.zip
 ```
 
-The Android workflow creates the release and generates the release notes. The Windows workflow waits for that release and uploads the Windows installer and portable ZIP without creating duplicate notes.
+The Windows workflow builds and uploads its packages first. The Android workflow then downloads those matching packages, embeds the Windows installer into the APK, and publishes the Android APK, Windows installer, and Windows portable ZIP together with the release notes.
 
 ### Release workflow behavior
 
-- Android and Windows builds run automatically after a push to `main`.
+- The Windows build runs after a push to `main`; the Android build starts automatically after the Windows artifact succeeds.
 - Newer pushes cancel older in-progress runs.
 - Android signing uses GitHub Secrets when configured.
 - The private keystore and `android/key.properties` must never be committed.

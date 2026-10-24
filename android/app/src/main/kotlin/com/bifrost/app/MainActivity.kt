@@ -24,6 +24,7 @@ class MainActivity : FlutterActivity() {
                     sharedFiles.clear()
                 }
                 "shareBifrostApk" -> shareInstalledApk(result)
+                "shareBifrostWindows" -> shareWindowsInstaller(result)
                 else -> result.notImplemented()
             }
         }
@@ -45,6 +46,25 @@ class MainActivity : FlutterActivity() {
             result.success(null)
         } catch (error: Exception) {
             result.error("SHARE_APK_FAILED", error.message, null)
+        }
+    }
+
+    private fun shareWindowsInstaller(result: MethodChannel.Result) {
+        try {
+            val shareableInstaller = File(cacheDir, "Bifrost-Windows-${BuildConfig.VERSION_NAME}.exe")
+            assets.open("bifrost-windows-installer.exe").use { input ->
+                shareableInstaller.outputStream().use { output -> input.copyTo(output) }
+            }
+            val uri = FileProvider.getUriForFile(this, "${BuildConfig.APPLICATION_ID}.fileprovider", shareableInstaller)
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/vnd.microsoft.portable-executable"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(shareIntent, "Share Bifrost Windows installer"))
+            result.success(null)
+        } catch (error: Exception) {
+            result.error("SHARE_WINDOWS_FAILED", "The Windows installer is not included in this build.", error.message)
         }
     }
 
