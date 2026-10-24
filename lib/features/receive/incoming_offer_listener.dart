@@ -1,6 +1,7 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+import '../../core/localization/localized_text.dart';
 
 import '../../core/networking/offer_broker.dart';
 import '../../core/notifications/transfer_notifications.dart';

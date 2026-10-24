@@ -48,6 +48,8 @@ class AppStorage {
 
   Future<String?> saveDirectoryPath() async => (await _preferences).getString('saveDirectoryPath');
   Future<void> setSaveDirectoryPath(String path) async => (await _preferences).setString('saveDirectoryPath', path);
+  Future<String> languageChoice() async => (await _preferences).getString('languageChoice') == 'ar' ? 'ar' : 'en';
+  Future<void> setLanguageChoice(String language) async => (await _preferences).setString('languageChoice', language == 'ar' ? 'ar' : 'en');
   Future<String> deviceName() async => (await _preferences).getString('deviceName') ?? 'Bifrost Device';
   Future<void> setDeviceName(String name) async => (await _preferences).setString('deviceName', name);
   Future<bool> backgroundActivity() async => (await _preferences).getBool('backgroundActivity') ?? false;

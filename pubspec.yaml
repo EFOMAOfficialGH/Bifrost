@@ -1,13 +1,15 @@
 name: bifrost
 description: "Bifrost — local-network file sharing for Android and Windows."
 publish_to: 'none'
-version: 0.12.7+30
+version: 0.13.0+31
 
 environment:
   sdk: ^3.13.5
 
 dependencies:
   flutter:
+    sdk: flutter
+  flutter_localizations:
     sdk: flutter
   flutter_riverpod: 2.6.1
   cupertino_icons: 1.0.8
@@ -31,6 +33,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icon.png
+    - assets/localization/strings.json
   fonts:
     - family: MisticalSpring
       fonts:

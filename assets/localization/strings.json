@@ -1,0 +1,1811 @@
+{
+  "_instructions": "Translation source reviewed for spelling and placeholder integrity. Keep language-choice captions exactly “English” and “العربية” in every locale.",
+  "strings": [
+    {
+      "key": "brand.name",
+      "en": "Bifrost",
+      "ar": "بايفروست",
+      "context": "Brand name; normally leave unchanged"
+    },
+    {
+      "key": "onboarding.folder_access_error",
+      "en": "Bifrost could not access that folder. Choose another location.",
+      "ar": "تعذّر على Bifrost الوصول إلى هذا المجلد. اختر موقعًا آخر.",
+      "context": "Setup screen error"
+    },
+    {
+      "key": "onboarding.welcome",
+      "en": "Welcome to Bifrost",
+      "ar": "مرحبًا بك في Bifrost",
+      "context": "First-run introduction"
+    },
+    {
+      "key": "onboarding.intro",
+      "en": "Set up your device once. You can change these choices later in Settings.",
+      "ar": "أعِدّ جهازك مرة واحدة. يمكنك تغيير هذه الخيارات لاحقًا من الإعدادات.",
+      "context": "First-run introduction"
+    },
+    {
+      "key": "onboarding.device_name",
+      "en": "Choose device name",
+      "ar": "اختر اسمًا للجهاز",
+      "context": "Setup field label"
+    },
+    {
+      "key": "onboarding.save_received_files_to",
+      "en": "Save received files to",
+      "ar": "احفظ الملفات المستلمة في",
+      "context": "Setup field label"
+    },
+    {
+      "key": "onboarding.grant_or_change_location",
+      "en": "Give access / Change save location",
+      "ar": "منح الإذن / تغيير موقع الحفظ",
+      "context": "Setup button; preserve slash distinction as appropriate"
+    },
+    {
+      "key": "onboarding.setting_up",
+      "en": "Setting up…",
+      "ar": "جارٍ الإعداد…",
+      "context": "Setup progress"
+    },
+    {
+      "key": "onboarding.continue",
+      "en": "Continue",
+      "ar": "متابعة",
+      "context": "Setup button"
+    },
+    {
+      "key": "navigation.nearby",
+      "en": "Nearby",
+      "ar": "بالقرب منك",
+      "context": "Bottom navigation label and help references"
+    },
+    {
+      "key": "navigation.history",
+      "en": "History",
+      "ar": "التاريخ",
+      "context": "Bottom navigation label and help references"
+    },
+    {
+      "key": "navigation.settings",
+      "en": "Settings",
+      "ar": "الإعدادات",
+      "context": "Bottom navigation label and help references"
+    },
+    {
+      "key": "home.help",
+      "en": "Help",
+      "ar": "مساعدة",
+      "context": "Home/help page"
+    },
+    {
+      "key": "nearby.title",
+      "en": "Nearby devices",
+      "ar": "أجهزة بالقرب منك",
+      "context": "Nearby page heading"
+    },
+    {
+      "key": "nearby.empty_subtitle",
+      "en": "Devices on your local Wi-Fi will appear here.",
+      "ar": "ستظهر هنا الأجهزة المتصلة بشبكة Wi-Fi المحلية.",
+      "context": "Nearby empty state"
+    },
+    {
+      "key": "nearby.searching",
+      "en": "Searching this Wi-Fi network…",
+      "ar": "جارٍ البحث على شبكة Wi-Fi هذه…",
+      "context": "Nearby status"
+    },
+    {
+      "key": "nearby.discovery_milestone",
+      "en": "Discovery arrives in Milestone 3",
+      "ar": "ستتوفر ميزة اكتشاف الأجهزة في المرحلة 3",
+      "context": "Legacy/test mode status; verify whether still shown"
+    },
+    {
+      "key": "nearby.this_device",
+      "en": "This device",
+      "ar": "هذا الجهاز",
+      "context": "Local device heading"
+    },
+    {
+      "key": "nearby.ready_to_receive",
+      "en": "Ready to receive • Bifrost Phone",
+      "ar": "جاهز للاستلام • Bifrost Phone",
+      "context": "Default Android ready status; Bifrost Phone is a device-name default"
+    },
+    {
+      "key": "nearby.file_picker_title",
+      "en": "File picker",
+      "ar": "محدد الملفات",
+      "context": "File picker title if shown by app"
+    },
+    {
+      "key": "nearby.send_files",
+      "en": "Send files",
+      "ar": "إرسال الملفات",
+      "context": "File picker action"
+    },
+    {
+      "key": "nearby.troubleshooting",
+      "en": "Troubleshooting",
+      "ar": "استكشاف الأخطاء وإصلاحها",
+      "context": "Help navigation label"
+    },
+    {
+      "key": "nearby.refresh",
+      "en": "Refresh",
+      "ar": "تحديث",
+      "context": "Tooltip"
+    },
+    {
+      "key": "nearby.drop_files",
+      "en": "Drop files here",
+      "ar": "أفلِت الملفات هنا",
+      "context": "Drag-and-drop prompt"
+    },
+    {
+      "key": "nearby.drop_or_choose_windows",
+      "en": "Drop files here or press \"Choose\" to start sending files",
+      "ar": "أفلِت الملفات هنا أو اضغط على «اختر» لبدء إرسال الملفات",
+      "context": "Windows drag-and-drop prompt; keep quoted button term consistent"
+    },
+    {
+      "key": "nearby.press_choose",
+      "en": "Press \"Choose\" to start sending files",
+      "ar": "اضغط على «اختر» لبدء إرسال الملفات",
+      "context": "Android send prompt"
+    },
+    {
+      "key": "nearby.choose",
+      "en": "Choose",
+      "ar": "اختر",
+      "context": "Button"
+    },
+    {
+      "key": "nearby.completed",
+      "en": "Completed",
+      "ar": "اكتمل",
+      "context": "Queue/history status"
+    },
+    {
+      "key": "nearby.failed",
+      "en": "Failed",
+      "ar": "فشل",
+      "context": "Queue/history status"
+    },
+    {
+      "key": "nearby.remove_queued_file",
+      "en": "Remove",
+      "ar": "إزالة",
+      "context": "Queued file action"
+    },
+    {
+      "key": "nearby.clear_queue",
+      "en": "Clear queued files",
+      "ar": "حذف قائمة الإرسال",
+      "context": "Queue action"
+    },
+    {
+      "key": "nearby.cancel_transfer",
+      "en": "Cancel transfer",
+      "ar": "إلغاء الإرسال",
+      "context": "Transfer action"
+    },
+    {
+      "key": "nearby.no_devices_searching",
+      "en": "No nearby devices found yet. Searching again automatically…",
+      "ar": "لم يُعثر على أي أجهزة قريبة بعد. سيُعاد البحث تلقائيًا…",
+      "context": "Nearby empty state while searching"
+    },
+    {
+      "key": "nearby.no_devices_idle",
+      "en": "No nearby devices found yet. Try refresh, manual IP, or check the troubleshooting guide.",
+      "ar": "لم يُعثر على أي أجهزة قريبة بعد. جرّب التحديث، أو أدخل عنوان IP يدويًا، أو راجع دليل استكشاف الأخطاء وإصلاحها.",
+      "context": "Nearby empty state"
+    },
+    {
+      "key": "nearby.connection_qr_tooltip",
+      "en": "Show connection QR",
+      "ar": "إظهار رمز QR للاتصال",
+      "context": "Tooltip"
+    },
+    {
+      "key": "nearby.connect_by_ip_address",
+      "en": "Connect by IP address",
+      "ar": "الاتصال بعنوان IP",
+      "context": "Button"
+    },
+    {
+      "key": "nearby.qr_instructions",
+      "en": "Use this code with a future Bifrost scanner, or enter the address manually.",
+      "ar": "استخدم هذا الرمز مع ماسح Bifrost الذي سيتوفر مستقبلًا، أو أدخل العنوان يدويًا.",
+      "context": "QR dialog; currently describes planned scanner"
+    },
+    {
+      "key": "nearby.close",
+      "en": "Close",
+      "ar": "إغلاق",
+      "context": "Dialog button"
+    },
+    {
+      "key": "nearby.transfer_started_to",
+      "en": "Transfer started to {device}",
+      "ar": "بدأ النقل إلى {device}",
+      "context": "Snackbar; {device} is a device name"
+    },
+    {
+      "key": "nearby.sending_file",
+      "en": "Sending {file}",
+      "ar": "جارٍ إرسال {file}",
+      "context": "Transfer status; {file} is filename"
+    },
+    {
+      "key": "nearby.sent_file",
+      "en": "Sent {file}",
+      "ar": "تم إرسال {file}",
+      "context": "Transfer status; {file} is filename"
+    },
+    {
+      "key": "nearby.connect_by_ip_dialog",
+      "en": "Connect by IP",
+      "ar": "الاتصال بعنوان IP",
+      "context": "Dialog title"
+    },
+    {
+      "key": "nearby.ip_address",
+      "en": "IP address",
+      "ar": "عنوان IP",
+      "context": "Field label"
+    },
+    {
+      "key": "nearby.port",
+      "en": "Port",
+      "ar": "المنفذ",
+      "context": "Field label"
+    },
+    {
+      "key": "nearby.cancel",
+      "en": "Cancel",
+      "ar": "إلغاء",
+      "context": "Button"
+    },
+    {
+      "key": "nearby.connect",
+      "en": "Connect",
+      "ar": "اتصل",
+      "context": "Button"
+    },
+    {
+      "key": "help.title",
+      "en": "Help & Troubleshooting",
+      "ar": "المساعدة واستكشاف الأخطاء وإصلاحها",
+      "context": "Help page title"
+    },
+    {
+      "key": "help.using_bifrost",
+      "en": "Using Bifrost",
+      "ar": "استخدام Bifrost",
+      "context": "Help section heading"
+    },
+    {
+      "key": "help.send_file_title",
+      "en": "Send a file",
+      "ar": "إرسال ملف",
+      "context": "Help item heading"
+    },
+    {
+      "key": "help.send_file_body",
+      "en": "Open Nearby, choose a device, then pick files or drag them into the Windows window. The other device can accept or reject the transfer.",
+      "ar": "افتح «الأجهزة القريبة»، واختر جهازًا، ثم حدّد الملفات أو اسحبها إلى نافذة Windows. يمكن للجهاز الآخر قبول عملية النقل أو رفضها.",
+      "context": "Help instructions"
+    },
+    {
+      "key": "help.android_share_title",
+      "en": "Use Android Share",
+      "ar": "استعمال ميزة المشاركة في الأندرويد",
+      "context": "Help item heading"
+    },
+    {
+      "key": "help.android_share_body",
+      "en": "From Gallery or Files, tap Share and choose Bifrost. The selected files will appear in the Nearby queue.",
+      "ar": "من «المعرض» أو «الملفات»، اضغط على «مشاركة» واختر Bifrost. ستظهر الملفات المحددة في قائمة انتظار الإرسال ضمن «الأجهزة القريبة».",
+      "context": "Help instructions"
+    },
+    {
+      "key": "help.save_location_title",
+      "en": "Where files are saved",
+      "ar": "مكان حفظ الملفات",
+      "context": "Help item heading"
+    },
+    {
+      "key": "help.save_location_body",
+      "en": "Received files go to Download/Bifrost by default. Change this in Settings → Save location.",
+      "ar": "تُحفَظ الملفات المستلمة افتراضيًا في Download/Bifrost. يمكنك تغيير ذلك من «الإعدادات» ← «موقع الحفظ».",
+      "context": "Help instructions; Download/Bifrost is a folder path"
+    },
+    {
+      "key": "help.trusted_devices_title",
+      "en": "Trusted devices",
+      "ar": "الأجهزة الموثوقة",
+      "context": "Help item heading"
+    },
+    {
+      "key": "help.trusted_devices_body",
+      "en": "Trust a device when accepting its first transfer to allow future transfers without asking. Remove it later from Settings → Trusted devices.",
+      "ar": "عند قبول أول عملية نقل من جهاز، اختر الوثوق به للسماح بعمليات النقل المستقبلية دون طلب موافقتك. يمكنك إزالته لاحقًا من «الإعدادات» ← «الأجهزة الموثوقة».",
+      "context": "Help instructions"
+    },
+    {
+      "key": "help.if_something_fails",
+      "en": "If something fails",
+      "ar": "إذا تعذّر إتمام شيء ما",
+      "context": "Help section heading"
+    },
+    {
+      "key": "help.same_network_title",
+      "en": "Same local network",
+      "ar": "نفس الشبكة المحلية",
+      "context": "Help item heading"
+    },
+    {
+      "key": "help.same_network_body",
+      "en": "Both devices must be connected to the same Wi-Fi router, or one phone must be connected to the other phone’s hotspot.",
+      "ar": "يجب أن يكون الجهازان متصلين بموجّه Wi-Fi نفسه، أو أن يكون أحد الهاتفين متصلًا بنقطة الاتصال الشخصية للهاتف الآخر.",
+      "context": "Help instructions; Wi-Fi is a technical name"
+    },
+    {
+      "key": "help.client_isolation_title",
+      "en": "Client isolation",
+      "ar": "عزل الأجهزة على الشبكة",
+      "context": "Help item heading"
+    },
+    {
+      "key": "help.client_isolation_body",
+      "en": "Guest Wi-Fi and some hotspots block devices from talking to each other. Try the main home network or manual IP.",
+      "ar": "قد تمنع شبكات Wi-Fi المخصصة للضيوف وبعض نقاط الاتصال الأجهزة من التواصل فيما بينها. جرّب شبكة المنزل الرئيسية أو الاتصال يدويًا بعنوان IP.",
+      "context": "Help instructions"
+    },
+    {
+      "key": "help.vpn_title",
+      "en": "VPN",
+      "ar": "VPN",
+      "context": "Help item heading; acronym can remain VPN"
+    },
+    {
+      "key": "help.vpn_body",
+      "en": "Temporarily disconnect a VPN. It can send local traffic through a different network.",
+      "ar": "افصل اتصال VPN مؤقتًا؛ فقد يوجّه حركة البيانات المحلية عبر شبكة أخرى.",
+      "context": "Help instructions"
+    },
+    {
+      "key": "help.windows_profile_title",
+      "en": "Windows network profile",
+      "ar": "ملف تعريف شبكة Windows",
+      "context": "Help item heading"
+    },
+    {
+      "key": "help.windows_profile_body",
+      "en": "Set the Windows network to Private and allow Bifrost through the Windows Firewall when prompted.",
+      "ar": "اضبط ملف تعريف شبكة Windows على «خاص»، واسمح لـ Bifrost بالمرور عبر جدار حماية Windows عند ظهور المطالبة.",
+      "context": "Help instructions; Private may be a Windows UI option"
+    },
+    {
+      "key": "help.manual_ip_title",
+      "en": "Manual IP fallback",
+      "ar": "الاتصال الاحتياطي بعنوان IP يدويًا",
+      "context": "Help item heading"
+    },
+    {
+      "key": "help.manual_ip_body",
+      "en": "Use Connect by IP when automatic discovery is blocked. The receiver shows its IP address in the networking test screen.",
+      "ar": "استخدم «الاتصال عبر IP» عندما يتعذر الاكتشاف التلقائي. يعرض جهاز الاستقبال عنوان IP الخاص به في شاشة اختبار الشبكة.",
+      "context": "Help instructions"
+    },
+    {
+      "key": "help.retry_title",
+      "en": "Retry failed transfers",
+      "ar": "إعادة محاولة عمليات النقل الفاشلة",
+      "context": "Help item heading"
+    },
+    {
+      "key": "help.retry_body",
+      "en": "Open History, tap a failed sent file, and choose Retry transfer. Files that were moved or deleted can be removed from History.",
+      "ar": "افتح «السجل»، واضغط على ملف مُرسَل فشل نقله، ثم اختر «إعادة محاولة النقل». يمكن إزالة الملفات التي نُقلت أو حُذفت من «السجل».",
+      "context": "Help instructions"
+    },
+    {
+      "key": "history.transfer_details",
+      "en": "Transfer details",
+      "ar": "تفاصيل عملية النقل",
+      "context": "Dialog title"
+    },
+    {
+      "key": "history.install_apk",
+      "en": "Install APK",
+      "ar": "تثبيت APK",
+      "context": "File action; APK may remain acronym"
+    },
+    {
+      "key": "history.open",
+      "en": "Open",
+      "ar": "فتح",
+      "context": "File action"
+    },
+    {
+      "key": "history.open_file_location",
+      "en": "Open File Location",
+      "ar": "فتح موقع الملف",
+      "context": "Windows action"
+    },
+    {
+      "key": "history.failed",
+      "en": "Failed",
+      "ar": "فشل",
+      "context": "Transfer status"
+    },
+    {
+      "key": "history.sent",
+      "en": "Sent",
+      "ar": "أُرسل",
+      "context": "Transfer direction"
+    },
+    {
+      "key": "history.retry_transfer",
+      "en": "Retry transfer",
+      "ar": "إعادة محاولة النقل",
+      "context": "Action"
+    },
+    {
+      "key": "history.file_unavailable",
+      "en": "File is no longer available",
+      "ar": "الملف لم يعد متوفرا",
+      "context": "Dialog title"
+    },
+    {
+      "key": "history.file_moved_deleted",
+      "en": "The saved file may have been moved or deleted.",
+      "ar": "ربما نُقل الملف المحفوظ أو حُذف.",
+      "context": "Dialog message"
+    },
+    {
+      "key": "history.delete_from_history",
+      "en": "Delete from History",
+      "ar": "المسح من تاريخ عمليات النقل",
+      "context": "Action"
+    },
+    {
+      "key": "history.opened_location",
+      "en": "Opened file location: {path}",
+      "ar": "تم فتح موقع الملف: {path}",
+      "context": "Snackbar; {path} is a filesystem path"
+    },
+    {
+      "key": "history.title",
+      "en": "Transfer history",
+      "ar": "سجل عمليات النقل",
+      "context": "Page/empty-state heading"
+    },
+    {
+      "key": "history.empty",
+      "en": "Completed transfers will appear here.",
+      "ar": "ستظهر عمليات النقل المكتملة هنا.",
+      "context": "Empty state"
+    },
+    {
+      "key": "history.clear",
+      "en": "Clear history",
+      "ar": "مسح السجل",
+      "context": "Action/tooltip"
+    },
+    {
+      "key": "history.status_line",
+      "en": "Status: {status}\nDirection: {direction}\nDevice: {device}\nSize: {size}\nTime: {time}{extra}",
+      "ar": "الحالة: {status}\nالاتجاه: {direction}\nالجهاز: {device}\nالحجم: {size}\nالوقت: {time}{extra}",
+      "context": "Transfer details; preserve placeholders and line breaks"
+    },
+    {
+      "key": "history.retrying_file",
+      "en": "Retrying {file}…",
+      "ar": "جارٍ إعادة محاولة نقل {file}…",
+      "context": "Snackbar/status; {file} is filename"
+    },
+    {
+      "key": "history.retry_completed",
+      "en": "Retry completed successfully.",
+      "ar": "اكتملت إعادة المحاولة بنجاح.",
+      "context": "Snackbar"
+    },
+    {
+      "key": "history.retry_cancelled",
+      "en": "Retry cancelled.",
+      "ar": "أُلغيت إعادة المحاولة.",
+      "context": "Snackbar"
+    },
+    {
+      "key": "history.retry_failed",
+      "en": "Retry failed: {error}",
+      "ar": "فشلت إعادة المحاولة: {error}",
+      "context": "Snackbar; {error} is technical error detail"
+    },
+    {
+      "key": "history.completed",
+      "en": "Completed",
+      "ar": "اكتمل",
+      "context": "Transfer status"
+    },
+    {
+      "key": "history.record_subtitle",
+      "en": "{direction} • {status} • {size}\n{device} • {time}",
+      "ar": "{direction} • {status} • {size}\n{device} • {time}",
+      "context": "History row; preserve placeholders and line break"
+    },
+    {
+      "key": "history.cancel",
+      "en": "Cancel",
+      "ar": "إلغاء",
+      "context": "Button"
+    },
+    {
+      "key": "history.remove_trusted_prompt",
+      "en": "Remove trusted device?",
+      "ar": "إزالة الجهاز الموثوق؟",
+      "context": "Confirmation dialog"
+    },
+    {
+      "key": "history.remove_trusted_message",
+      "en": "{device} will need approval next time it sends a file.",
+      "ar": "سيحتاج {device} إلى موافقتك في المرة القادمة التي يرسل فيها ملفًا.",
+      "context": "Confirmation dialog; {device} is a device name"
+    },
+    {
+      "key": "history.keep",
+      "en": "Keep",
+      "ar": "ابقاء",
+      "context": "Confirmation button"
+    },
+    {
+      "key": "history.remove",
+      "en": "Remove",
+      "ar": "إزالة",
+      "context": "Action"
+    },
+    {
+      "key": "history.no_trusted_devices",
+      "en": "No trusted devices",
+      "ar": "لا توجد اجهزة موثوقة",
+      "context": "Empty state"
+    },
+    {
+      "key": "history.trust_device_instruction",
+      "en": "Trust a device when accepting its first transfer and it will appear here.",
+      "ar": "سيظهر الجهاز هنا بعد الوثوق به عند قبول أول عملية نقل منه.",
+      "context": "Empty state"
+    },
+    {
+      "key": "history.last_seen",
+      "en": "Last seen {time}\n{id}",
+      "ar": "آخر ظهور {time}\n{id}",
+      "context": "Trusted-device row; preserve placeholders and line break"
+    },
+    {
+      "key": "history.remove_trusted_tooltip",
+      "en": "Remove trusted device",
+      "ar": "حذف جهاز موثوق",
+      "context": "Tooltip"
+    },
+    {
+      "key": "settings.title",
+      "en": "Settings",
+      "ar": "الإعدادات",
+      "context": "Page title"
+    },
+    {
+      "key": "settings.device_name",
+      "en": "Device name",
+      "ar": "اسم الجهاز",
+      "context": "Field label"
+    },
+    {
+      "key": "settings.save_device_name",
+      "en": "Save device name",
+      "ar": "حفظ اسم الجهاز",
+      "context": "Tooltip/button"
+    },
+    {
+      "key": "settings.save_location",
+      "en": "Save location",
+      "ar": "مكان الحفظ",
+      "context": "Setting label"
+    },
+    {
+      "key": "settings.background_receiving",
+      "en": "Background receiving",
+      "ar": "الاستلام في الخلفية",
+      "context": "Setting title and notification channel"
+    },
+    {
+      "key": "settings.background_receiving_description",
+      "en": "Keep Bifrost listening while the app is in the background.",
+      "ar": "يواصل Bifrost الاستماع أثناء تشغيل التطبيق في الخلفية.",
+      "context": "Setting description"
+    },
+    {
+      "key": "settings.automatic_updates",
+      "en": "Automatically check for updates",
+      "ar": "التحقق التلقائي من التحديثات",
+      "context": "Setting title"
+    },
+    {
+      "key": "settings.automatic_updates_description",
+      "en": "Silently check GitHub when Bifrost starts.",
+      "ar": "يتحقق Bifrost بصمت من وجود تحديثات على GitHub عند بدء تشغيله.",
+      "context": "Setting description"
+    },
+    {
+      "key": "settings.trusted_devices",
+      "en": "Trusted devices",
+      "ar": "الأجهزة الموثوقة",
+      "context": "Setting title"
+    },
+    {
+      "key": "settings.trusted_devices_description",
+      "en": "Manage devices that can send without approval.",
+      "ar": "إدارة الأجهزة التي يمكنها الإرسال دون موافقة.",
+      "context": "Setting description"
+    },
+    {
+      "key": "settings.theme",
+      "en": "Theme",
+      "ar": "النمط",
+      "context": "Setting title"
+    },
+    {
+      "key": "settings.text_color",
+      "en": "Text Color",
+      "ar": "لون النص",
+      "context": "Setting title"
+    },
+    {
+      "key": "settings.automatic_theme_color",
+      "en": "Automatic for the selected theme",
+      "ar": "تلقائي حسب النمط المحدد",
+      "context": "Text color option"
+    },
+    {
+      "key": "settings.check_updates",
+      "en": "Check for updates",
+      "ar": "التحقق من التحديثات",
+      "context": "Setting title/action"
+    },
+    {
+      "key": "settings.checking_releases",
+      "en": "Checking GitHub Releases…",
+      "ar": "جارٍ التحقق من إصدارات GitHub…",
+      "context": "Progress subtitle"
+    },
+    {
+      "key": "settings.downloading_update",
+      "en": "Downloading update… You can leave Bifrost open in the background.",
+      "ar": "جارٍ تنزيل التحديث… يمكنك إبقاء Bifrost مفتوحًا في الخلفية.",
+      "context": "Progress subtitle"
+    },
+    {
+      "key": "settings.download_without_github",
+      "en": "Download updates without opening GitHub",
+      "ar": "نزّل التحديثات دون فتح GitHub",
+      "context": "Setting subtitle"
+    },
+    {
+      "key": "settings.share_bifrost",
+      "en": "Share Bifrost",
+      "ar": "مشاركة بايفروست",
+      "context": "Setting title"
+    },
+    {
+      "key": "settings.share_android_windows",
+      "en": "Share the Android APK or Windows installer",
+      "ar": "شارك ملف APK لنظام Android أو مُثبّت Windows",
+      "context": "Setting description"
+    },
+    {
+      "key": "settings.share_android_only",
+      "en": "Package sharing is available on Android",
+      "ar": "مشاركة البرنامج متوفرة حاليا على الاندرويد فقط",
+      "context": "Setting description"
+    },
+    {
+      "key": "settings.about",
+      "en": "About Bifrost",
+      "ar": "حول بايفروست",
+      "context": "Setting title"
+    },
+    {
+      "key": "settings.about_description",
+      "en": "Credits, version, and project information",
+      "ar": "الاعتمادات، والإصدار، ومعلومات المشروع",
+      "context": "Setting description"
+    },
+    {
+      "key": "settings.language",
+      "en": "Language",
+      "ar": "اللغة",
+      "context": "New setting title to be added"
+    },
+    {
+      "key": "settings.language_english",
+      "en": "English",
+      "ar": "English",
+      "context": "Settings language choice; the English name is usually kept as English"
+    },
+    {
+      "key": "settings.language_arabic",
+      "en": "Arabic",
+      "ar": "العربية",
+      "context": "Settings language choice; Arabic endonym"
+    },
+    {
+      "key": "settings.choose_language",
+      "en": "Choose language",
+      "ar": "اختر لغة البرنامج",
+      "context": "New dialog/screen title to be added"
+    },
+    {
+      "key": "theme.choose",
+      "en": "Choose a theme",
+      "ar": "اختر سمة",
+      "context": "Theme selection title"
+    },
+    {
+      "key": "theme.day",
+      "en": "Day",
+      "ar": "النهار",
+      "context": "Theme name"
+    },
+    {
+      "key": "theme.day_description",
+      "en": "Blue sky, clouds, and warm sunlight",
+      "ar": "سماء زرقاء وغيوم وأشعة شمس دافئة",
+      "context": "Theme description"
+    },
+    {
+      "key": "theme.sunset",
+      "en": "Sunset",
+      "ar": "الغروب",
+      "context": "Theme name"
+    },
+    {
+      "key": "theme.sunset_description",
+      "en": "Amber sky, clouds, and a setting sun",
+      "ar": "سماء بلون كهرماني وغيوم وشمس تغرب عند الأفق",
+      "context": "Theme description"
+    },
+    {
+      "key": "theme.night",
+      "en": "Night",
+      "ar": "الليل",
+      "context": "Theme name"
+    },
+    {
+      "key": "theme.night_description",
+      "en": "Deep blue night with stars",
+      "ar": "سماء زرقاء غامقة مليئة بالنجوم",
+      "context": "Theme description"
+    },
+    {
+      "key": "theme.device_time",
+      "en": "Use Device Time",
+      "ar": "استخدم وقت الجهاز",
+      "context": "Theme name"
+    },
+    {
+      "key": "theme.device_time_description",
+      "en": "Automatically changes with the clock",
+      "ar": "يتغير تلقائيًا وفقًا للساعة",
+      "context": "Theme description"
+    },
+    {
+      "key": "theme.custom_color",
+      "en": "Custom Color",
+      "ar": "لون مخصص",
+      "context": "Theme name"
+    },
+    {
+      "key": "theme.custom_color_description",
+      "en": "Choose a coordinated color atmosphere",
+      "ar": "اختر أجواء لونية متناسقة",
+      "context": "Theme description"
+    },
+    {
+      "key": "theme.choose_color",
+      "en": "Choose theme color",
+      "ar": "اختر لون السمة",
+      "context": "Color dialog title"
+    },
+    {
+      "key": "theme.suggestions",
+      "en": "Suggestions",
+      "ar": "اقتراحات",
+      "context": "Color picker heading"
+    },
+    {
+      "key": "theme.use_default",
+      "en": "Use theme default",
+      "ar": "استخدم الإعداد الافتراضي للسمة",
+      "context": "Color option"
+    },
+    {
+      "key": "theme.cancel",
+      "en": "Cancel",
+      "ar": "إلغاء",
+      "context": "Button"
+    },
+    {
+      "key": "theme.apply",
+      "en": "Apply",
+      "ar": "تطبيق",
+      "context": "Button"
+    },
+    {
+      "key": "update.latest_compatible",
+      "en": "You are using the latest compatible Bifrost version.",
+      "ar": "أنت تستخدم أحدث إصدار متوافق من Bifrost.",
+      "context": "Update check result"
+    },
+    {
+      "key": "update.available",
+      "en": "Bifrost {version} is available",
+      "ar": "يتوفر Bifrost {version} الآن",
+      "context": "Update dialog title; {version} is release version"
+    },
+    {
+      "key": "update.no_installer",
+      "en": "A release exists, but it has no installer for this platform.",
+      "ar": "يتوفر إصدار جديد، لكن لا يتوفر له مُثبّت لهذه المنصة.",
+      "context": "Update dialog message"
+    },
+    {
+      "key": "update.download_size",
+      "en": "Download size: {size}",
+      "ar": "حجم التحديث: {size}",
+      "context": "Update dialog message; {size} is formatted file size"
+    },
+    {
+      "key": "update.background_download",
+      "en": "The download can continue while Bifrost is in the background.",
+      "ar": "يمكن أن يستمر التنزيل بينما يعمل Bifrost في الخلفية.",
+      "context": "Update dialog message"
+    },
+    {
+      "key": "update.later",
+      "en": "Later",
+      "ar": "لاحقا",
+      "context": "Button"
+    },
+    {
+      "key": "update.download_install",
+      "en": "Download and install",
+      "ar": "تحميل وتثبيت",
+      "context": "Button"
+    },
+    {
+      "key": "update.github_error",
+      "en": "Could not check GitHub Releases: {error}",
+      "ar": "تعذّر التحقق من إصدارات GitHub: {error}",
+      "context": "Snackbar; {error} is technical error detail"
+    },
+    {
+      "key": "update.downloading",
+      "en": "Downloading Bifrost {version}",
+      "ar": "جارٍ تنزيل Bifrost {version}",
+      "context": "Progress dialog title"
+    },
+    {
+      "key": "update.percent_and_size",
+      "en": "{percent}% • {received} of {total}",
+      "ar": "{percent}% • {received} من إجمالي {total}",
+      "context": "Progress detail; preserve numeric placeholders"
+    },
+    {
+      "key": "update.downloaded_size",
+      "en": "{received} downloaded",
+      "ar": "تم تنزيل {received}",
+      "context": "Progress detail"
+    },
+    {
+      "key": "update.speed_eta",
+      "en": "{speed}/s • {eta} left",
+      "ar": "{speed}/ث • تبقى {eta}",
+      "context": "Progress detail; speed and ETA are formatted values"
+    },
+    {
+      "key": "update.continue_background",
+      "en": "The download continues while Bifrost is in the background.",
+      "ar": "يستمر التنزيل بينما يعمل Bifrost في الخلفية.",
+      "context": "Progress dialog"
+    },
+    {
+      "key": "update.cancel",
+      "en": "Cancel",
+      "ar": "إلغاء",
+      "context": "Button"
+    },
+    {
+      "key": "update.download_failed",
+      "en": "The update could not be downloaded. You can try again from Settings.",
+      "ar": "تعذّر تنزيل التحديث. يمكنك المحاولة مجددًا من الإعدادات.",
+      "context": "Snackbar"
+    },
+    {
+      "key": "update.cancelled",
+      "en": "Update download cancelled.",
+      "ar": "تم إلغاء تنزيل التحديث.",
+      "context": "Snackbar"
+    },
+    {
+      "key": "update.failed_with_error",
+      "en": "Update download failed: {error}",
+      "ar": "فشل تنزيل التحديث: {error}",
+      "context": "Snackbar; {error} is technical error detail"
+    },
+    {
+      "key": "update.unknown_size",
+      "en": "unknown size",
+      "ar": "حجم غير معلوم",
+      "context": "Formatted update size"
+    },
+    {
+      "key": "transfer.details_status",
+      "en": "{percent}%",
+      "ar": "{percent}%",
+      "context": "Progress label"
+    },
+    {
+      "key": "transfer.record_direction_peer",
+      "en": "{direction} • {device}",
+      "ar": "{direction} • {device}",
+      "context": "Transfer progress row"
+    },
+    {
+      "key": "transfer.speed_eta",
+      "en": "{speed}/s • {eta} left",
+      "ar": "{speed}/ث • تبقى {eta}",
+      "context": "Transfer progress; formatted values"
+    },
+    {
+      "key": "transfer.retry_completed",
+      "en": "Retry completed successfully.",
+      "ar": "اكتملت إعادة المحاولة بنجاح.",
+      "context": "Transfer feedback"
+    },
+    {
+      "key": "transfer.cancel",
+      "en": "Cancel",
+      "ar": "إلغاء",
+      "context": "Button"
+    },
+    {
+      "key": "transfer.incoming",
+      "en": "Incoming transfer",
+      "ar": "نقل وارد",
+      "context": "Dialog and notification title"
+    },
+    {
+      "key": "transfer.incoming_files_ready",
+      "en": "{count} file(s) is ready for approval",
+      "ar": "ملفات جاهزة للموافقة ({count})",
+      "context": "Notification body; count is numeric, localize singular/plural in implementation"
+    },
+    {
+      "key": "transfer.incoming_summary",
+      "en": "{count} file(s) • {size}\n\n{files}",
+      "ar": "ملفات واردة ({count}) • {size}\n\n{files}",
+      "context": "Incoming approval dialog; files is a newline-separated list of filenames"
+    },
+    {
+      "key": "transfer.trust_device",
+      "en": "Trust this device",
+      "ar": "الوثوق بهذا الجهاز",
+      "context": "Checkbox title"
+    },
+    {
+      "key": "transfer.auto_accept",
+      "en": "Automatically accept future transfers from it.",
+      "ar": "قبول عمليات النقل المستقبلية من هذا الجهاز تلقائيًا.",
+      "context": "Checkbox description"
+    },
+    {
+      "key": "transfer.decline",
+      "en": "Decline",
+      "ar": "رفض",
+      "context": "Button"
+    },
+    {
+      "key": "transfer.accept",
+      "en": "Accept",
+      "ar": "قبول",
+      "context": "Button"
+    },
+    {
+      "key": "transfer.started",
+      "en": "Transfer started",
+      "ar": "تم بدء عملية النقل",
+      "context": "Snackbar"
+    },
+    {
+      "key": "transfer.cancelled",
+      "en": "Transfer cancelled",
+      "ar": "تم إلغاء عملية النقل",
+      "context": "Notification/feedback"
+    },
+    {
+      "key": "transfer.complete",
+      "en": "Transfer complete",
+      "ar": "اكتملت عملية النقل",
+      "context": "Notification title/body"
+    },
+    {
+      "key": "transfer.failed",
+      "en": "Transfer failed",
+      "ar": "فشلت عملية النقل",
+      "context": "Notification title/body"
+    },
+    {
+      "key": "transfer.receiving_file",
+      "en": "Receiving {file}",
+      "ar": "يتم استلام {file}",
+      "context": "Notification title; {file} is filename"
+    },
+    {
+      "key": "transfer.received_file",
+      "en": "Received {file}",
+      "ar": "تم استلام {file}",
+      "context": "Notification title; {file} is filename"
+    },
+    {
+      "key": "notification.channel_transfers",
+      "en": "Bifrost transfers",
+      "ar": "عمليات نقل Bifrost",
+      "context": "Android notification channel name"
+    },
+    {
+      "key": "notification.channel_transfer_progress",
+      "en": "File transfer progress",
+      "ar": "تقدّم نقل الملفات",
+      "context": "Android notification channel description"
+    },
+    {
+      "key": "notification.channel_incoming",
+      "en": "Incoming transfers",
+      "ar": "عمليات النقل الواردة",
+      "context": "Android notification channel name"
+    },
+    {
+      "key": "notification.channel_incoming_description",
+      "en": "Incoming file transfer requests",
+      "ar": "طلبات نقل الملفات الواردة",
+      "context": "Android notification channel description"
+    },
+    {
+      "key": "notification.channel_background",
+      "en": "Background receiving",
+      "ar": "الاستلام في الخلفية",
+      "context": "Android notification channel name"
+    },
+    {
+      "key": "notification.channel_background_description",
+      "en": "Keeps Bifrost available while the app is in the background",
+      "ar": "يُبقي Bifrost متاحًا أثناء عمل التطبيق في الخلفية",
+      "context": "Android notification channel description"
+    },
+    {
+      "key": "notification.channel_updates",
+      "en": "Bifrost updates",
+      "ar": "تحديثات Bifrost",
+      "context": "Android notification channel name"
+    },
+    {
+      "key": "notification.channel_update_description",
+      "en": "Bifrost update download progress",
+      "ar": "تقدّم تنزيل تحديث Bifrost",
+      "context": "Android notification channel description"
+    },
+    {
+      "key": "notification.downloading_update",
+      "en": "Downloading Bifrost update",
+      "ar": "جارٍ تنزيل تحديث Bifrost",
+      "context": "Notification title"
+    },
+    {
+      "key": "notification.update_downloaded",
+      "en": "Bifrost update downloaded",
+      "ar": "تم تنزيل تحديث بايفروست",
+      "context": "Notification title"
+    },
+    {
+      "key": "notification.version_ready",
+      "en": "Version {version} is ready to install",
+      "ar": "النسخة {version} جاهزة للتثبيت",
+      "context": "Notification body"
+    },
+    {
+      "key": "notification.bifrost_ready",
+      "en": "Bifrost is ready",
+      "ar": "Bifrost جاهز",
+      "context": "Notification title"
+    },
+    {
+      "key": "notification.listening",
+      "en": "Listening for nearby file transfers • Tap to stop",
+      "ar": "يستمع التطبيق إلى عمليات نقل الملفات القريبة • انقر للإيقاف",
+      "context": "Persistent notification body"
+    },
+    {
+      "key": "share.title",
+      "en": "Share Bifrost",
+      "ar": "مشاركة بايفروست",
+      "context": "Dialog title"
+    },
+    {
+      "key": "share.choose_package",
+      "en": "Choose which Bifrost package to share.",
+      "ar": "اختر حزمة Bifrost التي تريد مشاركتها.",
+      "context": "Dialog message"
+    },
+    {
+      "key": "share.android_apk",
+      "en": "Android APK",
+      "ar": "اندرويد APK",
+      "context": "Package option; APK can remain acronym"
+    },
+    {
+      "key": "share.windows_installer",
+      "en": "Windows installer",
+      "ar": "ملف تثبيت ويندوز",
+      "context": "Package option"
+    },
+    {
+      "key": "share.failed",
+      "en": "Could not share Bifrost: {error}",
+      "ar": "تعذّرت مشاركة Bifrost: {error}",
+      "context": "Snackbar; {error} is technical error detail"
+    },
+    {
+      "key": "settings.device_name_updated",
+      "en": "Device name updated.",
+      "ar": "تم تغيير اسم الجهاز.",
+      "context": "Snackbar"
+    },
+    {
+      "key": "settings.save_location_updated",
+      "en": "Save location updated.",
+      "ar": "تم تغيير مكان الحفظ.",
+      "context": "Snackbar"
+    },
+    {
+      "key": "about.author_credit",
+      "en": "Vibecoded by EFOMA",
+      "ar": "برمجة إبداعية بمساعدة EFOMA",
+      "context": "About dialog credit; proper name EFOMA remains unchanged"
+    },
+    {
+      "key": "about.version",
+      "en": "App Version: {version}",
+      "ar": "نسخة البرنامج: {version}",
+      "context": "About dialog; {version} is app version"
+    },
+    {
+      "key": "about.local_only",
+      "en": "Local-only file sharing for Android and Windows.",
+      "ar": "مشاركة الملفات محليًا فقط بين أجهزة Android وWindows.",
+      "context": "About dialog"
+    },
+    {
+      "key": "about.privacy",
+      "en": "Transfers stay on your local network. No internet account is required.",
+      "ar": "تبقى عمليات النقل ضمن شبكتك المحلية. ولا يلزم وجود حساب على الإنترنت.",
+      "context": "About dialog"
+    },
+    {
+      "key": "about.technology",
+      "en": "Built with Flutter and Dart.",
+      "ar": "مبني باستخدام Flutter وDart.",
+      "context": "About dialog"
+    },
+    {
+      "key": "about.close",
+      "en": "Close",
+      "ar": "إغلاق",
+      "context": "Button"
+    },
+    {
+      "key": "general.coming_soon",
+      "en": "{feature} is planned for a later milestone.",
+      "ar": "من المخطط إتاحة {feature} في مرحلة لاحقة.",
+      "context": "Snackbar; {feature} is feature name"
+    },
+    {
+      "key": "general.file_count",
+      "en": "{count} file(s)",
+      "ar": "عدد الملفات: {count}",
+      "context": "File count; use correct Arabic plural forms in implementation"
+    },
+    {
+      "key": "general.bytes",
+      "en": "B",
+      "ar": "بايت",
+      "context": "Byte unit abbreviation"
+    },
+    {
+      "key": "general.kilobytes",
+      "en": "KB",
+      "ar": "كيلوبايت",
+      "context": "Kilobyte unit abbreviation"
+    },
+    {
+      "key": "general.megabytes",
+      "en": "MB",
+      "ar": "ميغابايت",
+      "context": "Megabyte unit abbreviation"
+    },
+    {
+      "key": "general.gigabytes",
+      "en": "GB",
+      "ar": "غيغابايت",
+      "context": "Gigabyte unit abbreviation"
+    },
+    {
+      "key": "general.seconds",
+      "en": "s",
+      "ar": "ثانية",
+      "context": "Second suffix in elapsed time / ETA"
+    },
+    {
+      "key": "general.minutes",
+      "en": "m",
+      "ar": "دقيقة",
+      "context": "Minute suffix in ETA"
+    },
+    {
+      "key": "general.seconds_left",
+      "en": "left",
+      "ar": "تبقى",
+      "context": "Remaining-time wording"
+    },
+    {
+      "key": "general.unknown_size",
+      "en": "unknown size",
+      "ar": "حجم غير معلوم",
+      "context": "Size fallback"
+    },
+    {
+      "key": "general.direction_sent",
+      "en": "Sent",
+      "ar": "أُرسل",
+      "context": "Transfer direction in history"
+    },
+    {
+      "key": "general.direction_received",
+      "en": "Received",
+      "ar": "تم الاستلام",
+      "context": "Transfer direction in history"
+    },
+    {
+      "key": "general.status_cancelled",
+      "en": "Cancelled",
+      "ar": "تم الإلغاء",
+      "context": "Transfer status in history"
+    },
+    {
+      "key": "general.nearby_device",
+      "en": "Nearby device",
+      "ar": "جهاز قريب",
+      "context": "Default peer label"
+    },
+    {
+      "key": "general.trusted_device",
+      "en": "Trusted device",
+      "ar": "جهاز موثوق",
+      "context": "Default device label"
+    },
+    {
+      "key": "general.default_device",
+      "en": "Bifrost Device",
+      "ar": "جهاز بايفروست",
+      "context": "Default Windows/device name; can remain branded"
+    },
+    {
+      "key": "general.default_phone",
+      "en": "Bifrost Phone",
+      "ar": "Bifrost Phone",
+      "context": "Default Android device name; can remain branded"
+    },
+    {
+      "key": "network_test.title",
+      "en": "Networking test",
+      "ar": "اختبار الشبكة",
+      "context": "Developer/test screen"
+    },
+    {
+      "key": "network_test.receiver",
+      "en": "Milestone 2 test receiver",
+      "ar": "مستقبِل الاختبار للمرحلة الثانية",
+      "context": "Developer/test screen"
+    },
+    {
+      "key": "network_test.description",
+      "en": "This temporary screen starts a local receiver. A later screen will let you choose a file and send it from inside Bifrost.",
+      "ar": "تبدأ هذه الشاشة المؤقتة مستقبِلًا محليًا. وستتيح شاشة لاحقة اختيار ملف وإرساله من داخل Bifrost.",
+      "context": "Developer/test screen; may no longer be user-facing"
+    },
+    {
+      "key": "network_test.start_receiver",
+      "en": "Start receiver",
+      "ar": "بدء تشغيل المستقبِل",
+      "context": "Developer/test button"
+    },
+    {
+      "key": "network_test.stop_receiver",
+      "en": "Stop receiver",
+      "ar": "إيقاف تشغيل المستقبِل",
+      "context": "Developer/test button"
+    },
+    {
+      "key": "network_test.self_test",
+      "en": "Run one-device self-test",
+      "ar": "تشغيل اختبار ذاتي على جهاز واحد",
+      "context": "Developer/test button"
+    },
+    {
+      "key": "onboarding.language",
+      "en": "Language",
+      "ar": "اللغة",
+      "context": "New language selector label on first-run introduction"
+    },
+    {
+      "key": "onboarding.language_english",
+      "en": "English",
+      "ar": "English",
+      "context": "New first-run language choice; can use native language name instead"
+    },
+    {
+      "key": "onboarding.language_arabic",
+      "en": "Arabic",
+      "ar": "العربية",
+      "context": "New first-run language choice; can use native language name instead"
+    },
+    {
+      "key": "update.ready_message",
+      "en": "A new update is ready. Download size: {size}. You can choose Not now and check again later.",
+      "ar": "يتوفر تحديث جديد. حجم التنزيل: {size}. يمكنك اختيار «ليس الآن» والعودة للتحقق لاحقًا.",
+      "context": "Update prompt body; {size} is formatted size"
+    },
+    {
+      "key": "update.not_now",
+      "en": "Not now",
+      "ar": "ليس الان",
+      "context": "Update prompt button"
+    },
+    {
+      "key": "update.update_button",
+      "en": "Update",
+      "ar": "تحديث",
+      "context": "Update prompt button"
+    },
+    {
+      "key": "nearby.discovery_error",
+      "en": "Discovery could not start. You can connect by IP address instead.",
+      "ar": "تعذّر بدء اكتشاف الأجهزة. يمكنك الاتصال باستخدام عنوان IP بدلًا من ذلك.",
+      "context": "Nearby error message"
+    },
+    {
+      "key": "nearby.manual_ip_error",
+      "en": "Could not reach that address. Check the IP, port, and Wi-Fi connection.",
+      "ar": "تعذّر الوصول إلى هذا العنوان. تحقق من عنوان IP والمنفذ واتصال Wi-Fi.",
+      "context": "Manual connection error"
+    },
+    {
+      "key": "nearby.shared_files_added",
+      "en": "{count} file(s) added from Android Share",
+      "ar": "تمت إضافة {count} من الملفات عبر المشاركة في Android",
+      "context": "Snackbar; localize singular/plural forms"
+    },
+    {
+      "key": "general.file_count_singular",
+      "en": "file",
+      "ar": "ملف",
+      "context": "Singular English count form; Arabic pluralization should not rely on English suffixing"
+    },
+    {
+      "key": "general.file_count_plural",
+      "en": "files",
+      "ar": "ملفات",
+      "context": "Plural English count form; Arabic requires plural categories"
+    },
+    {
+      "key": "settings.choose_save_location",
+      "en": "Choose Bifrost save location",
+      "ar": "اختر موقع حفظ Bifrost",
+      "context": "Native directory-picker title"
+    },
+    {
+      "key": "history.just_now",
+      "en": "just now",
+      "ar": "الآن",
+      "context": "Relative time"
+    },
+    {
+      "key": "history.minutes_ago_singular",
+      "en": "{count} minute ago",
+      "ar": "منذ {count} دقيقة",
+      "context": "Relative time"
+    },
+    {
+      "key": "history.minutes_ago_plural",
+      "en": "{count} minutes ago",
+      "ar": "منذ {count} دقيقة",
+      "context": "Relative time"
+    },
+    {
+      "key": "history.hours_ago_singular",
+      "en": "{count} hour ago",
+      "ar": "منذ {count} ساعة",
+      "context": "Relative time"
+    },
+    {
+      "key": "history.hours_ago_plural",
+      "en": "{count} hours ago",
+      "ar": "منذ {count} ساعة",
+      "context": "Relative time"
+    },
+    {
+      "key": "history.days_ago_singular",
+      "en": "{count} day ago",
+      "ar": "منذ {count} يوم",
+      "context": "Relative time"
+    },
+    {
+      "key": "history.days_ago_plural",
+      "en": "{count} days ago",
+      "ar": "منذ {count} يوم",
+      "context": "Relative time"
+    },
+    {
+      "key": "general.queued",
+      "en": "Queued",
+      "ar": "في قائمة الانتظار",
+      "context": "Queue status"
+    },
+    {
+      "key": "general.unknown_device",
+      "en": "Unknown device",
+      "ar": "جهاز غير معروف",
+      "context": "Fallback device name"
+    },
+    {
+      "key": "network_test.receiver_stopped",
+      "en": "The local receiver is stopped.",
+      "ar": "المستقبِل المحلي متوقف.",
+      "context": "Network test state"
+    },
+    {
+      "key": "network_test.listening",
+      "en": "Listening on {address}. Files save to {path}.",
+      "ar": "يستمع على {address}. تُحفظ الملفات في {path}.",
+      "context": "Network test state"
+    },
+    {
+      "key": "network_test.start_error",
+      "en": "Could not start the receiver. Please check that Wi-Fi is on, then try again. Details: {error}",
+      "ar": "تعذّر بدء المستقبِل. تحقق من تشغيل Wi-Fi ثم حاول مجددًا. التفاصيل: {error}",
+      "context": "Network test error"
+    },
+    {
+      "key": "network_test.running_self_test",
+      "en": "Running a local send and checksum test…",
+      "ar": "جارٍ تنفيذ اختبار إرسال محلي والتحقق من المجموع الاختباري…",
+      "context": "Network test state"
+    },
+    {
+      "key": "network_test.self_test_passed",
+      "en": "Self-test passed: one file was streamed and checksum verified.",
+      "ar": "نجح الاختبار الذاتي: تم إرسال ملف والتحقق من المجموع الاختباري.",
+      "context": "Network test result"
+    },
+    {
+      "key": "network_test.self_test_no_file",
+      "en": "Self-test failed: no received file was found.",
+      "ar": "فشل الاختبار الذاتي: لم يُعثر على ملف مستلم.",
+      "context": "Network test result"
+    },
+    {
+      "key": "network_test.self_test_error",
+      "en": "Self-test failed: {error}",
+      "ar": "فشل الاختبار الذاتي: {error}",
+      "context": "Network test error"
+    },
+    {
+      "key": "time.am",
+      "en": "AM",
+      "ar": "صباحًا",
+      "context": "Clock suffix"
+    },
+    {
+      "key": "time.pm",
+      "en": "PM",
+      "ar": "مساءً",
+      "context": "Clock suffix"
+    },
+    {
+      "key": "transfer.cancelling",
+      "en": "Cancelling transfer…",
+      "ar": "جارٍ إلغاء النقل…",
+      "context": "Transfer status"
+    },
+    {
+      "key": "transfer.no_device_selected",
+      "en": "{count} file(s) ready. Select a device to send.",
+      "ar": "ملفات جاهزة للإرسال ({count}). اختر جهازًا للمتابعة.",
+      "context": "Queue status"
+    },
+    {
+      "key": "transfer.stopped",
+      "en": "Transfer stopped: the other device may have declined, or the connection was lost.",
+      "ar": "توقف النقل: ربما رفض الجهاز الآخر الطلب أو انقطع الاتصال.",
+      "context": "Transfer status"
+    },
+    {
+      "key": "brand.tagline",
+      "en": "Your bridge between worlds",
+      "ar": "جسر يربط العوالم ببعضها",
+      "context": "Splash tagline"
+    },
+    {
+      "key": "notification.transfers_channel",
+      "en": "Bifrost transfers",
+      "ar": "عمليات نقل Bifrost",
+      "context": "Android notification channel"
+    },
+    {
+      "key": "notification.transfer_progress",
+      "en": "File transfer progress",
+      "ar": "تقدّم نقل الملفات",
+      "context": "Android notification channel"
+    },
+    {
+      "key": "notification.incoming_channel",
+      "en": "Incoming transfers",
+      "ar": "عمليات النقل الواردة",
+      "context": "Android notification channel"
+    },
+    {
+      "key": "notification.incoming_requests",
+      "en": "Incoming file transfer requests",
+      "ar": "طلبات نقل الملفات الواردة",
+      "context": "Android notification channel"
+    },
+    {
+      "key": "notification.background_channel",
+      "en": "Background receiving",
+      "ar": "الاستلام في الخلفية",
+      "context": "Android notification channel"
+    },
+    {
+      "key": "notification.background_desc",
+      "en": "Keeps Bifrost available while the app is in the background",
+      "ar": "يُبقي Bifrost متاحًا أثناء عمل التطبيق في الخلفية",
+      "context": "Android notification channel"
+    },
+    {
+      "key": "notification.updates_channel",
+      "en": "Bifrost updates",
+      "ar": "تحديثات Bifrost",
+      "context": "Android notification channel"
+    },
+    {
+      "key": "notification.update_progress",
+      "en": "Bifrost update download progress",
+      "ar": "تقدّم تنزيل تحديث Bifrost",
+      "context": "Android notification channel"
+    },
+    {
+      "key": "notification.transfer_complete",
+      "en": "Transfer complete",
+      "ar": "اكتملت عملية النقل",
+      "context": "Android notification body"
+    },
+    {
+      "key": "notification.transfer_failed",
+      "en": "Transfer failed",
+      "ar": "فشلت عملية النقل",
+      "context": "Android notification body"
+    },
+    {
+      "key": "notification.ready",
+      "en": "Bifrost is ready",
+      "ar": "Bifrost جاهز",
+      "context": "Android notification title"
+    },
+    {
+      "key": "notification.tap_stop",
+      "en": "Listening for nearby file transfers • Tap to stop",
+      "ar": "يستمع التطبيق إلى عمليات نقل الملفات القريبة • انقر للإيقاف",
+      "context": "Android notification body"
+    },
+    {
+      "key": "notification.progress_body",
+      "en": "{percent}% • {received} of {total}{details}",
+      "ar": "{percent}% • {received} من {total}{details}",
+      "context": "Android notification body"
+    },
+    {
+      "key": "history.clear_history",
+      "en": "Clear history",
+      "ar": "مسح السجل",
+      "context": "Tooltip"
+    },
+    {
+      "key": "general.remove_all",
+      "en": "Remove all",
+      "ar": "إزالة الكل",
+      "context": "Tooltip"
+    },
+    {
+      "key": "nearby.remove",
+      "en": "Remove",
+      "ar": "إزالة",
+      "context": "Tooltip"
+    },
+    {
+      "key": "nearby.qr_tooltip",
+      "en": "Show connection QR",
+      "ar": "إظهار رمز QR للاتصال",
+      "context": "Tooltip"
+    },
+    {
+      "key": "settings.save_device_name_tooltip",
+      "en": "Save device name",
+      "ar": "حفظ اسم الجهاز",
+      "context": "Tooltip"
+    },
+    {
+      "key": "nearby.incoming_ready",
+      "en": "{count} file(s) is ready for approval",
+      "ar": "ملفات جاهزة للموافقة ({count})",
+      "context": "Incoming approval sentence"
+    },
+    {
+      "key": "update.install_title",
+      "en": "Bifrost {version} is available",
+      "ar": "يتوفر Bifrost {version} الآن",
+      "context": "Update alert title"
+    },
+    {
+      "key": "update.installer_alert",
+      "en": "A new update is ready. Download size: {size}. You can choose Not now and check again later.",
+      "ar": "يتوفر تحديث جديد. حجم التنزيل: {size}. يمكنك اختيار «ليس الآن» والعودة للتحقق لاحقًا.",
+      "context": "Update alert body"
+    },
+    {
+      "key": "update.downloading_alert",
+      "en": "Downloading Bifrost {version}",
+      "ar": "جارٍ تنزيل Bifrost {version}",
+      "context": "Update alert title"
+    },
+    {
+      "key": "update.background_alert",
+      "en": "You can leave Bifrost open in the background; progress will remain in the notification.",
+      "ar": "يمكنك إبقاء Bifrost مفتوحًا في الخلفية؛ سيظل التقدم ظاهرًا في الإشعار.",
+      "context": "Update alert body"
+    },
+    {
+      "key": "update.error_alert",
+      "en": "Update download failed: {error}",
+      "ar": "فشل تنزيل التحديث: {error}",
+      "context": "Update error"
+    },
+    {
+      "key": "update.github_check_error",
+      "en": "Could not check GitHub Releases: {error}",
+      "ar": "تعذّر التحقق من إصدارات GitHub: {error}",
+      "context": "Update error"
+    },
+    {
+      "key": "update.share_error",
+      "en": "Could not share Bifrost: {error}",
+      "ar": "تعذّرت مشاركة Bifrost: {error}",
+      "context": "Sharing error"
+    },
+    {
+      "key": "about.app_version",
+      "en": "App Version:    {version}",
+      "ar": "إصدار التطبيق:    {version}",
+      "context": "About version label"
+    },
+    {
+      "key": "history.opened_file_location",
+      "en": "Opened file location: {path}",
+      "ar": "تم فتح موقع الملف: {path}",
+      "context": "History feedback"
+    },
+    {
+      "key": "history.retrying_name",
+      "en": "Retrying {file}…",
+      "ar": "جارٍ إعادة محاولة نقل {file}…",
+      "context": "History status"
+    },
+    {
+      "key": "history.retrying_notification",
+      "en": "Retrying {file}",
+      "ar": "إعادة محاولة نقل {file}",
+      "context": "Notification title"
+    },
+    {
+      "key": "history.status_details",
+      "en": "Status: {status}\nDirection: {direction}\nDevice: {device}\nSize: {size}\nTime: {time}{extra}",
+      "ar": "الحالة: {status}\nالاتجاه: {direction}\nالجهاز: {device}\nالحجم: {size}\nالوقت: {time}{extra}",
+      "context": "History detail"
+    },
+    {
+      "key": "history.last_seen_line",
+      "en": "Last seen {time}\n{id}",
+      "ar": "آخر ظهور {time}\n{id}",
+      "context": "Trusted device"
+    },
+    {
+      "key": "general.files_ready",
+      "en": "{count} file(s) ready. Select a device to send.",
+      "ar": "ملفات جاهزة للإرسال ({count}). اختر جهازًا للمتابعة.",
+      "context": "Nearby queue"
+    },
+    {
+      "key": "nearby.transfer_to_device",
+      "en": "Transfer started to {device}",
+      "ar": "بدأ النقل إلى {device}",
+      "context": "Nearby status"
+    },
+    {
+      "key": "nearby.approval_reminder",
+      "en": "{device} will need approval next time it sends a file.",
+      "ar": "سيحتاج {device} إلى موافقتك في المرة القادمة التي يرسل فيها ملفًا.",
+      "context": "Trust feedback"
+    },
+    {
+      "key": "history.speed_extra",
+      "en": "\nSpeed: {speed}",
+      "ar": "\nالسرعة: {speed}",
+      "context": "History details"
+    },
+    {
+      "key": "history.time_am",
+      "en": "{time} AM",
+      "ar": "{time} صباحًا",
+      "context": "Clock display"
+    },
+    {
+      "key": "history.time_pm",
+      "en": "{time} PM",
+      "ar": "{time} مساءً",
+      "context": "Clock display"
+    },
+    {
+      "key": "history.record_row_detail",
+      "en": "{direction} • {status} • {size}\n{device} • {time}",
+      "ar": "{direction} • {status} • {size}\n{device} • {time}",
+      "context": "History row"
+    },
+    {
+      "key": "history.speed_short",
+      "en": "{speed}/s",
+      "ar": "{speed}/ث",
+      "context": "Speed value"
+    },
+    {
+      "key": "history.path_extra",
+      "en": "\nPath: {path}",
+      "ar": "\nالمسار: {path}",
+      "context": "History detail path"
+    }
+  ]
+}

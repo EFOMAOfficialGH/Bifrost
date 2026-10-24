@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:open_filex/open_filex.dart';
@@ -15,17 +16,21 @@ import 'core/networking/bifrost_client.dart';
 import 'core/notifications/transfer_notifications.dart';
 import 'core/theme/app_theme.dart';
 import 'core/storage/app_storage.dart';
+import 'core/localization/app_localizations.dart';
+import 'core/localization/localized_text.dart';
 import 'core/platform/shared_file_bridge.dart';
 import 'core/updates/update_service.dart';
 
 final appThemeProvider = StateProvider<AppThemeKind>((ref) => AppThemeKind.day);
+final appLanguageProvider = StateProvider<String>((ref) => 'en');
 final customThemeColorProvider = StateProvider<Color>((ref) => const Color(0xFF3154B8));
 final textColorProvider = StateProvider<Color?>((ref) => null);
 final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
-const bifrostVersion = '0.12.7+30';
+const bifrostVersion = '0.13.0+31';
 
-void main(List<String> args) {
+Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppLocalizations.load();
   if (Platform.isWindows) SharedFileBridge.instance.seed(args);
   runApp(const ProviderScope(child: BifrostApp()));
 }
@@ -40,10 +45,13 @@ class BifrostApp extends ConsumerStatefulWidget {
 class _BifrostAppState extends ConsumerState<BifrostApp> {
   @override void initState() { super.initState(); _loadAppearance(); }
   Future<void> _loadAppearance() async {
+    final language = await AppStorage.instance.languageChoice();
     final saved = await AppStorage.instance.themeChoice();
     final custom = await AppStorage.instance.customThemeColor();
     final text = await AppStorage.instance.textColor();
     if (!mounted) return;
+    AppLocalizations.currentLanguageCode = language;
+    ref.read(appLanguageProvider.notifier).state = language;
     final kind = AppThemeKind.values.where((item) => item.name == saved).firstOrNull;
     if (kind != null) ref.read(appThemeProvider.notifier).state = kind;
     final customColor = _parseColor(custom);
@@ -54,12 +62,17 @@ class _BifrostAppState extends ConsumerState<BifrostApp> {
   @override
   Widget build(BuildContext context) {
     final enableDiscovery = widget.enableDiscovery;
+    final language = ref.watch(appLanguageProvider);
+    AppLocalizations.currentLanguageCode = language;
     final kind = ref.watch(appThemeProvider);
     final customColor = ref.watch(customThemeColorProvider);
     final textColor = ref.watch(textColorProvider);
     return MaterialApp(
       title: 'Bifrost',
       debugShowCheckedModeBanner: false,
+      locale: Locale(language),
+      supportedLocales: const [Locale('en'), Locale('ar')],
+      localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
       theme: AppTheme.forKind(kind, customColor: customColor, textColor: textColor),
       themeMode: ThemeMode.light,
       builder: (context, child) => ThemeBackdrop(kind: kind, customColor: customColor, child: child ?? const SizedBox.shrink()),
@@ -100,21 +113,23 @@ class _BifrostGateState extends State<BifrostGate> {
   }
 }
 
-class FirstRunPage extends StatefulWidget {
+class FirstRunPage extends ConsumerStatefulWidget {
   const FirstRunPage({required this.onComplete, super.key});
   final VoidCallback onComplete;
-  @override State<FirstRunPage> createState() => _FirstRunPageState();
+  @override ConsumerState<FirstRunPage> createState() => _FirstRunPageState();
 }
 
-class _FirstRunPageState extends State<FirstRunPage> {
+class _FirstRunPageState extends ConsumerState<FirstRunPage> {
   late final TextEditingController _name;
   late String _path;
   bool _saving = false;
-  @override void initState() { super.initState(); _name = TextEditingController(text: 'Bifrost Device'); _path = AppStorage.instance.defaultSaveDirectory(); AppStorage.instance.deviceName().then((value) { if (mounted && value != 'Bifrost Device') setState(() => _name.text = value); }); }
+  String _language = 'en';
+  @override void initState() { super.initState(); _name = TextEditingController(text: 'Bifrost Device'); _path = AppStorage.instance.defaultSaveDirectory(); AppStorage.instance.languageChoice().then((value) { if (!mounted) return; setState(() => _language = value); AppLocalizations.currentLanguageCode = value; ref.read(appLanguageProvider.notifier).state = value; }); AppStorage.instance.deviceName().then((value) { if (mounted && value != 'Bifrost Device') setState(() => _name.text = value); }); }
+  Future<void> _setLanguage(String language) async { setState(() => _language = language); AppLocalizations.currentLanguageCode = language; ref.read(appLanguageProvider.notifier).state = language; await AppStorage.instance.setLanguageChoice(language); await TransferNotifications.instance.refreshLocalizedChannels(); }
   @override void dispose() { _name.dispose(); super.dispose(); }
-  Future<void> _chooseLocation() async { final selected = await FilePicker.getDirectoryPath(dialogTitle: 'Choose Bifrost save location', initialDirectory: _path); if (selected != null && mounted) setState(() => _path = selected); }
+  Future<void> _chooseLocation() async { final selected = await FilePicker.getDirectoryPath(dialogTitle: AppLocalizations.translate(context, 'Choose Bifrost save location'), initialDirectory: _path); if (selected != null && mounted) setState(() => _path = selected); }
   Future<void> _finish() async { final name = _name.text.trim(); if (name.isEmpty) return; setState(() => _saving = true); try { await Directory(_path).create(recursive: true); await AppStorage.instance.setDeviceName(name); await AppStorage.instance.setSaveDirectoryPath(_path); await AppStorage.instance.setOnboardingComplete(); widget.onComplete(); } catch (_) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bifrost could not access that folder. Choose another location.'))); } if (mounted) setState(() => _saving = false); }
-  @override Widget build(BuildContext context) => Scaffold(body: SafeArea(child: ListView(padding: const EdgeInsets.all(28), children: [const SizedBox(height: 72), Text('Welcome to Bifrost', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)), const SizedBox(height: 8), const Text('Set up your device once. You can change these choices later in Settings.'), const SizedBox(height: 32), TextField(controller: _name, decoration: const InputDecoration(labelText: 'Choose device name', prefixIcon: Icon(Icons.badge_outlined))), const SizedBox(height: 20), Card(child: ListTile(leading: const Icon(Icons.folder_outlined), title: const Text('Save received files to'), subtitle: Text(_path), trailing: const Icon(Icons.chevron_right), onTap: _chooseLocation)), const SizedBox(height: 12), OutlinedButton.icon(onPressed: _saving ? null : _chooseLocation, icon: const Icon(Icons.folder_open), label: const Text('Give access / Change save location')), const SizedBox(height: 28), FilledButton(onPressed: _saving ? null : _finish, child: Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(_saving ? 'Setting up…' : 'Continue')))])));
+  @override Widget build(BuildContext context) => Scaffold(body: SafeArea(child: ListView(padding: const EdgeInsets.all(28), children: [const SizedBox(height: 32), Text('Welcome to Bifrost', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)), const SizedBox(height: 8), const Text('Set up your device once. You can change these choices later in Settings.'), const SizedBox(height: 24), DropdownButtonFormField<String>(value: _language, decoration: InputDecoration(labelText: AppLocalizations.translate(context, 'Language')), items: const [DropdownMenuItem(value: 'en', child: Text('English')), DropdownMenuItem(value: 'ar', child: Text('العربية'))], onChanged: (value) { if (value != null) _setLanguage(value); }), const SizedBox(height: 24), TextField(controller: _name, decoration: InputDecoration(labelText: AppLocalizations.translate(context, 'Choose device name'), prefixIcon: const Icon(Icons.badge_outlined))), const SizedBox(height: 20), Card(child: ListTile(leading: const Icon(Icons.folder_outlined), title: const Text('Save received files to'), subtitle: Text(_path, localized: false, textDirection: TextDirection.ltr), trailing: Icon(Directionality.of(context) == TextDirection.rtl ? Icons.chevron_left : Icons.chevron_right), onTap: _chooseLocation)), const SizedBox(height: 12), OutlinedButton.icon(onPressed: _saving ? null : _chooseLocation, icon: const Icon(Icons.folder_open), label: const Text('Give access / Change save location')), const SizedBox(height: 28), FilledButton(onPressed: _saving ? null : _finish, child: Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text(_saving ? 'Setting up…' : 'Continue')))])));
 }
 
 class BifrostShell extends StatefulWidget {
@@ -193,9 +208,9 @@ class _BifrostShellState extends State<BifrostShell> {
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) => setState(() => _selectedIndex = index),
         destinations: [
-          NavigationDestination(icon: Icon(Icons.radar), label: 'Nearby'),
-          NavigationDestination(icon: Icon(Icons.history), label: 'History'),
-          NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Settings'),
+          NavigationDestination(icon: Icon(Icons.radar), label: AppLocalizations.translate(context, 'Nearby')),
+          NavigationDestination(icon: Icon(Icons.history), label: AppLocalizations.translate(context, 'History')),
+          NavigationDestination(icon: Icon(Icons.settings_outlined), label: AppLocalizations.translate(context, 'Settings')),
         ],
         backgroundColor: colors.surface,
       ),
@@ -220,7 +235,7 @@ class HomePage extends StatelessWidget {
                 const SizedBox(width: 12),
                 Text('Bifrost', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
                 const Spacer(),
-                IconButton(tooltip: 'Help', onPressed: () => _showComingSoon(context, 'Troubleshooting'), icon: const Icon(Icons.help_outline)),
+                IconButton(tooltip: AppLocalizations.translate(context, 'Help'), onPressed: () => _showComingSoon(context, 'Troubleshooting'), icon: const Icon(Icons.help_outline)),
               ],
             ),
           ),
@@ -286,7 +301,7 @@ class _HistoryPageState extends State<HistoryPage> {
   @override void dispose() { _activitySubscription?.cancel(); super.dispose(); }
   Future<void> _clear() async { await AppStorage.instance.clearHistory(); if (mounted) setState(() => _records = const []); }
 
-  Future<void> _showDetails(TransferRecord record) async => showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(title: Text(record.fileName), content: Text('Status: ${record.status}\nDirection: ${record.direction}\nDevice: ${record.peer}\nSize: ${_historyBytes(record.bytes)}\nTime: ${_historyTime(record.time)}${record.speedBytesPerSecond > 0 ? '\nSpeed: ${_formatSpeed(record.speedBytesPerSecond)}/s' : ''}${record.path == null ? '' : '\nPath: ${record.path}'}'), actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Close'))]));
+  Future<void> _showDetails(TransferRecord record) async => showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(title: Text(record.fileName, localized: false), content: Text('Status: ${record.status}\nDirection: ${record.direction}\nDevice: ${record.peer}\nSize: ${_historyBytes(record.bytes)}\nTime: ${_historyTime(record.time)}${record.speedBytesPerSecond > 0 ? '\nSpeed: ${_formatSpeed(record.speedBytesPerSecond)}/s' : ''}${record.path == null ? '' : '\nPath: ${record.path}'}'), actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Close'))]));
 
   Future<void> _retryRecord(TransferRecord record) async {
     if (record.path == null || record.peerHost == null || record.peerPort == null) return;
@@ -350,10 +365,10 @@ class _HistoryPageState extends State<HistoryPage> {
   Widget build(BuildContext context) => _records.isEmpty && _active.isEmpty
       ? const EmptyPage(icon: Icons.history, title: 'Transfer history', message: 'Completed transfers will appear here.')
       : ListView(padding: const EdgeInsets.all(24), children: [
-          Row(children: [Expanded(child: Text('Transfer history', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700))), if (_records.isNotEmpty) IconButton(tooltip: 'Clear history', onPressed: _clear, icon: const Icon(Icons.delete_sweep_outlined))]),
+          Row(children: [Expanded(child: Text('Transfer history', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700))), if (_records.isNotEmpty) IconButton(tooltip: AppLocalizations.translate(context, 'Clear history'), onPressed: _clear, icon: const Icon(Icons.delete_sweep_outlined))]),
           const SizedBox(height: 20),
           for (final record in _active.values) _historyTile(context, record),
-          for (final record in _records) Card(child: ListTile(onTap: () => _showRecordActions(record), leading: Icon(record.status == 'Completed' ? Icons.check_circle : Icons.error_outline, color: record.status == 'Completed' ? Colors.green : Theme.of(context).colorScheme.error), title: Text(record.fileName), subtitle: Text('${record.direction} • ${record.status} • ${_historyBytes(record.bytes)}\n${record.peer} • ${_historyTime(record.time)}'), trailing: record.path == null ? null : const Icon(Icons.more_vert))),
+          for (final record in _records) Card(child: ListTile(onTap: () => _showRecordActions(record), leading: Icon(record.status == 'Completed' ? Icons.check_circle : Icons.error_outline, color: record.status == 'Completed' ? Colors.green : Theme.of(context).colorScheme.error), title: Text(record.fileName, localized: false), subtitle: Text('${record.direction} • ${record.status} • ${_historyBytes(record.bytes)}\n${record.peer} • ${_historyTime(record.time)}'), trailing: record.path == null ? null : const Icon(Icons.more_vert))),
         ]);
 
   Widget _historyTile(BuildContext context, TransferRecord record) => Card(
@@ -363,7 +378,7 @@ class _HistoryPageState extends State<HistoryPage> {
             Row(children: [
               const Icon(Icons.sync, size: 20),
               const SizedBox(width: 10),
-              Expanded(child: Text(record.fileName, style: const TextStyle(fontWeight: FontWeight.w600))),
+              Expanded(child: Text(record.fileName, localized: false, style: const TextStyle(fontWeight: FontWeight.w600))),
               Text('${(record.progress * 100).round()}%'),
             ]),
             const SizedBox(height: 10),
@@ -372,7 +387,7 @@ class _HistoryPageState extends State<HistoryPage> {
             Text('${record.direction} • ${record.peer}'),
             if (record.speedBytesPerSecond > 0) Padding(padding: const EdgeInsets.only(top: 4), child: Text('${_formatSpeed(record.speedBytesPerSecond)}/s${record.etaSeconds == null ? '' : ' • ${_formatEta(record.etaSeconds!)} left'}', style: Theme.of(context).textTheme.bodySmall)),
             const SizedBox(height: 10),
-            Align(alignment: Alignment.centerRight, child: OutlinedButton.icon(onPressed: () async {
+            Align(alignment: AlignmentDirectional.centerEnd, child: OutlinedButton.icon(onPressed: () async {
               await AppStorage.instance.cancelTransfer(record.id);
             }, icon: const Icon(Icons.cancel_outlined), label: const Text('Cancel'))),
           ]),
@@ -396,7 +411,7 @@ class _TrustedDevicesPageState extends State<TrustedDevicesPage> {
     if (mounted) setState(() => _devices = _devices.where((item) => item.id != device.id).toList(growable: false));
   }
   Future<void> _removeAll() async { for (final device in _devices) { await AppStorage.instance.setTrusted(device.id, false); } if (mounted) setState(() => _devices = const []); }
-  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Trusted devices'), actions: [if (_devices.isNotEmpty) IconButton(tooltip: 'Remove all', onPressed: _removeAll, icon: const Icon(Icons.delete_sweep_outlined))]), body: _devices.isEmpty ? const EmptyPage(icon: Icons.verified_user_outlined, title: 'No trusted devices', message: 'Trust a device when accepting its first transfer and it will appear here.') : ListView(padding: const EdgeInsets.all(16), children: [for (final device in _devices) Card(child: ListTile(leading: const Icon(Icons.verified_user), title: Text(device.name), subtitle: Text('Last seen ${_relative(device.lastSeen)}\n${device.id}'), isThreeLine: true, trailing: IconButton(tooltip: 'Remove trusted device', icon: const Icon(Icons.delete_outline), onPressed: () => _remove(device))))]));
+  @override Widget build(BuildContext context) => Scaffold(appBar: AppBar(title: const Text('Trusted devices'), actions: [if (_devices.isNotEmpty) IconButton(tooltip: AppLocalizations.translate(context, 'Remove all'), onPressed: _removeAll, icon: const Icon(Icons.delete_sweep_outlined))]), body: _devices.isEmpty ? const EmptyPage(icon: Icons.verified_user_outlined, title: 'No trusted devices', message: 'Trust a device when accepting its first transfer and it will appear here.') : ListView(padding: const EdgeInsets.all(16), children: [for (final device in _devices) Card(child: ListTile(leading: const Icon(Icons.verified_user), title: Text(device.name, localized: false), subtitle: Text('Last seen ${_relative(device.lastSeen)}\n${device.id}'), isThreeLine: true, trailing: IconButton(tooltip: AppLocalizations.translate(context, 'Remove trusted device'), icon: const Icon(Icons.delete_outline), onPressed: () => _remove(device))))]));
 }
 
 String _relative(DateTime time) { final difference = DateTime.now().difference(time); if (difference.inMinutes < 1) return 'just now'; if (difference.inHours < 1) return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago'; if (difference.inDays < 1) return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago'; return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago'; }
@@ -438,7 +453,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Future<void> _chooseSaveLocation() async {
-    final path = await FilePicker.getDirectoryPath(dialogTitle: 'Choose Bifrost save location');
+    final path = await FilePicker.getDirectoryPath(dialogTitle: AppLocalizations.translate(context, 'Choose Bifrost save location'));
     if (path == null) return;
     await BifrostDeviceRuntime.instance.updateSaveDirectory(Directory(path));
     if (mounted) setState(() => _savePath = path);
@@ -448,6 +463,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Future<void> _toggleBackground(bool enabled) async {
     setState(() => _backgroundActivity = enabled);
     await BifrostDeviceRuntime.instance.setBackgroundActivity(enabled);
+  }
+
+  Future<void> _chooseLanguage() async {
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: const Text('Choose language'),
+        children: [
+          SimpleDialogOption(onPressed: () => Navigator.pop(dialogContext, 'en'), child: Row(children: [if (ref.read(appLanguageProvider) == 'en') const Icon(Icons.check, size: 18), const SizedBox(width: 8), const Text('English')])),
+          SimpleDialogOption(onPressed: () => Navigator.pop(dialogContext, 'ar'), child: Row(children: [if (ref.read(appLanguageProvider) == 'ar') const Icon(Icons.check, size: 18), const SizedBox(width: 8), const Text('العربية')])),
+        ],
+      ),
+    );
+    if (selected == null) return;
+    AppLocalizations.currentLanguageCode = selected;
+    ref.read(appLanguageProvider.notifier).state = selected;
+    await AppStorage.instance.setLanguageChoice(selected);
+    await TransferNotifications.instance.refreshLocalizedChannels();
   }
 
   Future<void> _shareBifrost() async {
@@ -476,18 +509,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     return ListView(padding: const EdgeInsets.all(24), children: [
       Text('Settings', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
       const SizedBox(height: 24),
-      TextField(controller: _nameController, textInputAction: TextInputAction.done, onSubmitted: (_) => _saveName(), decoration: InputDecoration(labelText: 'Device name', prefixIcon: const Icon(Icons.badge_outlined), suffixIcon: IconButton(tooltip: 'Save device name', onPressed: _saveName, icon: const Icon(Icons.check)))),
-      ListTile(leading: const Icon(Icons.folder_outlined), title: const Text('Save location'), subtitle: Text(_savePath ?? AppStorage.instance.defaultSaveDirectory()), trailing: const Icon(Icons.chevron_right), onTap: _chooseSaveLocation),
+      ListTile(leading: const Icon(Icons.language), title: const Text('Language'), subtitle: Text(ref.watch(appLanguageProvider) == 'ar' ? 'العربية' : 'English'), trailing: Icon(Directionality.of(context) == TextDirection.rtl ? Icons.chevron_left : Icons.chevron_right), onTap: _chooseLanguage),
+      const SizedBox(height: 8),
+      TextField(controller: _nameController, textInputAction: TextInputAction.done, onSubmitted: (_) => _saveName(), decoration: InputDecoration(labelText: AppLocalizations.translate(context, 'Device name'), prefixIcon: const Icon(Icons.badge_outlined), suffixIcon: IconButton(tooltip: AppLocalizations.translate(context, 'Save device name'), onPressed: _saveName, icon: const Icon(Icons.check)))),
+      ListTile(leading: const Icon(Icons.folder_outlined), title: const Text('Save location'), subtitle: Text(_savePath ?? AppStorage.instance.defaultSaveDirectory(), localized: false, textDirection: TextDirection.ltr), trailing: Icon(Directionality.of(context) == TextDirection.rtl ? Icons.chevron_left : Icons.chevron_right), onTap: _chooseSaveLocation),
       SwitchListTile(value: _backgroundActivity, onChanged: _toggleBackground, title: const Text('Background receiving'), subtitle: const Text('Keep Bifrost listening while the app is in the background.'), secondary: const Icon(Icons.notifications_active_outlined)),
       SwitchListTile(value: _automaticUpdateChecks, onChanged: (enabled) async { setState(() => _automaticUpdateChecks = enabled); await AppStorage.instance.setAutomaticUpdateChecks(enabled); }, title: const Text('Automatically check for updates'), subtitle: const Text('Silently check GitHub when Bifrost starts.'), secondary: const Icon(Icons.system_update_alt_outlined)),
       const SizedBox(height: 12),
-      ListTile(leading: const Icon(Icons.verified_user_outlined), title: const Text('Trusted devices'), subtitle: const Text('Manage devices that can send without approval.'), trailing: const Icon(Icons.chevron_right), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const TrustedDevicesPage()))),
-      ListTile(leading: const Icon(Icons.palette_outlined), title: const Text('Theme'), subtitle: Text(ref.watch(appThemeProvider).label), trailing: const Icon(Icons.chevron_right), onTap: _chooseTheme),
-      ListTile(leading: Icon(Icons.format_color_text, color: ref.watch(textColorProvider) ?? Theme.of(context).colorScheme.onSurface), title: const Text('Text Color'), subtitle: Text(ref.watch(textColorProvider) == null ? 'Automatic for the selected theme' : _colorHex(ref.watch(textColorProvider)!)), trailing: const Icon(Icons.chevron_right), onTap: _chooseTextColor),
-      ListTile(leading: const Icon(Icons.system_update_outlined), title: const Text('Check for updates'), subtitle: Text(_checkingForUpdates ? 'Checking GitHub Releases…' : _updateDownloading ? 'Downloading update… You can leave Bifrost open in the background.' : 'Download updates without opening GitHub'), trailing: _checkingForUpdates || _updateDownloading ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.chevron_right), onTap: _checkingForUpdates || _updateDownloading ? null : _checkForUpdates),
+      ListTile(leading: const Icon(Icons.verified_user_outlined), title: const Text('Trusted devices'), subtitle: const Text('Manage devices that can send without approval.'), trailing: Icon(Directionality.of(context) == TextDirection.rtl ? Icons.chevron_left : Icons.chevron_right), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const TrustedDevicesPage()))),
+      ListTile(leading: const Icon(Icons.palette_outlined), title: const Text('Theme'), subtitle: Text(ref.watch(appThemeProvider).label), trailing: Icon(Directionality.of(context) == TextDirection.rtl ? Icons.chevron_left : Icons.chevron_right), onTap: _chooseTheme),
+      ListTile(leading: Icon(Icons.format_color_text, color: ref.watch(textColorProvider) ?? Theme.of(context).colorScheme.onSurface), title: const Text('Text Color'), subtitle: Text(ref.watch(textColorProvider) == null ? 'Automatic for the selected theme' : _colorHex(ref.watch(textColorProvider)!)), trailing: Icon(Directionality.of(context) == TextDirection.rtl ? Icons.chevron_left : Icons.chevron_right), onTap: _chooseTextColor),
+      ListTile(leading: const Icon(Icons.system_update_outlined), title: const Text('Check for updates'), subtitle: Text(_checkingForUpdates ? 'Checking GitHub Releases…' : _updateDownloading ? 'Downloading update… You can leave Bifrost open in the background.' : 'Download updates without opening GitHub'), trailing: _checkingForUpdates || _updateDownloading ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)) : Icon(Directionality.of(context) == TextDirection.rtl ? Icons.chevron_left : Icons.chevron_right), onTap: _checkingForUpdates || _updateDownloading ? null : _checkForUpdates),
       const Divider(height: 32),
-      ListTile(leading: const Icon(Icons.share_outlined), title: const Text('Share Bifrost'), subtitle: Text(Platform.isAndroid ? 'Share the Android APK or Windows installer' : 'Package sharing is available on Android'), trailing: const Icon(Icons.chevron_right), onTap: Platform.isAndroid ? _shareBifrost : null),
-      ListTile(leading: const Icon(Icons.info_outline), title: const Text('About Bifrost'), subtitle: const Text('Credits, version, and project information'), trailing: const Icon(Icons.chevron_right), onTap: _showAbout),
+      ListTile(leading: const Icon(Icons.share_outlined), title: const Text('Share Bifrost'), subtitle: Text(Platform.isAndroid ? 'Share the Android APK or Windows installer' : 'Package sharing is available on Android'), trailing: Icon(Directionality.of(context) == TextDirection.rtl ? Icons.chevron_left : Icons.chevron_right), onTap: Platform.isAndroid ? _shareBifrost : null),
+      ListTile(leading: const Icon(Icons.info_outline), title: const Text('About Bifrost'), subtitle: const Text('Credits, version, and project information'), trailing: Icon(Directionality.of(context) == TextDirection.rtl ? Icons.chevron_left : Icons.chevron_right), onTap: _showAbout),
     ]);
   }
 
@@ -543,7 +578,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   paletteType: PaletteType.hsvWithHue,
                 ),
                 const SizedBox(height: 8),
-                const Align(alignment: Alignment.centerLeft, child: Text('Suggestions')),
+                const Align(alignment: AlignmentDirectional.centerStart, child: Text('Suggestions')),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 10,

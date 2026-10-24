@@ -1,6 +1,7 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Text;
+import '../../core/localization/localized_text.dart';
 
 import '../../core/networking/bifrost_client.dart';
 import '../../core/networking/bifrost_server.dart';
@@ -69,7 +70,7 @@ class _NetworkTestPageState extends State<NetworkTestPage> {
       const SizedBox(height: 12),
       OutlinedButton.icon(onPressed: _testing ? null : _runSelfTest, icon: const Icon(Icons.science_outlined), label: const Text('Run one-device self-test')),
       const SizedBox(height: 18),
-      SelectableText(_message),
+      LocalizedSelectableText(_message),
     ])),
   );
 }

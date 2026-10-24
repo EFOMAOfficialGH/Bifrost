@@ -1,3 +1,9 @@
+## 0.13.0+31 — Arabic language support
+
+- Added English and Arabic language selection on the first-run screen and in Settings.
+- Added reviewed Arabic UI strings and right-to-left layout support.
+- Synchronized the app/About/update version to 0.13.0+31.
+
 ## 0.12.7+30 — Version reporting and update fix
 
 - Corrected the in-app version shown in About and supplied to update checks.
