@@ -1,3 +1,10 @@
+## 0.13.2+33 — Persistent update downloads
+
+- Store downloaded update packages in app support storage and reuse a matching version instead of downloading again.
+- Show an install-ready prompt when a background download completes and when returning to Bifrost.
+- Open the installer from the completion notification or Check for updates.
+- Remove cached installers after the corresponding version is installed.
+
 ## 0.13.1+32 — Corrected requested Arabic wording
 
 - Set the splash tagline, About credit, and background activity text to the requested Arabic wording.

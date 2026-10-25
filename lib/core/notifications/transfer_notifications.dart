@@ -9,13 +9,19 @@ class TransferNotifications {
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _ready = false;
   Future<void> Function()? onBackgroundNotificationTapped;
+  Future<void> Function()? onUpdateNotificationTapped;
 
   Future<void> initialize() async {
     if (_ready || !Platform.isAndroid) return;
     const settings = InitializationSettings(android: AndroidInitializationSettings('@mipmap/ic_launcher'));
     await _plugin.initialize(settings: settings, onDidReceiveNotificationResponse: (response) async {
       if (response.id == 987654) await onBackgroundNotificationTapped?.call();
+      if (response.id == 987655) await onUpdateNotificationTapped?.call();
     });
+    final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+    if (launchDetails?.didNotificationLaunchApp == true && launchDetails?.notificationResponse?.id == 987655) {
+      await onUpdateNotificationTapped?.call();
+    }
     final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     await android?.requestNotificationsPermission();
     await android?.createNotificationChannel(AndroidNotificationChannel('bifrost_transfers', AppLocalizations.translateCurrent('Bifrost transfers'), description: AppLocalizations.translateCurrent('File transfer progress'), importance: Importance.low, playSound: false));

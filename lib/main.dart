@@ -26,11 +26,14 @@ final appLanguageProvider = StateProvider<String>((ref) => 'en');
 final customThemeColorProvider = StateProvider<Color>((ref) => const Color(0xFF3154B8));
 final textColorProvider = StateProvider<Color?>((ref) => null);
 final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
-const bifrostVersion = '0.13.1+32';
+const bifrostVersion = '0.13.2+33';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppLocalizations.load();
+  try {
+    await BifrostUpdateService.instance.cleanupInstalledUpdates(currentVersion: bifrostVersion);
+  } catch (_) {}
   if (Platform.isWindows) SharedFileBridge.instance.seed(args);
   runApp(const ProviderScope(child: BifrostApp()));
 }
@@ -42,8 +45,103 @@ class BifrostApp extends ConsumerStatefulWidget {
   @override ConsumerState<BifrostApp> createState() => _BifrostAppState();
 }
 
-class _BifrostAppState extends ConsumerState<BifrostApp> {
-  @override void initState() { super.initState(); _loadAppearance(); }
+Future<void> _openUpdatePackage(CachedBifrostUpdate update) async {
+  if (Platform.isAndroid) {
+    await OpenFilex.open(update.file.path, type: 'application/vnd.android.package-archive');
+  } else if (Platform.isWindows) {
+    await Process.start('cmd.exe', ['/c', 'start', '', update.file.path]);
+  }
+}
+
+Future<void> _promptToInstallUpdate(BuildContext context, CachedBifrostUpdate update) async {
+  if (!context.mounted) return;
+  final installNow = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Bifrost update downloaded'),
+      content: Text('Version ${update.version} is ready to install'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Later')),
+        FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Install now')),
+      ],
+    ),
+  );
+  if (installNow == true) await _openUpdatePackage(update);
+}
+
+class _BifrostAppState extends ConsumerState<BifrostApp> with WidgetsBindingObserver {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  String? _readyPromptShownFor;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    TransferNotifications.instance.onUpdateNotificationTapped = _openLatestCachedUpdate;
+    _loadAppearance();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkForReadyCachedUpdate(delay: const Duration(milliseconds: 1500)));
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkForReadyCachedUpdate();
+    }
+  }
+
+  Future<void> _openLatestCachedUpdate() async {
+    final update = await BifrostUpdateService.instance.latestCachedUpdate(
+      currentVersion: bifrostVersion,
+      android: Platform.isAndroid,
+    );
+    if (update != null) {
+      _readyPromptShownFor = update.version;
+      await _openUpdatePackage(update);
+    }
+  }
+
+  Future<void> _checkForReadyCachedUpdate({Duration delay = Duration.zero}) async {
+    if (delay > Duration.zero) await Future<void>.delayed(delay);
+    if (!mounted || !Platform.isAndroid) return;
+    final update = await BifrostUpdateService.instance.latestCachedUpdate(
+      currentVersion: bifrostVersion,
+      android: true,
+    );
+    if (!mounted) return;
+    if (update == null || _readyPromptShownFor == update.version) return;
+    final context = _navigatorKey.currentContext;
+    if (context == null) return;
+    _readyPromptShownFor = update.version;
+    await _promptToInstallUpdate(context, update);
+  }
+
+  @override Widget build(BuildContext context) {
+    final enableDiscovery = widget.enableDiscovery;
+    final language = ref.watch(appLanguageProvider);
+    AppLocalizations.currentLanguageCode = language;
+    final kind = ref.watch(appThemeProvider);
+    final customColor = ref.watch(customThemeColorProvider);
+    final textColor = ref.watch(textColorProvider);
+    return MaterialApp(
+      navigatorKey: _navigatorKey,
+      title: 'Bifrost',
+      debugShowCheckedModeBanner: false,
+      locale: Locale(language),
+      supportedLocales: const [Locale('en'), Locale('ar')],
+      localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
+      theme: AppTheme.forKind(kind, customColor: customColor, textColor: textColor),
+      themeMode: ThemeMode.light,
+      builder: (context, child) => ThemeBackdrop(kind: kind, customColor: customColor, child: child ?? const SizedBox.shrink()),
+      home: BifrostSplash(child: IncomingOfferListener(child: BifrostGate(enableDiscovery: enableDiscovery))),
+    );
+  }
+
   Future<void> _loadAppearance() async {
     final language = await AppStorage.instance.languageChoice();
     final saved = await AppStorage.instance.themeChoice();
@@ -59,26 +157,6 @@ class _BifrostAppState extends ConsumerState<BifrostApp> {
     ref.read(textColorProvider.notifier).state = _parseColor(text);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final enableDiscovery = widget.enableDiscovery;
-    final language = ref.watch(appLanguageProvider);
-    AppLocalizations.currentLanguageCode = language;
-    final kind = ref.watch(appThemeProvider);
-    final customColor = ref.watch(customThemeColorProvider);
-    final textColor = ref.watch(textColorProvider);
-    return MaterialApp(
-      title: 'Bifrost',
-      debugShowCheckedModeBanner: false,
-      locale: Locale(language),
-      supportedLocales: const [Locale('en'), Locale('ar')],
-      localizationsDelegates: const [GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
-      theme: AppTheme.forKind(kind, customColor: customColor, textColor: textColor),
-      themeMode: ThemeMode.light,
-      builder: (context, child) => ThemeBackdrop(kind: kind, customColor: customColor, child: child ?? const SizedBox.shrink()),
-      home: BifrostSplash(child: IncomingOfferListener(child: BifrostGate(enableDiscovery: enableDiscovery))),
-    );
-  }
 }
 
 class BifrostSplash extends StatefulWidget {
@@ -160,6 +238,12 @@ class _BifrostShellState extends State<BifrostShell> {
     try {
       final release = await BifrostUpdateService.instance.latest(currentVersion: bifrostVersion);
       if (!mounted || release == null) return;
+      final cached = await BifrostUpdateService.instance.cachedUpdateForVersion(
+        version: release.version,
+        android: Platform.isAndroid,
+      );
+      if (!mounted) return;
+      if (cached != null) return;
       final url = Platform.isAndroid ? release.apkUrl : Platform.isWindows ? release.windowsUrl : null;
       if (url == null) return;
       final download = await showDialog<bool>(context: context, builder: (dialogContext) => AlertDialog(title: Text('Bifrost ${release.version} is available'), content: Text('A new update is ready. Download size: ${_formatUpdateBytes(Platform.isAndroid ? release.apkSizeBytes : release.windowsSizeBytes)}. You can choose Not now and check again later.'), actions: [TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Not now')), FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Update'))]));
@@ -179,11 +263,12 @@ class _BifrostShellState extends State<BifrostShell> {
     unawaited(showDialog<void>(context: context, barrierDismissible: false, builder: (dialogContext) => StatefulBuilder(builder: (_, setState) { repaint = setState; final progress = total > 0 ? (received / total).clamp(0.0, 1.0) : null; return AlertDialog(title: Text('Downloading Bifrost ${release.version}'), content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [LinearProgressIndicator(value: progress), const SizedBox(height: 12), Text(total > 0 ? '${(progress! * 100).toStringAsFixed(0)}% • ${_formatUpdateBytes(received)} of ${_formatUpdateBytes(total)}' : '${_formatUpdateBytes(received)} downloaded'), if (speed > 0) Text('${_formatSpeed(speed)}/s${eta > 0 ? ' • ${_formatEta(eta)} left' : ''}'), const SizedBox(height: 10), const Text('The download continues while Bifrost is in the background.')]), actions: [TextButton(onPressed: () { BifrostUpdateService.instance.cancelDownload(); Navigator.pop(dialogContext); }, child: const Text('Cancel'))]); })).then((_) => closed = true));
     try {
       final started = DateTime.now();
-      final file = await BifrostUpdateService.instance.download(url, onProgress: (done, reportedTotal) { received = done; if (reportedTotal != null) total = reportedTotal; final seconds = DateTime.now().difference(started).inMilliseconds / 1000; speed = received / (seconds < .1 ? .1 : seconds); eta = speed > 0 && total > received ? ((total - received) / speed).ceil() : 0; TransferNotifications.instance.updateProgress(received: received, total: total, speedBytesPerSecond: speed, etaSeconds: eta); repaint?.call(() {}); });
+      final file = await BifrostUpdateService.instance.download(url, version: release.version, onProgress: (done, reportedTotal) { received = done; if (reportedTotal != null) total = reportedTotal; final seconds = DateTime.now().difference(started).inMilliseconds / 1000; speed = received / (seconds < .1 ? .1 : seconds); eta = speed > 0 && total > received ? ((total - received) / speed).ceil() : 0; TransferNotifications.instance.updateProgress(received: received, total: total, speedBytesPerSecond: speed, etaSeconds: eta); repaint?.call(() {}); });
       await TransferNotifications.instance.updateComplete(version: release.version);
       if (!closed && mounted) Navigator.of(context).pop();
-      if (Platform.isAndroid) await OpenFilex.open(file.path, type: 'application/vnd.android.package-archive');
-      if (Platform.isWindows) await Process.start('cmd.exe', ['/c', 'start', '', file.path]);
+      if (mounted && WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+        await _promptToInstallUpdate(context, CachedBifrostUpdate(version: release.version, file: file));
+      }
     } on UpdateDownloadCancelled {
       await TransferNotifications.instance.clearUpdate();
       if (!closed && mounted) Navigator.of(context).pop();
@@ -612,11 +697,32 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Future<void> _checkForUpdates() async {
     setState(() => _checkingForUpdates = true);
     try {
+      final cachedUpdate = await BifrostUpdateService.instance.latestCachedUpdate(
+        currentVersion: bifrostVersion,
+        android: Platform.isAndroid,
+      );
+      if (!mounted) return;
+      if (cachedUpdate != null) {
+        await _openUpdatePackage(cachedUpdate);
+        return;
+      }
       final release = await BifrostUpdateService.instance.latest(currentVersion: bifrostVersion);
       if (!mounted) return;
       if (release == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You are using the latest compatible Bifrost version.')));
+        final cached = await BifrostUpdateService.instance.latestCachedUpdate(currentVersion: bifrostVersion, android: Platform.isAndroid);
+        if (!mounted) return;
+        if (cached != null) {
+          await _openUpdatePackage(cached);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You are using the latest compatible Bifrost version.')));
+        }
       } else {
+        final cachedFile = await BifrostUpdateService.instance.cachedUpdateForVersion(version: release.version, android: Platform.isAndroid);
+        if (!mounted) return;
+        if (cachedFile != null) {
+          await _openUpdatePackage(CachedBifrostUpdate(version: release.version, file: cachedFile));
+          return;
+        }
         final asset = Platform.isAndroid ? release.apkUrl : Platform.isWindows ? release.windowsUrl : null;
         final size = Platform.isAndroid ? release.apkSizeBytes : release.windowsSizeBytes;
         await showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(title: Text('Bifrost ${release.version} is available'), content: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [Text(asset == null ? 'A release exists, but it has no installer for this platform.' : 'Download size: ${_formatUpdateBytes(size)}'), if (asset != null) const Padding(padding: EdgeInsets.only(top: 8), child: Text('The download can continue while Bifrost is in the background.')), if (release.notes.trim().isNotEmpty) Padding(padding: const EdgeInsets.only(top: 18), child: Text(release.notes))])), actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Later')), if (asset != null) FilledButton(onPressed: () { Navigator.pop(dialogContext); _downloadAndInstall(release, asset); }, child: const Text('Download and install'))]));
@@ -646,7 +752,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     })).then((_) => dialogOpen = false));
     try {
       final started = DateTime.now();
-      final file = await BifrostUpdateService.instance.download(url, onProgress: (downloaded, reportedTotal) {
+      final file = await BifrostUpdateService.instance.download(url, version: release.version, onProgress: (downloaded, reportedTotal) {
         received = downloaded;
         if (reportedTotal != null) total = reportedTotal;
         final elapsed = DateTime.now().difference(started).inMilliseconds;
@@ -659,12 +765,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           dialogSetState!(() {});
         }
       });
-      await TransferNotifications.instance.updateComplete(version: release.version);
+      try {
+        await TransferNotifications.instance.updateComplete(version: release.version);
+      } catch (_) {}
       if (dialogOpen && mounted) Navigator.of(context).pop();
-      if (Platform.isAndroid) {
-        await OpenFilex.open(file.path, type: 'application/vnd.android.package-archive');
-      } else if (Platform.isWindows) {
-        await Process.start('cmd.exe', ['/c', 'start', '', file.path]);
+      if (mounted) setState(() => _updateDownloading = false);
+      if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed && mounted) {
+        await _showDownloadedUpdateDialog(CachedBifrostUpdate(version: release.version, file: file));
       }
     } on UpdateDownloadCancelled {
       await TransferNotifications.instance.clearUpdate();
@@ -677,6 +784,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     } finally {
       if (mounted) setState(() => _updateDownloading = false);
     }
+  }
+
+  Future<void> _showDownloadedUpdateDialog(CachedBifrostUpdate update) async {
+    if (!mounted) return;
+    await _promptToInstallUpdate(context, update);
   }
 
   Future<void> _showAbout() async => showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(

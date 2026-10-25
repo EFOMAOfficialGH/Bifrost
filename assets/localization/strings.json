@@ -1806,6 +1806,12 @@
       "en": "\nPath: {path}",
       "ar": "\nالمسار: {path}",
       "context": "History detail path"
+    },
+    {
+      "key": "update.install_now",
+      "en": "Install now",
+      "ar": "ثبّت الآن",
+      "context": "Button to open the downloaded update installer"
     }
   ]
 }
