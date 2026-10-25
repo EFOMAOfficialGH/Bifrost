@@ -1,3 +1,8 @@
+## 0.13.1+32 — Corrected requested Arabic wording
+
+- Set the splash tagline, About credit, and background activity text to the requested Arabic wording.
+- Fixed text-color picker hue dragging by avoiding a parent rebuild during pointer updates.
+
 ## 0.13.0+31 — Arabic language support
 
 - Added English and Arabic language selection on the first-run screen and in Settings.

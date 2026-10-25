@@ -628,7 +628,7 @@
     {
       "key": "settings.background_receiving_description",
       "en": "Keep Bifrost listening while the app is in the background.",
-      "ar": "يواصل Bifrost الاستماع أثناء تشغيل التطبيق في الخلفية.",
+      "ar": "يواصل Bifrost العلم فالخلفية",
       "context": "Setting description"
     },
     {
@@ -1186,7 +1186,7 @@
     {
       "key": "about.author_credit",
       "en": "Vibecoded by EFOMA",
-      "ar": "برمجة إبداعية بمساعدة EFOMA",
+      "ar": "برمجة EFOMA",
       "context": "About dialog credit; proper name EFOMA remains unchanged"
     },
     {
@@ -1558,7 +1558,7 @@
     {
       "key": "brand.tagline",
       "en": "Your bridge between worlds",
-      "ar": "جسر يربط العوالم ببعضها",
+      "ar": "جسرك بين العوالم",
       "context": "Splash tagline"
     },
     {

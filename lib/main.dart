@@ -26,7 +26,7 @@ final appLanguageProvider = StateProvider<String>((ref) => 'en');
 final customThemeColorProvider = StateProvider<Color>((ref) => const Color(0xFF3154B8));
 final textColorProvider = StateProvider<Color?>((ref) => null);
 final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
-const bifrostVersion = '0.13.0+31';
+const bifrostVersion = '0.13.1+32';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -571,7 +571,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               children: [
                 ColorPicker(
                   pickerColor: selectedColor,
-                  onColorChanged: (color) => setDialogState(() => selectedColor = color),
+                  onColorChanged: (color) => selectedColor = color,
                   enableAlpha: false,
                   displayThumbColor: true,
                   pickerAreaHeightPercent: .72,
