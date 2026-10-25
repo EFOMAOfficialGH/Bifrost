@@ -10,13 +10,13 @@
     {
       "key": "onboarding.folder_access_error",
       "en": "Bifrost could not access that folder. Choose another location.",
-      "ar": "تعذّر على Bifrost الوصول إلى هذا المجلد. اختر موقعًا آخر.",
+      "ar": "تعذّر على بايفروست الوصول إلى هذا المجلد. اختر موقعًا آخر.",
       "context": "Setup screen error"
     },
     {
       "key": "onboarding.welcome",
       "en": "Welcome to Bifrost",
-      "ar": "مرحبًا بك في Bifrost",
+      "ar": "مرحبًا بك في بايفروست",
       "context": "First-run introduction"
     },
     {
@@ -112,7 +112,7 @@
     {
       "key": "nearby.ready_to_receive",
       "en": "Ready to receive • Bifrost Phone",
-      "ar": "جاهز للاستلام • Bifrost Phone",
+      "ar": "جاهز للاستلام • هاتف بايفروست",
       "context": "Default Android ready status; Bifrost Phone is a device-name default"
     },
     {
@@ -220,7 +220,7 @@
     {
       "key": "nearby.qr_instructions",
       "en": "Use this code with a future Bifrost scanner, or enter the address manually.",
-      "ar": "استخدم هذا الرمز مع ماسح Bifrost الذي سيتوفر مستقبلًا، أو أدخل العنوان يدويًا.",
+      "ar": "استخدم هذا الرمز مع ماسح بايفروست الذي سيتوفر مستقبلًا، أو أدخل العنوان يدويًا.",
       "context": "QR dialog; currently describes planned scanner"
     },
     {
@@ -286,7 +286,7 @@
     {
       "key": "help.using_bifrost",
       "en": "Using Bifrost",
-      "ar": "استخدام Bifrost",
+      "ar": "استخدام بايفروست",
       "context": "Help section heading"
     },
     {
@@ -310,7 +310,7 @@
     {
       "key": "help.android_share_body",
       "en": "From Gallery or Files, tap Share and choose Bifrost. The selected files will appear in the Nearby queue.",
-      "ar": "من «المعرض» أو «الملفات»، اضغط على «مشاركة» واختر Bifrost. ستظهر الملفات المحددة في قائمة انتظار الإرسال ضمن «الأجهزة القريبة».",
+      "ar": "من «المعرض» أو «الملفات»، اضغط على «مشاركة» واختر بايفروست. ستظهر الملفات المحددة في قائمة انتظار الإرسال ضمن «الأجهزة القريبة».",
       "context": "Help instructions"
     },
     {
@@ -322,7 +322,7 @@
     {
       "key": "help.save_location_body",
       "en": "Received files go to Download/Bifrost by default. Change this in Settings → Save location.",
-      "ar": "تُحفَظ الملفات المستلمة افتراضيًا في Download/Bifrost. يمكنك تغيير ذلك من «الإعدادات» ← «موقع الحفظ».",
+      "ar": "تُحفَظ الملفات المستلمة افتراضيًا في مجلد بايفروست ضمن التنزيلات. يمكنك تغيير الموقع من «الإعدادات» ← «موقع الحفظ».",
       "context": "Help instructions; Download/Bifrost is a folder path"
     },
     {
@@ -388,7 +388,7 @@
     {
       "key": "help.windows_profile_body",
       "en": "Set the Windows network to Private and allow Bifrost through the Windows Firewall when prompted.",
-      "ar": "اضبط ملف تعريف شبكة Windows على «خاص»، واسمح لـ Bifrost بالمرور عبر جدار حماية Windows عند ظهور المطالبة.",
+      "ar": "اضبط ملف تعريف شبكة Windows على «خاص»، واسمح لـ بايفروست بالمرور عبر جدار حماية Windows عند ظهور المطالبة.",
       "context": "Help instructions; Private may be a Windows UI option"
     },
     {
@@ -628,7 +628,7 @@
     {
       "key": "settings.background_receiving_description",
       "en": "Keep Bifrost listening while the app is in the background.",
-      "ar": "يواصل Bifrost العلم فالخلفية",
+      "ar": "يواصل بايفروست العمل فالخلفية",
       "context": "Setting description"
     },
     {
@@ -640,7 +640,7 @@
     {
       "key": "settings.automatic_updates_description",
       "en": "Silently check GitHub when Bifrost starts.",
-      "ar": "يتحقق Bifrost بصمت من وجود تحديثات على GitHub عند بدء تشغيله.",
+      "ar": "يتحقق بايفروست بصمت من وجود تحديثات على GitHub عند بدء تشغيله.",
       "context": "Setting description"
     },
     {
@@ -688,7 +688,7 @@
     {
       "key": "settings.downloading_update",
       "en": "Downloading update… You can leave Bifrost open in the background.",
-      "ar": "جارٍ تنزيل التحديث… يمكنك إبقاء Bifrost مفتوحًا في الخلفية.",
+      "ar": "جارٍ تنزيل التحديث… يمكنك إبقاء بايفروست مفتوحًا في الخلفية.",
       "context": "Progress subtitle"
     },
     {
@@ -850,13 +850,13 @@
     {
       "key": "update.latest_compatible",
       "en": "You are using the latest compatible Bifrost version.",
-      "ar": "أنت تستخدم أحدث إصدار متوافق من Bifrost.",
+      "ar": "أنت تستخدم أحدث إصدار متوافق من بايفروست.",
       "context": "Update check result"
     },
     {
       "key": "update.available",
       "en": "Bifrost {version} is available",
-      "ar": "يتوفر Bifrost {version} الآن",
+      "ar": "يتوفر بايفروست {version} الآن",
       "context": "Update dialog title; {version} is release version"
     },
     {
@@ -874,7 +874,7 @@
     {
       "key": "update.background_download",
       "en": "The download can continue while Bifrost is in the background.",
-      "ar": "يمكن أن يستمر التنزيل بينما يعمل Bifrost في الخلفية.",
+      "ar": "يمكن أن يستمر التنزيل بينما يعمل بايفروست في الخلفية.",
       "context": "Update dialog message"
     },
     {
@@ -898,7 +898,7 @@
     {
       "key": "update.downloading",
       "en": "Downloading Bifrost {version}",
-      "ar": "جارٍ تنزيل Bifrost {version}",
+      "ar": "جارٍ تنزيل بايفروست {version}",
       "context": "Progress dialog title"
     },
     {
@@ -922,7 +922,7 @@
     {
       "key": "update.continue_background",
       "en": "The download continues while Bifrost is in the background.",
-      "ar": "يستمر التنزيل بينما يعمل Bifrost في الخلفية.",
+      "ar": "يستمر التنزيل بينما يعمل بايفروست في الخلفية.",
       "context": "Progress dialog"
     },
     {
@@ -1066,7 +1066,7 @@
     {
       "key": "notification.channel_transfers",
       "en": "Bifrost transfers",
-      "ar": "عمليات نقل Bifrost",
+      "ar": "عمليات نقل بايفروست",
       "context": "Android notification channel name"
     },
     {
@@ -1096,25 +1096,25 @@
     {
       "key": "notification.channel_background_description",
       "en": "Keeps Bifrost available while the app is in the background",
-      "ar": "يُبقي Bifrost متاحًا أثناء عمل التطبيق في الخلفية",
+      "ar": "يُبقي بايفروست متاحًا أثناء عمل التطبيق في الخلفية",
       "context": "Android notification channel description"
     },
     {
       "key": "notification.channel_updates",
       "en": "Bifrost updates",
-      "ar": "تحديثات Bifrost",
+      "ar": "تحديثات بايفروست",
       "context": "Android notification channel name"
     },
     {
       "key": "notification.channel_update_description",
       "en": "Bifrost update download progress",
-      "ar": "تقدّم تنزيل تحديث Bifrost",
+      "ar": "تقدّم تنزيل تحديث بايفروست",
       "context": "Android notification channel description"
     },
     {
       "key": "notification.downloading_update",
       "en": "Downloading Bifrost update",
-      "ar": "جارٍ تنزيل تحديث Bifrost",
+      "ar": "جارٍ تنزيل تحديث بايفروست",
       "context": "Notification title"
     },
     {
@@ -1132,7 +1132,7 @@
     {
       "key": "notification.bifrost_ready",
       "en": "Bifrost is ready",
-      "ar": "Bifrost جاهز",
+      "ar": "بايفروست جاهز",
       "context": "Notification title"
     },
     {
@@ -1150,7 +1150,7 @@
     {
       "key": "share.choose_package",
       "en": "Choose which Bifrost package to share.",
-      "ar": "اختر حزمة Bifrost التي تريد مشاركتها.",
+      "ar": "اختر حزمة بايفروست التي تريد مشاركتها.",
       "context": "Dialog message"
     },
     {
@@ -1168,7 +1168,7 @@
     {
       "key": "share.failed",
       "en": "Could not share Bifrost: {error}",
-      "ar": "تعذّرت مشاركة Bifrost: {error}",
+      "ar": "تعذّرت مشاركة بايفروست: {error}",
       "context": "Snackbar; {error} is technical error detail"
     },
     {
@@ -1318,7 +1318,7 @@
     {
       "key": "general.default_phone",
       "en": "Bifrost Phone",
-      "ar": "Bifrost Phone",
+      "ar": "هاتف بايفروست",
       "context": "Default Android device name; can remain branded"
     },
     {
@@ -1336,7 +1336,7 @@
     {
       "key": "network_test.description",
       "en": "This temporary screen starts a local receiver. A later screen will let you choose a file and send it from inside Bifrost.",
-      "ar": "تبدأ هذه الشاشة المؤقتة مستقبِلًا محليًا. وستتيح شاشة لاحقة اختيار ملف وإرساله من داخل Bifrost.",
+      "ar": "تبدأ هذه الشاشة المؤقتة مستقبِلًا محليًا. وستتيح شاشة لاحقة اختيار ملف وإرساله من داخل بايفروست.",
       "context": "Developer/test screen; may no longer be user-facing"
     },
     {
@@ -1426,7 +1426,7 @@
     {
       "key": "settings.choose_save_location",
       "en": "Choose Bifrost save location",
-      "ar": "اختر موقع حفظ Bifrost",
+      "ar": "اختر موقع حفظ بايفروست",
       "context": "Native directory-picker title"
     },
     {
@@ -1564,7 +1564,7 @@
     {
       "key": "notification.transfers_channel",
       "en": "Bifrost transfers",
-      "ar": "عمليات نقل Bifrost",
+      "ar": "عمليات نقل بايفروست",
       "context": "Android notification channel"
     },
     {
@@ -1594,19 +1594,19 @@
     {
       "key": "notification.background_desc",
       "en": "Keeps Bifrost available while the app is in the background",
-      "ar": "يُبقي Bifrost متاحًا أثناء عمل التطبيق في الخلفية",
+      "ar": "يُبقي بايفروست متاحًا أثناء عمل التطبيق في الخلفية",
       "context": "Android notification channel"
     },
     {
       "key": "notification.updates_channel",
       "en": "Bifrost updates",
-      "ar": "تحديثات Bifrost",
+      "ar": "تحديثات بايفروست",
       "context": "Android notification channel"
     },
     {
       "key": "notification.update_progress",
       "en": "Bifrost update download progress",
-      "ar": "تقدّم تنزيل تحديث Bifrost",
+      "ar": "تقدّم تنزيل تحديث بايفروست",
       "context": "Android notification channel"
     },
     {
@@ -1624,7 +1624,7 @@
     {
       "key": "notification.ready",
       "en": "Bifrost is ready",
-      "ar": "Bifrost جاهز",
+      "ar": "بايفروست جاهز",
       "context": "Android notification title"
     },
     {
@@ -1678,7 +1678,7 @@
     {
       "key": "update.install_title",
       "en": "Bifrost {version} is available",
-      "ar": "يتوفر Bifrost {version} الآن",
+      "ar": "يتوفر بايفروست {version} الآن",
       "context": "Update alert title"
     },
     {
@@ -1690,13 +1690,13 @@
     {
       "key": "update.downloading_alert",
       "en": "Downloading Bifrost {version}",
-      "ar": "جارٍ تنزيل Bifrost {version}",
+      "ar": "جارٍ تنزيل بايفروست {version}",
       "context": "Update alert title"
     },
     {
       "key": "update.background_alert",
       "en": "You can leave Bifrost open in the background; progress will remain in the notification.",
-      "ar": "يمكنك إبقاء Bifrost مفتوحًا في الخلفية؛ سيظل التقدم ظاهرًا في الإشعار.",
+      "ar": "يمكنك إبقاء بايفروست مفتوحًا في الخلفية؛ سيظل التقدم ظاهرًا في الإشعار.",
       "context": "Update alert body"
     },
     {
@@ -1714,7 +1714,7 @@
     {
       "key": "update.share_error",
       "en": "Could not share Bifrost: {error}",
-      "ar": "تعذّرت مشاركة Bifrost: {error}",
+      "ar": "تعذّرت مشاركة بايفروست: {error}",
       "context": "Sharing error"
     },
     {
@@ -1812,6 +1812,12 @@
       "en": "Install now",
       "ar": "ثبّت الآن",
       "context": "Button to open the downloaded update installer"
+    },
+    {
+      "key": "network.missing_device_name",
+      "en": "Bifrost device",
+      "ar": "جهاز بايفروست",
+      "context": "Brand or generated device-name fallback shown in the UI"
     }
   ]
 }

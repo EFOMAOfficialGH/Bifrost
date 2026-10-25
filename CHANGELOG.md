@@ -1,3 +1,9 @@
+## 0.13.5+36 — Arabic brand wording
+
+- Use “بايفروست” throughout Arabic UI text.
+- Correct the background activity description to “يواصل بايفروست العمل فالخلفية”.
+- Rebind nearby-device discovery after Wi-Fi/hotspot interface changes and allow failed server startup to retry.
+
 ## 0.13.4+35 — Arabic About credit
 
 - Update the About author credit to “تم برمجته بواسطة EFOMA” in Arabic and “Programmed by EFOMA” in English.

@@ -23,10 +23,10 @@ import 'core/updates/update_service.dart';
 
 final appThemeProvider = StateProvider<AppThemeKind>((ref) => AppThemeKind.day);
 final appLanguageProvider = StateProvider<String>((ref) => 'en');
+final deviceNameProvider = StateProvider<String>((ref) => AppLocalizations.translateCurrent('Bifrost Device'));
 final customThemeColorProvider = StateProvider<Color>((ref) => const Color(0xFF3154B8));
 final textColorProvider = StateProvider<Color?>((ref) => null);
-final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
-const bifrostVersion = '0.13.4+35';
+const bifrostVersion = '0.13.5+36';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -130,7 +130,7 @@ class _BifrostAppState extends ConsumerState<BifrostApp> with WidgetsBindingObse
     final textColor = ref.watch(textColorProvider);
     return MaterialApp(
       navigatorKey: _navigatorKey,
-      title: 'Bifrost',
+      title: language == 'ar' ? 'بايفروست' : 'Bifrost',
       debugShowCheckedModeBanner: false,
       locale: Locale(language),
       supportedLocales: const [Locale('en'), Locale('ar')],
@@ -202,8 +202,8 @@ class _FirstRunPageState extends ConsumerState<FirstRunPage> {
   late String _path;
   bool _saving = false;
   String _language = 'en';
-  @override void initState() { super.initState(); _name = TextEditingController(text: 'Bifrost Device'); _path = AppStorage.instance.defaultSaveDirectory(); AppStorage.instance.languageChoice().then((value) { if (!mounted) return; setState(() => _language = value); AppLocalizations.currentLanguageCode = value; ref.read(appLanguageProvider.notifier).state = value; }); AppStorage.instance.deviceName().then((value) { if (mounted && value != 'Bifrost Device') setState(() => _name.text = value); }); }
-  Future<void> _setLanguage(String language) async { setState(() => _language = language); AppLocalizations.currentLanguageCode = language; ref.read(appLanguageProvider.notifier).state = language; await AppStorage.instance.setLanguageChoice(language); await TransferNotifications.instance.refreshLocalizedChannels(); }
+  @override void initState() { super.initState(); _name = TextEditingController(text: 'Bifrost Device'); _path = AppStorage.instance.defaultSaveDirectory(); AppStorage.instance.languageChoice().then((value) { if (!mounted) return; setState(() { _language = value; if (_name.text == 'Bifrost Device' || _name.text == 'جهاز بايفروست') _name.text = value == 'ar' ? 'جهاز بايفروست' : 'Bifrost Device'; }); AppLocalizations.currentLanguageCode = value; ref.read(appLanguageProvider.notifier).state = value; }); AppStorage.instance.deviceName().then((value) { if (mounted && value != 'Bifrost Device') setState(() => _name.text = value); }); }
+  Future<void> _setLanguage(String language) async { setState(() { _language = language; if (_name.text == 'Bifrost Device' || _name.text == 'جهاز بايفروست') _name.text = language == 'ar' ? 'جهاز بايفروست' : 'Bifrost Device'; }); AppLocalizations.currentLanguageCode = language; ref.read(appLanguageProvider.notifier).state = language; await AppStorage.instance.setLanguageChoice(language); await TransferNotifications.instance.refreshLocalizedChannels(); }
   @override void dispose() { _name.dispose(); super.dispose(); }
   Future<void> _chooseLocation() async { final selected = await FilePicker.getDirectoryPath(dialogTitle: AppLocalizations.translate(context, 'Choose Bifrost save location'), initialDirectory: _path); if (selected != null && mounted) setState(() => _path = selected); }
   Future<void> _finish() async { final name = _name.text.trim(); if (name.isEmpty) return; setState(() => _saving = true); try { await Directory(_path).create(recursive: true); await AppStorage.instance.setDeviceName(name); await AppStorage.instance.setSaveDirectoryPath(_path); await AppStorage.instance.setOnboardingComplete(); widget.onComplete(); } catch (_) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bifrost could not access that folder. Choose another location.'))); } if (mounted) setState(() => _saving = false); }
@@ -564,7 +564,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     if (selected == null) return;
     AppLocalizations.currentLanguageCode = selected;
     ref.read(appLanguageProvider.notifier).state = selected;
+    final previousName = _nameController.text.trim();
     await AppStorage.instance.setLanguageChoice(selected);
+    if (previousName == 'Bifrost Device' || previousName == 'جهاز بايفروست') {
+      final localizedName = await AppStorage.instance.deviceName();
+      _nameController.text = localizedName;
+      ref.read(deviceNameProvider.notifier).state = localizedName;
+      BifrostDeviceRuntime.instance.updateDeviceName(localizedName);
+    }
     await TransferNotifications.instance.refreshLocalizedChannels();
   }
 

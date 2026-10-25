@@ -25,7 +25,14 @@ void main() {
     expect(AppLocalizations.translateFor('ar', 'العربية'), 'العربية');
     expect(
       AppLocalizations.translateFor('ar', 'Welcome to Bifrost'),
-      'مرحبًا بك في Bifrost',
+      'مرحبًا بك في بايفروست',
+    );
+    expect(AppLocalizations.translateFor('ar', 'Bifrost'), 'بايفروست');
+    expect(AppLocalizations.translateFor('ar', 'Bifrost Device'), 'جهاز بايفروست');
+    expect(AppLocalizations.translateFor('ar', 'Bifrost Phone'), 'هاتف بايفروست');
+    expect(
+      AppLocalizations.translateFor('ar', 'Keep Bifrost listening while the app is in the background.'),
+      'يواصل بايفروست العمل فالخلفية',
     );
   });
 

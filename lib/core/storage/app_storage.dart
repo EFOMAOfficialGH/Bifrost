@@ -49,8 +49,23 @@ class AppStorage {
   Future<String?> saveDirectoryPath() async => (await _preferences).getString('saveDirectoryPath');
   Future<void> setSaveDirectoryPath(String path) async => (await _preferences).setString('saveDirectoryPath', path);
   Future<String> languageChoice() async => (await _preferences).getString('languageChoice') == 'ar' ? 'ar' : 'en';
-  Future<void> setLanguageChoice(String language) async => (await _preferences).setString('languageChoice', language == 'ar' ? 'ar' : 'en');
-  Future<String> deviceName() async => (await _preferences).getString('deviceName') ?? 'Bifrost Device';
+  Future<void> setLanguageChoice(String language) async {
+    final prefs = await _preferences;
+    final normalized = language == 'ar' ? 'ar' : 'en';
+    await prefs.setString('languageChoice', normalized);
+    final currentName = prefs.getString('deviceName');
+    if (currentName == null || currentName == 'Bifrost Device' || currentName == 'جهاز بايفروست') {
+      await prefs.setString('deviceName', normalized == 'ar' ? 'جهاز بايفروست' : 'Bifrost Device');
+    }
+  }
+  Future<String> deviceName() async {
+    final prefs = await _preferences;
+    final currentName = prefs.getString('deviceName');
+    if (currentName == null || currentName == 'Bifrost Device' || currentName == 'جهاز بايفروست') {
+      return prefs.getString('languageChoice') == 'ar' ? 'جهاز بايفروست' : 'Bifrost Device';
+    }
+    return currentName;
+  }
   Future<void> setDeviceName(String name) async => (await _preferences).setString('deviceName', name);
   Future<bool> backgroundActivity() async => (await _preferences).getBool('backgroundActivity') ?? false;
   Future<void> setBackgroundActivity(bool enabled) async => (await _preferences).setBool('backgroundActivity', enabled);

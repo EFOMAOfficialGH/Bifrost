@@ -4,12 +4,13 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 
+import '../localization/app_localizations.dart';
 import 'checksum.dart';
 import 'discovery_service.dart';
 import 'protocol.dart';
 
 class BifrostServer {
-  BifrostServer({required this.saveDirectory, this.deviceName = 'Bifrost Device', this.deviceId = 'local-device', this.onOffer, this.onOfferWithSender, this.onFileProgress, this.onFileReceived, this.onFileCancelled});
+  BifrostServer({required this.saveDirectory, String? deviceName, this.deviceId = 'local-device', this.onOffer, this.onOfferWithSender, this.onFileProgress, this.onFileReceived, this.onFileCancelled}) : deviceName = deviceName ?? AppLocalizations.translateCurrent('Bifrost Device');
 
   final Directory saveDirectory;
   String deviceName;
@@ -28,8 +29,22 @@ class BifrostServer {
   String get address => _server == null ? '' : 'http://${_server!.address.address}:$port';
 
   void updateDeviceName(String value) {
-    deviceName = value.trim().isEmpty ? 'Bifrost Device' : value.trim();
+    deviceName = value.trim().isEmpty ? AppLocalizations.translateCurrent('Bifrost Device') : value.trim();
     _discovery?.updateName(deviceName);
+  }
+
+  Future<void> refreshDiscovery() async {
+    final server = _server;
+    if (server == null) return;
+    _discovery?.close();
+    final discovery = BifrostDiscoveryResponder(
+      deviceId: deviceId,
+      name: deviceName,
+      deviceType: Platform.isWindows ? 'windows' : 'android',
+      httpPort: server.port,
+    );
+    _discovery = discovery;
+    await discovery.start();
   }
 
   Future<void> start({InternetAddress? address, int port = 0, SecurityContext? securityContext}) async {
