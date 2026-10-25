@@ -100,10 +100,12 @@ class BifrostUpdateService {
     final pattern = RegExp(r'^bifrost-update-(\d+\.\d+\.\d+(?:\+\d+)?)\.(apk|exe)(?:\.part)?$');
     await for (final entity in directory.list(followLinks: false)) {
       if (entity is! File) continue;
-      final match = pattern.firstMatch(entity.uri.pathSegments.last);
-      if (match == null || _compareVersions(match.group(1)!, currentVersion) <= 0) {
-        if (entity.path.endsWith('.part') || match != null) await entity.delete();
+      if (entity.path.endsWith('.part')) {
+        await entity.delete();
+        continue;
       }
+      final match = pattern.firstMatch(entity.uri.pathSegments.last);
+      if (match != null && _compareVersions(match.group(1)!, currentVersion) <= 0) await entity.delete();
     }
   }
 
