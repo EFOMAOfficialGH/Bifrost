@@ -10,6 +10,7 @@ class TransferNotifications {
   bool _ready = false;
   Future<void> Function()? onBackgroundNotificationTapped;
   Future<void> Function()? onUpdateNotificationTapped;
+  DateTime _lastUpdateProgressAt = DateTime.fromMillisecondsSinceEpoch(0);
 
   Future<void> initialize() async {
     if (_ready || !Platform.isAndroid) return;
@@ -50,6 +51,9 @@ class TransferNotifications {
 
   Future<void> updateProgress({required int received, required int total, double speedBytesPerSecond = 0, int? etaSeconds}) async {
     if (!Platform.isAndroid) return;
+    final now = DateTime.now();
+    if (now.difference(_lastUpdateProgressAt) < const Duration(milliseconds: 750)) return;
+    _lastUpdateProgressAt = now;
     await initialize();
     final percent = total == 0 ? 0 : ((received * 100) ~/ total).clamp(0, 100);
     final details = speedBytesPerSecond > 0 ? ' • ${_format(speedBytesPerSecond.round())}/s${etaSeconds == null ? '' : ' • ${etaSeconds}s left'}' : '';

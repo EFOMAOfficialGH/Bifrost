@@ -1,3 +1,8 @@
+## 0.13.3+34 — Faster update progress handling
+
+- Rate-limit Android progress-notification updates so each download chunk does not trigger a native notification call.
+- Keep the GitHub release download streaming and update the notification periodically while it progresses.
+
 ## 0.13.2+33 — Persistent update downloads
 
 - Store downloaded update packages in app support storage and reuse a matching version instead of downloading again.

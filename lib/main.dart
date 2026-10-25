@@ -26,7 +26,7 @@ final appLanguageProvider = StateProvider<String>((ref) => 'en');
 final customThemeColorProvider = StateProvider<Color>((ref) => const Color(0xFF3154B8));
 final textColorProvider = StateProvider<Color?>((ref) => null);
 final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
-const bifrostVersion = '0.13.2+33';
+const bifrostVersion = '0.13.3+34';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
