@@ -1,3 +1,7 @@
+## 0.13.4+35 — Arabic About credit
+
+- Update the About author credit to “تم برمجته بواسطة EFOMA” in Arabic and “Programmed by EFOMA” in English.
+
 ## 0.13.3+34 — Faster update progress handling
 
 - Rate-limit Android progress-notification updates so each download chunk does not trigger a native notification call.

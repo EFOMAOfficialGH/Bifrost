@@ -26,7 +26,7 @@ final appLanguageProvider = StateProvider<String>((ref) => 'en');
 final customThemeColorProvider = StateProvider<Color>((ref) => const Color(0xFF3154B8));
 final textColorProvider = StateProvider<Color?>((ref) => null);
 final deviceNameProvider = StateProvider<String>((ref) => 'Bifrost Device');
-const bifrostVersion = '0.13.3+34';
+const bifrostVersion = '0.13.4+35';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -794,7 +794,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Future<void> _showAbout() async => showDialog<void>(context: context, builder: (dialogContext) => AlertDialog(
         title: const Text('Bifrost', style: TextStyle(fontWeight: FontWeight.w800)),
         content: const Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Vibecoded by EFOMA', style: TextStyle(fontWeight: FontWeight.w600)),
+          Text('Programmed by EFOMA', style: TextStyle(fontWeight: FontWeight.w600)),
           SizedBox(height: 18),
           Text('App Version:    $bifrostVersion'),
           SizedBox(height: 14),

@@ -1185,8 +1185,8 @@
     },
     {
       "key": "about.author_credit",
-      "en": "Vibecoded by EFOMA",
-      "ar": "برمجة EFOMA",
+      "en": "Programmed by EFOMA",
+      "ar": "تم برمجته بواسطة EFOMA",
       "context": "About dialog credit; proper name EFOMA remains unchanged"
     },
     {
