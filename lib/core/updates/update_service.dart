@@ -35,8 +35,7 @@ class CachedBifrostUpdate {
 }
 
 class BifrostUpdateService {
-  BifrostUpdateService._({Future<Directory> Function()? supportDirectoryProvider})
-      : _supportDirectoryProvider = supportDirectoryProvider;
+  BifrostUpdateService._({this._supportDirectoryProvider});
   BifrostUpdateService.forTesting(Future<Directory> Function() supportDirectoryProvider)
       : this._(supportDirectoryProvider: supportDirectoryProvider);
   static final instance = BifrostUpdateService._();
@@ -80,7 +79,7 @@ class BifrostUpdateService {
     final directory = await _updateDirectory();
     if (!await directory.exists()) return null;
     final extension = android ? 'apk' : 'exe';
-    final pattern = RegExp('^bifrost-update-(\\d+\\.\\d+\\.\\d+(?:\\+\\d+)?)\\.$extension$');
+    final pattern = RegExp(r'^bifrost-update-(\d+\.\d+\.\d+(?:\+\d+)?)\.' + extension + r'$');
     final candidates = <CachedBifrostUpdate>[];
     await for (final entity in directory.list(followLinks: false)) {
       if (entity is! File) continue;

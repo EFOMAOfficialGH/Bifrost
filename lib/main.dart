@@ -116,7 +116,7 @@ class _BifrostAppState extends ConsumerState<BifrostApp> with WidgetsBindingObse
     if (!mounted) return;
     if (update == null || _readyPromptShownFor == update.version) return;
     final context = _navigatorKey.currentContext;
-    if (context == null) return;
+    if (context == null || !context.mounted) return;
     _readyPromptShownFor = update.version;
     await _promptToInstallUpdate(context, update);
   }
