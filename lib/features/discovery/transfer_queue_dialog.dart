@@ -33,7 +33,6 @@ class _TransferQueueDialogState extends State<TransferQueueDialog> {
   void _reorder(int oldIndex, int newIndex) {
     if (widget.sending || oldIndex == newIndex) return;
     setState(() {
-      if (newIndex > oldIndex) newIndex--;
       final file = _files.removeAt(oldIndex);
       _files.insert(newIndex, file);
     });
@@ -59,7 +58,7 @@ class _TransferQueueDialogState extends State<TransferQueueDialog> {
                   Expanded(
                     child: ReorderableListView.builder(
                       itemCount: _files.length,
-                      onReorder: widget.sending ? (_, __) {} : _reorder,
+                      onReorderItem: widget.sending ? (_, _) {} : _reorder,
                       itemBuilder: (context, index) {
                         final file = _files[index];
                         final status = widget.statuses[file.path] ?? 'Queued';
