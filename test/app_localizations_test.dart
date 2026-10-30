@@ -31,7 +31,7 @@ void main() {
     expect(AppLocalizations.translateFor('ar', 'Bifrost Device'), 'جهاز بايفروست');
     expect(AppLocalizations.translateFor('ar', 'Bifrost Phone'), 'هاتف بايفروست');
     expect(
-      AppLocalizations.translateFor('ar', 'Keep Bifrost listening while the app is in the background.'),
+      AppLocalizations.translateFor('ar', 'Keep Bifrost receiving while in background'),
       'يواصل بايفروست العمل فالخلفية',
     );
   });
