@@ -336,7 +336,7 @@ class AppTransferPlugin(
                         @Suppress("DEPRECATION")
                         activity.packageManager.getPackageArchiveInfo(apkFiles.first().path, 0)
                     } ?: throw IOException("The base APK is invalid")
-                    if (baseInfo.applicationInfo?.splitName != null) throw IOException("The XAPK APK list does not start with a base APK")
+                    if (!baseInfo.splitNames.isNullOrEmpty()) throw IOException("The XAPK APK list does not start with a base APK")
 
                     val installer = activity.packageManager.packageInstaller
                     val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)

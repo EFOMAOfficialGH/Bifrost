@@ -12,8 +12,8 @@ DefaultGroupName=Bifrost
 DisableProgramGroupPage=yes
 OutputDir=Output
 OutputBaseFilename=Bifrost-Windows-Installer
-SetupIconFile=windows\runner\resources\app_icon.ico
-WizardSmallImageFile=assets\icon.png
+SetupIconFile=runner\resources\app_icon.ico
+WizardSmallImageFile=..\assets\icon.png
 WizardSmallImageBackColor=#040F28
 UninstallDisplayIcon={app}\{#MyAppExeName}
 ArchitecturesInstallIn64BitMode=x64
@@ -32,7 +32,7 @@ Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription:
 Name: "startmenushortcut"; Description: "Create a Start-menu shortcut"; GroupDescription: "Shortcuts:"; Flags: checkedonce
 
 [Files]
-Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
+Source: "..\build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
 
 [Icons]
 Name: "{autoprograms}\Bifrost"; Filename: "{app}\{#MyAppExeName}"; Tasks: startmenushortcut
