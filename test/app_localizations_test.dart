@@ -60,8 +60,8 @@ void main() {
         'يتوفر الإصدار 9.9.9+123. اختر «ثبّت الآن» لتنزيله وتثبيته، أو «لاحقًا» ليتم تذكيرك عند تشغيل التطبيق في المرة القادمة.',
       );
       expect(
-        AppLocalizations.translateFor('ar', 'Transfer an app'),
-        'نقل تطبيق',
+        AppLocalizations.translateFor('ar', 'Transfer apps'),
+        'نقل التطبيقات',
       );
       expect(
         AppLocalizations.translateFor(
@@ -77,6 +77,43 @@ void main() {
       expect(
         AppLocalizations.translateFor('ar', '2 of 8 transfers'),
         '2 من أصل 8 عملية نقل',
+      );
+      expect(
+        AppLocalizations.translateFor('ar', 'Switch to grid view'),
+        'التبديل إلى العرض الشبكي',
+      );
+      expect(
+        AppLocalizations.translateFor('ar', '2 APK splits'),
+        '2 من ملفات APK المجزأة',
+      );
+      expect(
+        AppLocalizations.translateFor('ar', 'Send 3 selected'),
+        'إرسال 3 من التطبيقات المحددة',
+      );
+      expect(
+        AppLocalizations.translateFor(
+          'ar',
+          '1 app added to the transfer queue.',
+        ),
+        'أُضيف تطبيق واحد إلى قائمة انتظار النقل.',
+      );
+      expect(
+        AppLocalizations.translateFor(
+          'ar',
+          '3 apps added to the transfer queue.',
+        ),
+        'أُضيف 3 من التطبيقات إلى قائمة انتظار النقل.',
+      );
+      expect(
+        AppLocalizations.translateFor(
+          'ar',
+          'Version 2.1 (42) · APK size 12 MB',
+        ),
+        'الإصدار 2.1 (42) · حجم APK ‏12 ميغابايت',
+      );
+      expect(
+        AppLocalizations.translateFor('ar', 'Temporary app package removed'),
+        'أُزيلت حزمة التطبيق المؤقتة',
       );
       expect(
         AppLocalizations.translateFor('ar', 'Launch Bifrost at startup'),

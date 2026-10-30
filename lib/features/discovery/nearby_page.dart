@@ -19,6 +19,7 @@ import '../../core/platform/shared_file_bridge.dart';
 import '../../core/storage/app_storage.dart';
 import '../send/network_test_page.dart';
 import '../app_transfer/app_transfer_picker.dart';
+import '../app_transfer/app_transfer_service.dart';
 import 'transfer_queue_dialog.dart';
 
 class NearbyPage extends StatefulWidget {
@@ -47,6 +48,9 @@ class _NearbyPageState extends State<NearbyPage> {
   String? _error;
   TransferCancellation? _cancellation;
   final _queueStatuses = <String, String>{};
+  final _queuedRemoteNames = <String, String>{};
+  final _temporaryAppPackagePaths = <String>{};
+  final _appTransferService = AppTransferService();
   StreamSubscription<List<String>>? _sharedFilesSubscription;
   Timer? _discoveryTimer;
 
@@ -108,16 +112,35 @@ class _NearbyPageState extends State<NearbyPage> {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (pickerContext) => AppTransferPicker(
-          onXapkReady: (xapk) async {
-            final queued = _queueDropped([xapk]);
+          onAppsReady: (artifacts) async {
+            final queued = _queueDropped(
+              artifacts.map((artifact) => artifact.file).toList(),
+            );
+            final queuedPaths = queued.map((file) => file.path).toSet();
+            for (final artifact in artifacts) {
+              if (queuedPaths.contains(artifact.file.path)) {
+                _queuedRemoteNames[artifact.file.path] = artifact.remoteName;
+                if (artifact.isTemporary) {
+                  _temporaryAppPackagePaths.add(artifact.file.path);
+                }
+              } else if (artifact.isTemporary) {
+                await _appTransferService.deleteTemporaryExport(
+                  artifact.file.path,
+                );
+              }
+            }
             if (queued.isEmpty)
               throw StateError(
-                'The generated XAPK could not be added to the transfer queue.',
+                'The selected apps could not be added to the transfer queue.',
               );
-            if (mounted) {
+            if (mounted && pickerContext.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('App package added to the transfer queue.'),
+                SnackBar(
+                  content: Text(
+                    queued.length == 1
+                        ? '1 app added to the transfer queue.'
+                        : '${queued.length} apps added to the transfer queue.',
+                  ),
                 ),
               );
               Navigator.of(pickerContext).pop();
@@ -283,10 +306,18 @@ class _NearbyPageState extends State<NearbyPage> {
         files: _queuedFiles,
         statuses: Map<String, String>.of(_queueStatuses),
         sending: _sending,
+        displayNames: Map<String, String>.of(_queuedRemoteNames),
       ),
     );
     if (!mounted || updated == null) return;
     final retained = updated.map((file) => file.path).toSet();
+    final removed = _queuedFiles.where((file) => !retained.contains(file.path));
+    for (final file in removed) {
+      if (_temporaryAppPackagePaths.remove(file.path)) {
+        await _appTransferService.deleteTemporaryExport(file.path);
+      }
+      _queuedRemoteNames.remove(file.path);
+    }
     setState(() {
       _queuedFiles = updated;
       _queueStatuses.removeWhere((path, _) => !retained.contains(path));
@@ -648,6 +679,14 @@ class _NearbyPageState extends State<NearbyPage> {
     try {
       for (var i = 0; i < files.length; i++) {
         final file = files[i];
+        final fileName =
+            _queuedRemoteNames[file.path] ??
+            (file.uri.pathSegments.isEmpty
+                ? file.path
+                : file.uri.pathSegments.last);
+        final generatedAppPackage = _temporaryAppPackagePaths.contains(
+          file.path,
+        );
         final size = await file.length();
         if (mounted) setState(() => _queueStatuses[file.path] = 'Sending');
         final activityId = 'send-${DateTime.now().microsecondsSinceEpoch}';
@@ -658,7 +697,7 @@ class _NearbyPageState extends State<NearbyPage> {
         await AppStorage.instance.beginPersistent(
           TransferRecord(
             id: activityId,
-            fileName: file.uri.pathSegments.last,
+            fileName: fileName,
             bytes: size,
             direction: 'Sent',
             status: 'In progress',
@@ -666,6 +705,7 @@ class _NearbyPageState extends State<NearbyPage> {
             time: DateTime.now(),
             progress: 0,
             path: file.path,
+            generatedAppPackage: generatedAppPackage,
             peerHost: device.host,
             peerPort: device.port,
             peerDeviceId: device.id,
@@ -686,6 +726,7 @@ class _NearbyPageState extends State<NearbyPage> {
               await client.sendFile(
                 server: device.baseUri,
                 file: file,
+                remoteName: fileName,
                 transferId: transferId,
                 fileId: fileId,
                 resumeToken: resumeToken,
@@ -712,11 +753,11 @@ class _NearbyPageState extends State<NearbyPage> {
                       final speed = current?.speedBytesPerSecond ?? 0;
                       final eta = current?.etaSeconds;
                       _transferStatus =
-                          'Sending ${file.uri.pathSegments.last}: ${total == 0 ? 100 : (sent * 100 ~/ total)}%${speed > 0 ? ' • ${_formatSpeed(speed)}/s' : ''}${eta != null ? ' • ${_formatEta(eta)} left' : ''}';
+                          'Sending $fileName: ${total == 0 ? 100 : (sent * 100 ~/ total)}%${speed > 0 ? ' • ${_formatSpeed(speed)}/s' : ''}${eta != null ? ' • ${_formatEta(eta)} left' : ''}';
                     });
                   TransferNotifications.instance.progress(
                     id: notificationId,
-                    title: 'Sending ${file.uri.pathSegments.last}',
+                    title: 'Sending $fileName',
                     sent: sent,
                     total: total,
                     speedBytesPerSecond: current?.speedBytesPerSecond ?? 0,
@@ -735,22 +776,26 @@ class _NearbyPageState extends State<NearbyPage> {
               if (mounted)
                 setState(
                   () => _transferStatus =
-                      'Connection interrupted. Retrying ${file.uri.pathSegments.last} (${attempt + 1}/3)…',
+                      'Connection interrupted. Retrying $fileName (${attempt + 1}/3)…',
                 );
               await Future<void>.delayed(Duration(milliseconds: 500 * attempt));
             }
           }
           if (lastError != null) throw lastError;
+          final removedTemporaryPackage =
+              generatedAppPackage &&
+              await _appTransferService.deleteTemporaryExport(file.path);
           await AppStorage.instance.finish(
             TransferRecord(
               id: activityId,
-              fileName: file.uri.pathSegments.last,
+              fileName: fileName,
               bytes: size,
               direction: 'Sent',
               status: 'Completed',
               peer: device.name,
               time: DateTime.now(),
-              path: file.path,
+              path: removedTemporaryPackage ? null : file.path,
+              generatedAppPackage: generatedAppPackage,
               peerHost: device.host,
               peerPort: device.port,
               peerDeviceId: device.id,
@@ -764,6 +809,8 @@ class _NearbyPageState extends State<NearbyPage> {
           if (mounted)
             setState(() {
               _queueStatuses.remove(file.path);
+              _queuedRemoteNames.remove(file.path);
+              _temporaryAppPackagePaths.remove(file.path);
               _queuedFiles = _queuedFiles
                   .where((item) => item.path != file.path)
                   .toList(growable: false);
@@ -772,7 +819,7 @@ class _NearbyPageState extends State<NearbyPage> {
           await TransferNotifications.instance.cancel(notificationId);
           await TransferNotifications.instance.complete(
             id: notificationId,
-            title: 'Sent ${file.uri.pathSegments.last}',
+            title: 'Sent $fileName',
             success: true,
           );
         } catch (error) {
@@ -781,7 +828,7 @@ class _NearbyPageState extends State<NearbyPage> {
           await AppStorage.instance.finish(
             TransferRecord(
               id: activityId,
-              fileName: file.uri.pathSegments.last,
+              fileName: fileName,
               bytes: size,
               direction: 'Sent',
               status: cancelled ? 'Cancelled' : 'Failed',
@@ -789,6 +836,7 @@ class _NearbyPageState extends State<NearbyPage> {
               time: DateTime.now(),
               progress: _progress,
               path: file.path,
+              generatedAppPackage: generatedAppPackage,
               peerHost: device.host,
               peerPort: device.port,
               peerDeviceId: device.id,

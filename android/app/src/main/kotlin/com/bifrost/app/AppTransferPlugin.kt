@@ -70,7 +70,21 @@ class AppTransferPlugin(
                 requestAllFilesAccess()
                 result.success(null)
             }
-            "createXapk" -> createXapk(call, result)
+            "prepareAppTransfer" -> prepareAppTransfer(call, result)
+            "deleteTemporaryExport" -> {
+                val path = call.argument<String>("path")
+                worker.execute {
+                    val deleted = path != null && deleteTemporaryExport(path)
+                    mainHandler.post { result.success(deleted) }
+                }
+            }
+            "cleanupTemporaryExports" -> {
+                val retained = call.argument<List<String>>("retainedPaths") ?: emptyList()
+                worker.execute {
+                    cleanupTemporaryExports(retained)
+                    mainHandler.post { result.success(null) }
+                }
+            }
             "installXapk" -> installXapk(call, result)
             else -> result.notImplemented()
         }
@@ -101,22 +115,19 @@ class AppTransferPlugin(
                         pm.getPackageInfo(app.packageName, 0)
                     }
                     val apkPaths = listOfNotNull(app.sourceDir) + (app.splitSourceDirs?.toList() ?: emptyList())
+                    val apkNames = apkPaths.mapIndexed { index, path ->
+                        if (index == 0) "base.apk" else File(path).name
+                    }
                     val apkSize = apkPaths.sumOf { File(it).length() }
-                    val obb = File(Environment.getExternalStorageDirectory(), "Android/obb/${app.packageName}")
-                    val canInspectObb = Build.VERSION.SDK_INT < 30 || Environment.isExternalStorageManager()
-                    val obbFiles = if (canInspectObb && obb.isDirectory) collectFiles(obb) else emptyList()
-                    val obbSize = obbFiles.sumOf { it.length() }
                     mapOf(
                         "name" to pm.getApplicationLabel(app).toString(),
                         "packageName" to app.packageName,
                         "versionName" to info.versionName.orEmpty(),
                         "versionCode" to if (Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong(),
-                        "sizeBytes" to apkSize + obbSize,
+                        "sizeBytes" to apkSize,
                         "apkSizeBytes" to apkSize,
-                        "obbSizeBytes" to obbSize,
                         "apkPaths" to apkPaths,
-                        "hasObb" to obbFiles.isNotEmpty(),
-                        "obbAccessRequired" to !canInspectObb,
+                        "apkNames" to apkNames,
                         "iconPng" to iconBytes(app),
                     )
                 } catch (_: Exception) {
@@ -161,17 +172,20 @@ class AppTransferPlugin(
         return files
     }
 
-    private fun createXapk(call: MethodCall, result: MethodChannel.Result) {
+    private fun prepareAppTransfer(call: MethodCall, result: MethodChannel.Result) {
         val name = call.argument<String>("name") ?: "App"
         val packageName = call.argument<String>("packageName")
         val versionName = call.argument<String>("versionName") ?: ""
         val versionCode = (call.argument<Number>("versionCode"))?.toLong() ?: 0L
         val apkPaths = call.argument<List<String>>("apkPaths")
-        if (packageName.isNullOrBlank() || !packageName.matches(Regex("^[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+$")) || apkPaths.isNullOrEmpty() || apkPaths.any { !File(it).isFile }) {
+        val apkNames = call.argument<List<String>>("apkNames")
+        val includeObb = call.argument<Boolean>("includeObb") ?: false
+        val safeName = name.replace(Regex("[^A-Za-z0-9._-]+"), "_").trim('.').ifBlank { packageName ?: "App" }
+        if (packageName.isNullOrBlank() || !packageName.matches(Regex("^[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+$")) || apkPaths.isNullOrEmpty() || apkNames == null || apkNames.size != apkPaths.size || apkPaths.any { !File(it).isFile } || apkNames.firstOrNull() != "base.apk" || apkNames.any { !it.matches(Regex("^[A-Za-z0-9._-]+\\.apk$")) } || apkNames.toSet().size != apkNames.size) {
             result.error("INVALID_APP", "The app's APK files could not be found.", null)
             return
         }
-        if (Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager()) {
+        if (includeObb && Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager()) {
             result.error("ALL_FILES_ACCESS_REQUIRED", "Grant All files access to check for and include optional OBB files.", null)
             return
         }
@@ -179,11 +193,19 @@ class AppTransferPlugin(
             var output: File? = null
             try {
                 val obbRoot = File(Environment.getExternalStorageDirectory(), "Android/obb/$packageName")
-                val obbFiles = if (obbRoot.isDirectory) collectFiles(obbRoot).sortedBy { it.path } else emptyList()
+                val obbFiles = if (includeObb && obbRoot.isDirectory) collectFiles(obbRoot).sortedBy { it.path } else emptyList()
                 val apkFiles = apkPaths.map(::File)
+                if (apkFiles.size == 1 && obbFiles.isEmpty()) {
+                    val directArtifact = mapOf(
+                        "path" to apkFiles.first().absolutePath,
+                        "remoteName" to "$safeName.apk",
+                        "temporary" to false,
+                        "isArchive" to false,
+                    )
+                    mainHandler.post { result.success(directArtifact) }
+                    return@execute
+                }
                 val totalBytes = (apkFiles + obbFiles).sumOf { it.length() }.coerceAtLeast(1L)
-                val apkNames = apkFiles.indices.map { index -> if (index == 0) "base.apk" else "split_${index}.apk" }
-                val safeName = name.replace(Regex("[^A-Za-z0-9._-]+"), "_").trim('.').ifBlank { packageName }
                 val outputDirectory = activity.getExternalFilesDir("BifrostExports") ?: File(activity.cacheDir, "BifrostExports")
                 if (!outputDirectory.exists() && !outputDirectory.mkdirs()) throw IOException("Cannot create the app export folder")
                 output = File(outputDirectory, "$safeName-${System.currentTimeMillis()}.xapk")
@@ -222,11 +244,42 @@ class AppTransferPlugin(
                     }
                 }
                 reportProgress(1.0)
-                mainHandler.post { result.success(output.absolutePath) }
+                val artifact = mapOf(
+                    "path" to output.absolutePath,
+                    "remoteName" to "$safeName.xapk",
+                    "temporary" to true,
+                    "isArchive" to true,
+                )
+                mainHandler.post { result.success(artifact) }
             } catch (e: Exception) {
                 output?.delete()
-                mainHandler.post { result.error("XAPK_CREATE_FAILED", e.localizedMessage ?: "Could not package this app.", null) }
+                mainHandler.post { result.error("APP_TRANSFER_PREPARE_FAILED", e.localizedMessage ?: "Could not prepare this app.", null) }
             }
+        }
+    }
+
+    private fun exportDirectories(): List<File> = listOfNotNull(
+        activity.getExternalFilesDir("BifrostExports"),
+        File(activity.cacheDir, "BifrostExports"),
+    ).map { it.canonicalFile }.distinctBy { it.path }
+
+    private fun deleteTemporaryExport(path: String): Boolean {
+        val target = File(path).canonicalFile
+        val isOwnedExport = exportDirectories().any { root ->
+            target.path.startsWith(root.path + File.separator)
+        }
+        if (!isOwnedExport || !target.isFile || !target.name.endsWith(".xapk", ignoreCase = true)) return false
+        return target.delete()
+    }
+
+    private fun cleanupTemporaryExports(retainedPaths: List<String>) {
+        val retained = retainedPaths.mapNotNull { path ->
+            try { File(path).canonicalPath } catch (_: Exception) { null }
+        }.toSet()
+        for (root in exportDirectories()) {
+            root.listFiles()?.filter { file ->
+                file.isFile && file.name.endsWith(".xapk", ignoreCase = true) && file.canonicalPath !in retained
+            }?.forEach { it.delete() }
         }
     }
 
@@ -315,7 +368,8 @@ class AppTransferPlugin(
                     }
                     staging = File(activity.cacheDir, "bifrost-install-${System.currentTimeMillis()}")
                     if (!staging!!.mkdirs()) throw IOException("Could not create temporary install files")
-                    val apkFiles = mutableListOf<File>()
+                    val stagedApks = mutableListOf<Pair<File, String>>()
+                    val sessionNames = mutableSetOf<String>()
                     for (name in apkNames) {
                         val entry = archive.getEntry("apks/$name") ?: throw IOException("APK file $name is missing from the XAPK")
                         if (entry.isDirectory || entry.size <= 0 || entry.size > MAX_ENTRY_SIZE) throw IOException("APK file $name has an invalid size")
@@ -328,22 +382,23 @@ class AppTransferPlugin(
                             activity.packageManager.getPackageArchiveInfo(destination.path, 0)
                         } ?: throw IOException("APK file $name is invalid")
                         if (packageInfo.packageName != packageName) throw IOException("The APK package name does not match the XAPK manifest")
-                        apkFiles += destination
+                        val splitNames = packageInfo.splitNames?.toList().orEmpty()
+                        val sessionName = if (name == "base.apk") {
+                            if (splitNames.isNotEmpty()) throw IOException("The XAPK APK list does not start with a base APK")
+                            "base.apk"
+                        } else {
+                            splitNames.singleOrNull()?.let { "split_$it.apk" } ?: name
+                        }
+                        if (!sessionNames.add(sessionName)) throw IOException("The XAPK contains duplicate package splits")
+                        stagedApks += destination to sessionName
                     }
-                    val baseInfo = if (Build.VERSION.SDK_INT >= 33) {
-                        activity.packageManager.getPackageArchiveInfo(apkFiles.first().path, android.content.pm.PackageManager.PackageInfoFlags.of(0))
-                    } else {
-                        @Suppress("DEPRECATION")
-                        activity.packageManager.getPackageArchiveInfo(apkFiles.first().path, 0)
-                    } ?: throw IOException("The base APK is invalid")
-                    if (!baseInfo.splitNames.isNullOrEmpty()) throw IOException("The XAPK APK list does not start with a base APK")
 
                     val installer = activity.packageManager.packageInstaller
                     val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
                     sessionId = installer.createSession(params)
                     installer.openSession(sessionId!!).use { session ->
-                        for (file in apkFiles) {
-                            session.openWrite(file.name, 0, file.length()).use { output ->
+                        for ((file, sessionName) in stagedApks) {
+                            session.openWrite(sessionName, 0, file.length()).use { output ->
                                 FileInputStream(file).use { input -> input.copyTo(output, COPY_BUFFER_SIZE) }
                                 session.fsync(output)
                             }

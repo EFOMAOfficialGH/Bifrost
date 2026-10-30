@@ -1923,8 +1923,8 @@
     },
     {
       "key": "app_transfer.title",
-      "en": "Transfer an app",
-      "ar": "نقل تطبيق",
+      "en": "Transfer apps",
+      "ar": "نقل التطبيقات",
       "context": "App transfer screen title"
     },
     {
@@ -2178,6 +2178,144 @@
       "en": "Could not install the app package.",
       "ar": "تعذّر تثبيت حزمة التطبيق.",
       "context": "Install error"
+    },
+    {
+      "key": "app_transfer.select_all",
+      "en": "Select all shown",
+      "ar": "تحديد كل الظاهر",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.clear_selection",
+      "en": "Clear selection",
+      "ar": "إلغاء التحديد",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.view_list",
+      "en": "Switch to list view",
+      "ar": "التبديل إلى عرض القائمة",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.view_grid",
+      "en": "Switch to grid view",
+      "ar": "التبديل إلى العرض الشبكي",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.filter_all",
+      "en": "All apps",
+      "ar": "كل التطبيقات",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.filter_single",
+      "en": "Single APK",
+      "ar": "ملف APK واحد",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.filter_split",
+      "en": "Split apps",
+      "ar": "التطبيقات ذات ملفات APK المجزأة",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.obb_toggle",
+      "en": "Include optional OBB data",
+      "ar": "تضمين بيانات OBB الاختيارية",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.obb_selected_only",
+      "en": "Only selected apps are scanned. APK size is shown without OBB data.",
+      "ar": "يُفحَص ما تحدده فقط. يُعرض حجم ملفات APK دون بيانات OBB.",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.apk_version_size",
+      "en": "Version {version} ({version_code}) · APK size {size}",
+      "ar": "الإصدار {version} ({version_code}) · حجم APK ‏{size}",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.single_apk",
+      "en": "Single APK",
+      "ar": "ملف APK واحد",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.apk_splits",
+      "en": "{count} APK splits",
+      "ar": "{count} من ملفات APK المجزأة",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.send_selected",
+      "en": "Send {count} selected",
+      "ar": "إرسال {count} من التطبيقات المحددة",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.selected_count",
+      "en": "{count} selected",
+      "ar": "تم تحديد {count}",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.no_match",
+      "en": "No apps match the current search.",
+      "ar": "لا توجد تطبيقات تطابق البحث الحالي.",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.preparing_batch",
+      "en": "Preparing {current} of {total}: {feature}",
+      "ar": "جارٍ تجهيز {current} من {total}: {feature}",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.obb_permission_switch",
+      "en": "Grant All files access, return to Bifrost, then enable Include optional OBB data.",
+      "ar": "امنح إذن الوصول إلى كل الملفات، ثم عُد إلى بايفروست وفعّل «تضمين بيانات OBB الاختيارية».",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.queued_batch",
+      "en": "{count} apps added to the transfer queue.",
+      "ar": "أُضيف {count} من التطبيقات إلى قائمة انتظار النقل.",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.package_removed",
+      "en": "Temporary app package removed",
+      "ar": "أُزيلت حزمة التطبيق المؤقتة",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.package_removed_details",
+      "en": "It was deleted after sending to save storage. Export the app again if you want to resend it.",
+      "ar": "حُذفت بعد الإرسال لتوفير مساحة التخزين. صدّر التطبيق مجددًا إذا أردت إرساله مرة أخرى.",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.prepare_batch_failed",
+      "en": "Could not prepare app transfer: {extra}",
+      "ar": "تعذّر تجهيز نقل التطبيق: {extra}",
+      "context": "App transfer picker or history"
+    },
+    {
+      "key": "app_transfer.version",
+      "en": "Version {version}",
+      "ar": "الإصدار {version}",
+      "context": "App transfer picker"
+    },
+    {
+      "key": "app_transfer.queued_one",
+      "en": "{count} app added to the transfer queue.",
+      "ar": "أُضيف تطبيق واحد إلى قائمة انتظار النقل.",
+      "context": "App transfer picker queue confirmation"
     }
   ]
 }

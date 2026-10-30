@@ -13,10 +13,8 @@ void main() {
       'versionCode': 42,
       'sizeBytes': 1200,
       'apkSizeBytes': 1000,
-      'obbSizeBytes': 200,
       'apkPaths': ['/data/app/base.apk', '/data/app/split_config.apk'],
-      'hasObb': false,
-      'obbAccessRequired': true,
+      'apkNames': ['base.apk', 'split_config.apk'],
       'iconPng': icon,
     });
 
@@ -25,9 +23,9 @@ void main() {
     expect(app.versionName, '2.1');
     expect(app.versionCode, 42);
     expect(app.sizeBytes, 1200);
+    expect(app.apkSizeBytes, 1000);
     expect(app.apkPaths, hasLength(2));
-    expect(app.hasObb, isFalse);
-    expect(app.obbAccessRequired, isTrue);
+    expect(app.apkNames, ['base.apk', 'split_config.apk']);
     expect(app.iconPng, icon);
   });
 }

@@ -11,10 +11,8 @@ class TransferableApp {
     required this.versionCode,
     required this.sizeBytes,
     required this.apkSizeBytes,
-    required this.obbSizeBytes,
     required this.apkPaths,
-    required this.hasObb,
-    required this.obbAccessRequired,
+    required this.apkNames,
     this.iconPng,
   });
 
@@ -24,25 +22,69 @@ class TransferableApp {
   final int versionCode;
   final int sizeBytes;
   final int apkSizeBytes;
-  final int obbSizeBytes;
   final List<String> apkPaths;
-  final bool hasObb;
-  final bool obbAccessRequired;
+  final List<String> apkNames;
   final Uint8List? iconPng;
 
-  factory TransferableApp.fromMap(Map<dynamic, dynamic> map) => TransferableApp(
-    name: map['name'] as String? ?? 'Unknown app',
-    packageName: map['packageName'] as String? ?? '',
-    versionName: map['versionName'] as String? ?? '',
-    versionCode: (map['versionCode'] as num?)?.toInt() ?? 0,
-    sizeBytes: (map['sizeBytes'] as num?)?.toInt() ?? 0,
-    apkSizeBytes: (map['apkSizeBytes'] as num?)?.toInt() ?? 0,
-    obbSizeBytes: (map['obbSizeBytes'] as num?)?.toInt() ?? 0,
-    apkPaths: (map['apkPaths'] as List<dynamic>? ?? const []).cast<String>(),
-    hasObb: map['hasObb'] as bool? ?? false,
-    obbAccessRequired: map['obbAccessRequired'] as bool? ?? false,
-    iconPng: map['iconPng'] is Uint8List ? map['iconPng'] as Uint8List : null,
-  );
+  factory TransferableApp.fromMap(Map<dynamic, dynamic> map) {
+    final paths = (map['apkPaths'] as List<dynamic>? ?? const [])
+        .cast<String>();
+    final names = (map['apkNames'] as List<dynamic>? ?? const [])
+        .cast<String>();
+    return TransferableApp(
+      name: map['name'] as String? ?? 'Unknown app',
+      packageName: map['packageName'] as String? ?? '',
+      versionName: map['versionName'] as String? ?? '',
+      versionCode: (map['versionCode'] as num?)?.toInt() ?? 0,
+      sizeBytes: (map['sizeBytes'] as num?)?.toInt() ?? 0,
+      apkSizeBytes: (map['apkSizeBytes'] as num?)?.toInt() ?? 0,
+      apkPaths: paths,
+      apkNames: names.isEmpty
+          ? paths.indexed
+                .map(
+                  (entry) => entry.$1 == 0
+                      ? 'base.apk'
+                      : File(entry.$2).uri.pathSegments.last,
+                )
+                .toList(growable: false)
+          : names,
+      iconPng: map['iconPng'] is Uint8List ? map['iconPng'] as Uint8List : null,
+    );
+  }
+}
+
+/// A selected app ready to enter the ordinary Bifrost file-transfer queue.
+class AppTransferArtifact {
+  const AppTransferArtifact({
+    required this.file,
+    required this.remoteName,
+    required this.isTemporary,
+    required this.isArchive,
+  });
+
+  final File file;
+  final String remoteName;
+  final bool isTemporary;
+  final bool isArchive;
+
+  factory AppTransferArtifact.fromMap(Map<dynamic, dynamic> map) {
+    final path = map['path'] as String?;
+    final remoteName = map['remoteName'] as String?;
+    if (path == null ||
+        path.isEmpty ||
+        remoteName == null ||
+        remoteName.isEmpty) {
+      throw const AppTransferException(
+        'Android returned an invalid app-transfer file.',
+      );
+    }
+    return AppTransferArtifact(
+      file: File(path),
+      remoteName: remoteName,
+      isTemporary: map['temporary'] as bool? ?? false,
+      isArchive: map['isArchive'] as bool? ?? false,
+    );
+  }
 }
 
 class AppTransferException implements Exception {
@@ -53,9 +95,8 @@ class AppTransferException implements Exception {
   String toString() => message;
 }
 
-/// Android PackageManager and PackageInstaller operations. XAPK I/O is streamed
-/// natively so transferring large apps does not require holding entire APKs or
-/// OBB archives in Dart memory.
+/// Android PackageManager and PackageInstaller operations. Multi-split/OBB
+/// packages are streamed natively; a single APK without OBB is sent directly.
 class AppTransferService {
   AppTransferService({MethodChannel? channel})
     : _channel = channel ?? _defaultChannel {
@@ -71,8 +112,9 @@ class AppTransferService {
   Future<Object?> _handleNativeCallback(MethodCall call) async {
     if (call.method == 'packagingProgress') {
       final progress = call.arguments;
-      if (progress is num)
+      if (progress is num) {
         _onProgress?.call(progress.toDouble().clamp(0, 1).toDouble());
+      }
     }
     return null;
   }
@@ -100,45 +142,73 @@ class AppTransferService {
   Future<void> requestAllFilesAccess() =>
       _channel.invokeMethod<void>('requestAllFilesAccess');
 
-  /// Create a streamed XAPK containing only base/split APKs and optional OBB.
-  Future<File> createXapk(
+  Future<AppTransferArtifact> prepareAppTransfer(
     TransferableApp app, {
+    bool includeObb = false,
     void Function(double progress)? onProgress,
   }) async {
     _requireAndroid();
-    if (app.apkPaths.isEmpty) {
-      throw const AppTransferException('No APK files were found for this app.');
-    }
-    if ((app.hasObb || app.obbAccessRequired) && !await hasAllFilesAccess()) {
+    if (app.apkPaths.isEmpty || app.apkNames.length != app.apkPaths.length) {
       throw const AppTransferException(
-        'Android storage access is needed to include this app’s OBB files. Grant All files access and try again.',
+        'No valid APK files were found for this app.',
+      );
+    }
+    if (includeObb && !await hasAllFilesAccess()) {
+      await requestAllFilesAccess();
+      throw const AppTransferException(
+        'Grant All files access, return to Bifrost, and tap Send selected again to include optional OBB data.',
         code: 'ALL_FILES_ACCESS_REQUIRED',
       );
     }
+
     _onProgress = onProgress;
     try {
-      final path = await _channel.invokeMethod<String>('createXapk', {
-        'name': app.name,
-        'packageName': app.packageName,
-        'versionName': app.versionName,
-        'versionCode': app.versionCode,
-        'apkPaths': app.apkPaths,
-      });
-      if (path == null || path.isEmpty) {
+      final result = await _channel.invokeMapMethod<dynamic, dynamic>(
+        'prepareAppTransfer',
+        {
+          'name': app.name,
+          'packageName': app.packageName,
+          'versionName': app.versionName,
+          'versionCode': app.versionCode,
+          'apkPaths': app.apkPaths,
+          'apkNames': app.apkNames,
+          'includeObb': includeObb,
+        },
+      );
+      if (result == null) {
         throw const AppTransferException(
-          'Android could not create the XAPK archive.',
+          'Android could not prepare this app for transfer.',
         );
       }
       onProgress?.call(1);
-      return File(path);
+      return AppTransferArtifact.fromMap(result);
     } on PlatformException catch (error) {
       throw AppTransferException(
-        error.message ?? 'Android could not package this app.',
+        error.message ?? 'Android could not prepare this app for transfer.',
         code: error.code,
       );
     } finally {
       _onProgress = null;
     }
+  }
+
+  Future<bool> deleteTemporaryExport(String path) async {
+    _requireAndroid();
+    try {
+      return await _channel.invokeMethod<bool>('deleteTemporaryExport', {
+            'path': path,
+          }) ??
+          false;
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  Future<void> cleanupTemporaryExports(Iterable<String> retainedPaths) async {
+    _requireAndroid();
+    await _channel.invokeMethod<void>('cleanupTemporaryExports', {
+      'retainedPaths': retainedPaths.toList(growable: false),
+    });
   }
 
   /// Install all APK splits in one PackageInstaller session. OBB files are

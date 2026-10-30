@@ -1,3 +1,11 @@
+## 0.14.1+39 — Faster Android app sharing
+
+- Send eligible single-APK apps directly without creating an XAPK archive.
+- Add multi-app selection, searchable type filters, and grid/list views to the app picker.
+- Add optional OBB inclusion and progress reporting while preparing selected apps.
+- Remove generated XAPK exports after successful sending and clean stale exports on startup.
+- Keep History actions accurate when an automatically cleaned app package is no longer stored.
+
 ## 0.13.6+37 — Large transfers, compact queue, and Windows tray
 - Rate-limit transfer progress notifications while preserving final byte counts; add a >200 MiB transfer regression test.
 - Expand dropped folders into readable files and safely ignore invalid paths.

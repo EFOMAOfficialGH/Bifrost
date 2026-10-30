@@ -35,7 +35,7 @@ final customThemeColorProvider = StateProvider<Color>(
   (ref) => const Color(0xFF3154B8),
 );
 final textColorProvider = StateProvider<Color?>((ref) => null);
-const bifrostVersion = '0.14.0+38';
+const bifrostVersion = '0.14.1+39';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,6 +45,16 @@ Future<void> main(List<String> args) async {
       currentVersion: bifrostVersion,
     );
   } catch (_) {}
+  if (Platform.isAndroid) {
+    try {
+      final history = await AppStorage.instance.history();
+      final retainedExports = history
+          .where((record) => record.status != 'Completed')
+          .map((record) => record.path)
+          .whereType<String>();
+      await AppTransferService().cleanupTemporaryExports(retainedExports);
+    } catch (_) {}
+  }
   if (Platform.isWindows) {
     try {
       await WindowsStartupService.instance.syncFromPreferences();
@@ -973,6 +983,11 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Future<void> _clear() async {
+    for (final record in _records) {
+      if (record.generatedAppPackage && record.path != null) {
+        await AppTransferService().deleteTemporaryExport(record.path!);
+      }
+    }
     await AppStorage.instance.clearHistory();
     if (mounted) setState(() => _records = const []);
   }
@@ -1067,6 +1082,7 @@ class _HistoryPageState extends State<HistoryPage> {
         time: DateTime.now(),
         progress: 0,
         path: record.path,
+        generatedAppPackage: record.generatedAppPackage,
         peerHost: peerHost,
         peerPort: peerPort,
         peerDeviceId: record.peerDeviceId,
@@ -1094,6 +1110,7 @@ class _HistoryPageState extends State<HistoryPage> {
       await client.sendFile(
         server: server,
         file: file,
+        remoteName: record.fileName,
         transferId: transferId,
         fileId: fileId,
         resumeToken: resumeToken,
@@ -1125,6 +1142,9 @@ class _HistoryPageState extends State<HistoryPage> {
           );
         },
       );
+      final removedTemporaryPackage =
+          record.generatedAppPackage &&
+          await AppTransferService().deleteTemporaryExport(file.path);
       await AppStorage.instance.finish(
         TransferRecord(
           id: attemptId,
@@ -1134,7 +1154,8 @@ class _HistoryPageState extends State<HistoryPage> {
           status: 'Completed',
           peer: record.peer,
           time: DateTime.now(),
-          path: record.path,
+          path: removedTemporaryPackage ? null : record.path,
+          generatedAppPackage: record.generatedAppPackage,
           peerHost: peerHost,
           peerPort: peerPort,
           peerDeviceId: record.peerDeviceId,
@@ -1162,6 +1183,7 @@ class _HistoryPageState extends State<HistoryPage> {
           peer: record.peer,
           time: DateTime.now(),
           path: record.path,
+          generatedAppPackage: record.generatedAppPackage,
           peerHost: peerHost,
           peerPort: peerPort,
           peerDeviceId: record.peerDeviceId,
@@ -1233,7 +1255,15 @@ class _HistoryPageState extends State<HistoryPage> {
                 ),
                 onTap: () => Navigator.pop(sheetContext, 'retry'),
               ),
-            if (!exists)
+            if (!exists && record.generatedAppPackage && path == null)
+              const ListTile(
+                leading: Icon(Icons.cleaning_services_outlined),
+                title: Text('Temporary app package removed'),
+                subtitle: Text(
+                  'It was deleted after sending to save storage. Export the app again if you want to resend it.',
+                ),
+              )
+            else if (!exists)
               const ListTile(
                 leading: Icon(Icons.warning_amber),
                 title: Text('File is no longer available'),
@@ -1308,6 +1338,9 @@ class _HistoryPageState extends State<HistoryPage> {
           SnackBar(content: Text('Opened file location: $parent')),
         );
     } else if (action == 'delete') {
+      if (record.generatedAppPackage && record.path != null) {
+        await AppTransferService().deleteTemporaryExport(record.path!);
+      }
       await AppStorage.instance.deleteHistory(record.id);
       if (mounted)
         setState(

@@ -25,6 +25,7 @@ class TransferRecord {
     this.fileId,
     this.sha256,
     this.resumeToken,
+    this.generatedAppPackage = false,
   });
   final String id;
   final String fileName;
@@ -44,6 +45,7 @@ class TransferRecord {
   final String? fileId;
   final String? sha256;
   final String? resumeToken;
+  final bool generatedAppPackage;
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -64,6 +66,7 @@ class TransferRecord {
     'fileId': fileId,
     'sha256': sha256,
     'resumeToken': resumeToken,
+    'generatedAppPackage': generatedAppPackage,
   };
   factory TransferRecord.fromJson(Map<String, dynamic> json) => TransferRecord(
     id: json['id'] as String,
@@ -84,6 +87,7 @@ class TransferRecord {
     fileId: json['fileId'] as String?,
     sha256: json['sha256'] as String?,
     resumeToken: json['resumeToken'] as String?,
+    generatedAppPackage: json['generatedAppPackage'] as bool? ?? false,
   );
 
   TransferRecord copyWith({String? status, double? progress}) => TransferRecord(
@@ -105,6 +109,7 @@ class TransferRecord {
     fileId: fileId,
     sha256: sha256,
     resumeToken: resumeToken,
+    generatedAppPackage: generatedAppPackage,
   );
 }
 
@@ -399,6 +404,7 @@ class AppStorage {
       fileId: current.fileId,
       sha256: sha256,
       resumeToken: current.resumeToken,
+      generatedAppPackage: current.generatedAppPackage,
     );
     _active[id] = updated;
     _activity.add(updated);
@@ -442,6 +448,7 @@ class AppStorage {
       sha256: current.sha256,
       resumeToken: current.resumeToken,
       path: current.path,
+      generatedAppPackage: current.generatedAppPackage,
     );
     _active[id] = next;
     _activity.add(next);

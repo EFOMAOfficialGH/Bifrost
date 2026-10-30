@@ -10,12 +10,14 @@ class TransferQueueDialog extends StatefulWidget {
     required this.files,
     required this.statuses,
     required this.sending,
+    this.displayNames = const {},
     super.key,
   });
 
   final List<File> files;
   final Map<String, String> statuses;
   final bool sending;
+  final Map<String, String> displayNames;
 
   @override
   State<TransferQueueDialog> createState() => _TransferQueueDialogState();
@@ -72,9 +74,10 @@ class _TransferQueueDialogState extends State<TransferQueueDialog> {
                                   child: const Icon(Icons.drag_handle),
                                 ),
                           title: Text(
-                            file.uri.pathSegments.isEmpty
-                                ? file.path
-                                : file.uri.pathSegments.last,
+                            widget.displayNames[file.path] ??
+                                (file.uri.pathSegments.isEmpty
+                                    ? file.path
+                                    : file.uri.pathSegments.last),
                             localized: false,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -83,7 +86,9 @@ class _TransferQueueDialogState extends State<TransferQueueDialog> {
                             '${_fileSize(file)} • ${AppLocalizations.translateCurrent(status)}',
                           ),
                           trailing: IconButton(
-                            tooltip: AppLocalizations.translateCurrent('Remove'),
+                            tooltip: AppLocalizations.translateCurrent(
+                              'Remove',
+                            ),
                             onPressed: widget.sending
                                 ? null
                                 : () => setState(() => _files.removeAt(index)),
@@ -114,7 +119,8 @@ class _TransferQueueDialogState extends State<TransferQueueDialog> {
 
   String _fileSize(File file) {
     try {
-      if (!file.existsSync()) return AppLocalizations.translateCurrent('Unavailable');
+      if (!file.existsSync())
+        return AppLocalizations.translateCurrent('Unavailable');
       final bytes = file.lengthSync();
       if (bytes < 1024) return '$bytes B';
       if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
