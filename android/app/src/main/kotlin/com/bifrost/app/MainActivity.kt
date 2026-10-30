@@ -13,9 +13,14 @@ import java.io.File
 class MainActivity : FlutterActivity() {
     private val sharedFiles = mutableListOf<String>()
     private lateinit var shareChannel: MethodChannel
+    private lateinit var appTransferPlugin: AppTransferPlugin
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        val appTransferChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, AppTransferPlugin.CHANNEL)
+        appTransferPlugin = AppTransferPlugin(this, appTransferChannel)
+        appTransferChannel.setMethodCallHandler(appTransferPlugin)
+        AppTransferReceiverRegistry.handler = appTransferPlugin::onInstallBroadcast
         shareChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "bifrost/share")
         shareChannel.setMethodCallHandler { call, result ->
             when (call.method) {
@@ -29,6 +34,11 @@ class MainActivity : FlutterActivity() {
             }
         }
         collectSharedFiles(intent)
+    }
+
+    override fun onDestroy() {
+        AppTransferReceiverRegistry.handler = null
+        super.onDestroy()
     }
 
     private fun shareInstalledApk(result: MethodChannel.Result) {

@@ -1872,6 +1872,312 @@
       "en": "Unavailable",
       "ar": "غير متاح",
       "context": "Queue file metadata fallback"
+    },
+    {
+      "key": "update.available_title",
+      "en": "Update available",
+      "ar": "يتوفر تحديث جديد",
+      "context": "Startup update title"
+    },
+    {
+      "key": "update.startup_available",
+      "en": "Version {version} is available. Install now to download and install it, or choose Later to be reminded next launch.",
+      "ar": "يتوفر الإصدار {version}. اختر «ثبّت الآن» لتنزيله وتثبيته، أو «لاحقًا» ليتم تذكيرك عند تشغيل التطبيق في المرة القادمة.",
+      "context": "Startup update choice text"
+    },
+    {
+      "key": "update.startup_ready",
+      "en": "A new update is ready. Download size: {size}. Choose Later to be reminded next time.",
+      "ar": "يتوفر تحديث جديد. حجم التنزيل: {size}. اختر «لاحقًا» ليتم تذكيرك في المرة القادمة.",
+      "context": "Startup update choice text"
+    },
+    {
+      "key": "settings.windows_startup",
+      "en": "Launch Bifrost at startup",
+      "ar": "تشغيل بايفروست عند بدء تشغيل Windows",
+      "context": "Windows startup toggle"
+    },
+    {
+      "key": "settings.windows_startup_description",
+      "en": "Start minimized in the system tray when you sign in.",
+      "ar": "ابدأ بايفروست مصغّرًا في علبة النظام عند تسجيل الدخول.",
+      "context": "Windows startup toggle description"
+    },
+    {
+      "key": "settings.windows_startup_error",
+      "en": "Could not update Windows startup setting: {extra}",
+      "ar": "تعذّر تحديث إعداد بدء تشغيل Windows: {extra}",
+      "context": "Windows startup error"
+    },
+    {
+      "key": "app_transfer.button",
+      "en": "Transfer an installed app",
+      "ar": "نقل تطبيق مثبّت",
+      "context": "Nearby app transfer action"
+    },
+    {
+      "key": "app_transfer.queued",
+      "en": "App package added to the transfer queue.",
+      "ar": "أُضيفت حزمة التطبيق إلى قائمة انتظار النقل.",
+      "context": "App export success"
+    },
+    {
+      "key": "app_transfer.title",
+      "en": "Transfer an app",
+      "ar": "نقل تطبيق",
+      "context": "App transfer screen title"
+    },
+    {
+      "key": "app_transfer.privacy",
+      "en": "App Transfer is intended for personal use with apps you own. Only APKs and optional OBB files are included; app data is never copied.",
+      "ar": "ميزة نقل التطبيقات مخصّصة للاستخدام الشخصي مع التطبيقات التي تملكها. تُضمَّن ملفات APK وملفات OBB الاختيارية فقط؛ ولا تُنسخ بيانات التطبيقات مطلقًا.",
+      "context": "App transfer privacy note"
+    },
+    {
+      "key": "app_transfer.search",
+      "en": "Search installed apps",
+      "ar": "ابحث في التطبيقات المثبّتة",
+      "context": "App picker search"
+    },
+    {
+      "key": "app_transfer.empty",
+      "en": "No installed user apps match this search.",
+      "ar": "لا توجد تطبيقات مستخدم مثبّتة تطابق هذا البحث.",
+      "context": "App picker empty state"
+    },
+    {
+      "key": "app_transfer.try_again",
+      "en": "Try again",
+      "ar": "حاول مرة أخرى",
+      "context": "App picker retry action"
+    },
+    {
+      "key": "app_transfer.obb_permission",
+      "en": "Grant All files access to check for optional OBB data, then select the app again.",
+      "ar": "امنح إذن «الوصول إلى كل الملفات» للتحقق من بيانات OBB الاختيارية، ثم اختر التطبيق مرة أخرى.",
+      "context": "OBB permission prompt"
+    },
+    {
+      "key": "app_transfer.preparing",
+      "en": "Preparing {feature}…",
+      "ar": "جارٍ تجهيز {feature}…",
+      "context": "App export progress"
+    },
+    {
+      "key": "app_transfer.prepare_failed",
+      "en": "Could not prepare {feature}: {extra}",
+      "ar": "تعذّر تجهيز {feature}: {extra}",
+      "context": "App export failure"
+    },
+    {
+      "key": "app_transfer.app_version_size",
+      "en": "Version {version} ({version_code}) · Size {size}",
+      "ar": "الإصدار {version} ({version_code}) · الحجم {size}",
+      "context": "Installed app metadata"
+    },
+    {
+      "key": "app_transfer.obb_included",
+      "en": "OBB files included",
+      "ar": "تتضمن ملفات OBB",
+      "context": "Installed app metadata"
+    },
+    {
+      "key": "app_transfer.obb_check",
+      "en": "OBB check requires All files access",
+      "ar": "يتطلب التحقق من OBB إذن «الوصول إلى كل الملفات»",
+      "context": "Installed app metadata"
+    },
+    {
+      "key": "app_transfer.install_action",
+      "en": "Install app package",
+      "ar": "تثبيت حزمة التطبيق",
+      "context": "Received XAPK action"
+    },
+    {
+      "key": "app_transfer.install_complete",
+      "en": "App installation completed.",
+      "ar": "اكتمل تثبيت التطبيق.",
+      "context": "Install completion"
+    },
+    {
+      "key": "app_transfer.unknown_sources",
+      "en": "Enable “Install unknown apps” for Bifrost in Settings, then retry installation.",
+      "ar": "فعّل «تثبيت التطبيقات غير المعروفة» لبايفروست في الإعدادات، ثم أعد محاولة التثبيت.",
+      "context": "Android install permission"
+    },
+    {
+      "key": "app_transfer.package_missing",
+      "en": "The received XAPK file could not be found.",
+      "ar": "تعذّر العثور على ملف XAPK المستلَم.",
+      "context": "Install error"
+    },
+    {
+      "key": "app_transfer.apk_missing",
+      "en": "No APK files were found for this app.",
+      "ar": "لم يُعثر على ملفات APK لهذا التطبيق.",
+      "context": "Export error"
+    },
+    {
+      "key": "history.search",
+      "en": "Search files, devices, dates, or types",
+      "ar": "ابحث عن الملفات أو الأجهزة أو التواريخ أو الأنواع",
+      "context": "History search"
+    },
+    {
+      "key": "history.file_type",
+      "en": "File type",
+      "ar": "نوع الملف",
+      "context": "History filter"
+    },
+    {
+      "key": "history.date_range",
+      "en": "Date range",
+      "ar": "النطاق الزمني",
+      "context": "History filter"
+    },
+    {
+      "key": "history.count",
+      "en": "{shown} of {total} transfers",
+      "ar": "{shown} من أصل {total} عملية نقل",
+      "context": "History result count"
+    },
+    {
+      "key": "history.no_filter_match",
+      "en": "No transfers match these filters.",
+      "ar": "لا توجد عمليات نقل تطابق عوامل التصفية هذه.",
+      "context": "History empty filter result"
+    },
+    {
+      "key": "history.all_files",
+      "en": "All files",
+      "ar": "كل الملفات",
+      "context": "History category"
+    },
+    {
+      "key": "history.images",
+      "en": "Images",
+      "ar": "الصور",
+      "context": "History category"
+    },
+    {
+      "key": "history.videos",
+      "en": "Videos",
+      "ar": "الفيديوهات",
+      "context": "History category"
+    },
+    {
+      "key": "history.audio",
+      "en": "Audio",
+      "ar": "الصوتيات",
+      "context": "History category"
+    },
+    {
+      "key": "history.documents",
+      "en": "Documents",
+      "ar": "المستندات",
+      "context": "History category"
+    },
+    {
+      "key": "history.archives",
+      "en": "Archives",
+      "ar": "الأرشيفات",
+      "context": "History category"
+    },
+    {
+      "key": "history.apps",
+      "en": "Apps",
+      "ar": "التطبيقات",
+      "context": "History category"
+    },
+    {
+      "key": "history.other",
+      "en": "Other",
+      "ar": "أخرى",
+      "context": "History category"
+    },
+    {
+      "key": "history.any_time",
+      "en": "Any time",
+      "ar": "أي وقت",
+      "context": "History date filter"
+    },
+    {
+      "key": "history.today",
+      "en": "Today",
+      "ar": "اليوم",
+      "context": "History date filter"
+    },
+    {
+      "key": "history.last_7_days",
+      "en": "Last 7 days",
+      "ar": "آخر 7 أيام",
+      "context": "History date filter"
+    },
+    {
+      "key": "history.last_30_days",
+      "en": "Last 30 days",
+      "ar": "آخر 30 يومًا",
+      "context": "History date filter"
+    },
+    {
+      "key": "history.send_again",
+      "en": "Send again",
+      "ar": "إعادة الإرسال",
+      "context": "History action"
+    },
+    {
+      "key": "app_transfer.unknown_sources_native",
+      "en": "Enable Install unknown apps for Bifrost, then retry.",
+      "ar": "فعّل إذن تثبيت التطبيقات غير المعروفة لبايفروست، ثم أعد المحاولة.",
+      "context": "Android install permission"
+    },
+    {
+      "key": "app_transfer.obb_restore_permission",
+      "en": "Grant All files access to Bifrost, then retry. Shizuku is a documented alternative if direct OBB access is unavailable.",
+      "ar": "امنح بايفروست إذن الوصول إلى كل الملفات، ثم أعد المحاولة. يتوفر شرح لاستخدام Shizuku كبديل عند تعذّر الوصول المباشر إلى ملفات OBB.",
+      "context": "Android OBB restore permission"
+    },
+    {
+      "key": "app_transfer.obb_restore_partial",
+      "en": "App installed, but its OBB data could not be copied: {extra}. Grant All files access and retry; see the Shizuku fallback guidance if direct access remains blocked.",
+      "ar": "تم تثبيت التطبيق، لكن تعذّر نسخ بيانات OBB: {extra}. امنح إذن الوصول إلى كل الملفات وأعد المحاولة؛ وراجع إرشادات Shizuku إذا استمر تعذّر الوصول المباشر.",
+      "context": "Partial app restore failure"
+    },
+    {
+      "key": "app_transfer.signature_conflict",
+      "en": "Signature conflict: the installed app was signed with a different key.",
+      "ar": "تعارض في التوقيع: وُقّع التطبيق المثبّت بمفتاح مختلف.",
+      "context": "Install error"
+    },
+    {
+      "key": "app_transfer.version_downgrade",
+      "en": "This package is an older version than the installed app.",
+      "ar": "إصدار هذه الحزمة أقدم من إصدار التطبيق المثبّت.",
+      "context": "Install error"
+    },
+    {
+      "key": "app_transfer.insufficient_storage",
+      "en": "There is not enough storage to install this app.",
+      "ar": "لا توجد مساحة تخزين كافية لتثبيت هذا التطبيق.",
+      "context": "Install error"
+    },
+    {
+      "key": "app_transfer.abi_mismatch",
+      "en": "This app is not compatible with this device's processor architecture.",
+      "ar": "هذا التطبيق غير متوافق مع بنية معالج هذا الجهاز.",
+      "context": "Install error"
+    },
+    {
+      "key": "app_transfer.install_confirmation_missing",
+      "en": "Android requires an installation confirmation, but could not open it.",
+      "ar": "يتطلب Android تأكيد التثبيت، لكن تعذّر فتح شاشة التأكيد.",
+      "context": "Install error"
+    },
+    {
+      "key": "app_transfer.install_failed",
+      "en": "Could not install the app package.",
+      "ar": "تعذّر تثبيت حزمة التطبيق.",
+      "context": "Install error"
     }
   ]
 }

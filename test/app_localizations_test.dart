@@ -14,10 +14,7 @@ void main() {
       AppLocalizations.translateFor('ar', 'Sending report.pdf'),
       'جارٍ إرسال report.pdf',
     );
-    expect(
-      AppLocalizations.translateFor('ar', '5 minutes ago'),
-      'منذ 5 دقيقة',
-    );
+    expect(AppLocalizations.translateFor('ar', '5 minutes ago'), 'منذ 5 دقيقة');
   });
 
   test('Arabic UI uses RTL language and preserves language-choice labels', () {
@@ -28,10 +25,19 @@ void main() {
       'مرحبًا بك في بايفروست',
     );
     expect(AppLocalizations.translateFor('ar', 'Bifrost'), 'بايفروست');
-    expect(AppLocalizations.translateFor('ar', 'Bifrost Device'), 'جهاز بايفروست');
-    expect(AppLocalizations.translateFor('ar', 'Bifrost Phone'), 'هاتف بايفروست');
     expect(
-      AppLocalizations.translateFor('ar', 'Keep Bifrost receiving while in background'),
+      AppLocalizations.translateFor('ar', 'Bifrost Device'),
+      'جهاز بايفروست',
+    );
+    expect(
+      AppLocalizations.translateFor('ar', 'Bifrost Phone'),
+      'هاتف بايفروست',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Keep Bifrost receiving while in background',
+      ),
       'يواصل بايفروست العمل فالخلفية',
     );
   });
@@ -42,4 +48,40 @@ void main() {
       'Welcome to Bifrost',
     );
   });
+
+  test(
+    'new startup, app-transfer, and history labels translate placeholders',
+    () {
+      expect(
+        AppLocalizations.translateFor(
+          'ar',
+          'Version 9.9.9+123 is available. Install now to download and install it, or choose Later to be reminded next launch.',
+        ),
+        'يتوفر الإصدار 9.9.9+123. اختر «ثبّت الآن» لتنزيله وتثبيته، أو «لاحقًا» ليتم تذكيرك عند تشغيل التطبيق في المرة القادمة.',
+      );
+      expect(
+        AppLocalizations.translateFor('ar', 'Transfer an app'),
+        'نقل تطبيق',
+      );
+      expect(
+        AppLocalizations.translateFor(
+          'ar',
+          'App Transfer is intended for personal use with apps you own. Only APKs and optional OBB files are included; app data is never copied.',
+        ),
+        'ميزة نقل التطبيقات مخصّصة للاستخدام الشخصي مع التطبيقات التي تملكها. تُضمَّن ملفات APK وملفات OBB الاختيارية فقط؛ ولا تُنسخ بيانات التطبيقات مطلقًا.',
+      );
+      expect(
+        AppLocalizations.translateFor('ar', 'Version 2.1 (42) · Size 12 MB'),
+        'الإصدار 2.1 (42) · الحجم 12 ميغابايت',
+      );
+      expect(
+        AppLocalizations.translateFor('ar', '2 of 8 transfers'),
+        '2 من أصل 8 عملية نقل',
+      );
+      expect(
+        AppLocalizations.translateFor('ar', 'Launch Bifrost at startup'),
+        'تشغيل بايفروست عند بدء تشغيل Windows',
+      );
+    },
+  );
 }

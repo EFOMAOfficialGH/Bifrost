@@ -1,8 +1,27 @@
 #include "flutter_window.h"
 
 #include <optional>
+#include <shellapi.h>
+#include <string>
 
 #include "flutter/generated_plugin_registrant.h"
+
+namespace {
+bool ShouldStartMinimizedToTray() {
+  int argument_count = 0;
+  LPWSTR* arguments = CommandLineToArgvW(GetCommandLineW(), &argument_count);
+  if (!arguments) return false;
+  bool minimized = false;
+  for (int index = 1; index < argument_count; ++index) {
+    if (std::wstring(arguments[index]) == L"--minimized-to-tray") {
+      minimized = true;
+      break;
+    }
+  }
+  LocalFree(arguments);
+  return minimized;
+}
+}  // namespace
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -29,10 +48,33 @@ bool FlutterWindow::OnCreate() {
   tray_channel_ = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
       flutter_controller_->engine()->messenger(), "bifrost/tray",
       &flutter::StandardMethodCodec::GetInstance());
+  tray_channel_->SetMethodCallHandler(
+      [this](const flutter::MethodCall<flutter::EncodableValue>& call,
+             std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
+        if (call.method_name() != "showUpdateBalloon") {
+          result->NotImplemented();
+          return;
+        }
+        NOTIFYICONDATA data{};
+        data.cbSize = sizeof(data);
+        data.hWnd = GetHandle();
+        data.uID = 1;
+        data.uFlags = NIF_INFO;
+        wcscpy_s(data.szInfoTitle, _countof(data.szInfoTitle), L"Bifrost update");
+        wcscpy_s(data.szInfo, _countof(data.szInfo),
+                 L"Update available. Open Bifrost to review it.");
+        data.dwInfoFlags = NIIF_INFO;
+        data.uTimeout = 10000;
+        if (Shell_NotifyIcon(NIM_MODIFY, &data)) {
+          result->Success();
+        } else {
+          result->Error("TRAY_UNAVAILABLE", "The Bifrost tray icon is unavailable.", nullptr);
+        }
+      });
   AddTrayIcon();
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
-    this->Show();
+    if (!ShouldStartMinimizedToTray()) this->Show();
   });
 
   // Flutter can complete the first frame before the "show window" callback is

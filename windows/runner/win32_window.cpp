@@ -19,6 +19,7 @@ namespace {
 
 constexpr const wchar_t kWindowClassName[] = L"FLUTTER_RUNNER_WIN32_WINDOW";
 constexpr UINT kTrayCallbackMessage = WM_APP + 1;
+constexpr UINT kInstallerShutdownMessage = WM_APP + 2;
 constexpr UINT kTraySendFiles = 1;
 constexpr UINT kTrayCheckForUpdates = 2;
 constexpr UINT kTrayExit = 3;
@@ -188,7 +189,7 @@ Win32Window::MessageHandler(HWND hwnd,
       ShowWindow(hwnd, SW_HIDE);
       return 0;
     case kTrayCallbackMessage:
-      if (lparam == WM_LBUTTONDBLCLK) {
+      if (lparam == WM_LBUTTONDBLCLK || lparam == NIN_BALLOONUSERCLICK) {
         ShowWindow(hwnd, SW_RESTORE);
         SetForegroundWindow(hwnd);
       } else if (lparam == WM_RBUTTONUP || lparam == WM_CONTEXTMENU) {
@@ -207,6 +208,9 @@ Win32Window::MessageHandler(HWND hwnd,
           else if (command != 0) OnTrayCommand(command);
         }
       }
+      return 0;
+    case kInstallerShutdownMessage:
+      DestroyWindow(hwnd);
       return 0;
     case WM_DESTROY:
       RemoveTrayIcon();

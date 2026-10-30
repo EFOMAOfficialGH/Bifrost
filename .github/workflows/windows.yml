@@ -47,35 +47,18 @@ jobs:
       - name: Install Inno Setup
         shell: pwsh
         run: choco install innosetup --no-progress -y
-      - name: Create installer script
+      - name: Build installer
         shell: pwsh
         run: |
           $version = (Get-Content pubspec.yaml | Select-String '^version:\s*(.+)$').Matches.Groups[1].Value.Trim()
-          @'
-          [Setup]
-          AppName=Bifrost
-          AppVersion=VERSION_PLACEHOLDER
-          DefaultDirName={autopf}\Bifrost
-          OutputBaseFilename=bifrost-windows-installer
-          ArchitecturesInstallIn64BitMode=x64
-          [Files]
-          Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
-          [Icons]
-          Name: "{autodesktop}\Bifrost"; Filename: "{app}\bifrost.exe"
-          [Registry]
-          Root: HKCR; Subkey: "*\shell\Send with Bifrost"; ValueType: string; ValueName: ""; ValueData: "Send with Bifrost"; Flags: uninsdeletekey
-          Root: HKCR; Subkey: "*\shell\Send with Bifrost\command"; ValueType: string; ValueName: ""; ValueData: """{app}\bifrost.exe"" ""%1"""
-          '@ | Out-File -Encoding utf8 bifrost.iss
-          (Get-Content bifrost.iss) -replace 'VERSION_PLACEHOLDER', $version | Set-Content -Encoding utf8 bifrost.iss
-      - name: Build installer
-        shell: pwsh
-        run: '& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" bifrost.iss'
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DAppVersion=$version" /OOutput windows\bifrost.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Rename Windows packages with version
         shell: pwsh
         run: |
           $version = (Get-Content pubspec.yaml | Select-String '^version:\s*(.+)$').Matches.Groups[1].Value.Trim()
-          Move-Item Output\bifrost-windows-installer.exe "Bifrost-Windows-$version.exe"
+          Move-Item Output\Bifrost-Windows-Installer.exe "Bifrost-Windows-$version.exe"
           Rename-Item bifrost-windows-portable.zip "Bifrost-Windows-$version-portable.zip"
 
       - name: Upload Windows packages

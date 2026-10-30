@@ -2,9 +2,9 @@
 
 Bifrost is a private, local-network file-sharing app for **Android and Windows**. It transfers files directly between nearby devices without accounts, cloud storage, ads, telemetry, or an internet connection for core transfers.
 
-> **Current version: v0.13.6+37**
+> **Current version: v0.14.0+38**
 >
-> Android-to-Android, Android-to-Windows, and Windows-to-Android transfers are implemented. The project is actively evolving toward a polished v1.0 release.
+> Version 0.14.0 adds chunk-resumable transfers, searchable History, Windows startup/tray controls, a branded installer/updater, and Android XAPK app transfer.
 
 ## Highlights
 
@@ -20,15 +20,21 @@ Bifrost is a private, local-network file-sharing app for **Android and Windows**
 - Folder drag-and-drop expansion and streamed large-file transfers
 - Compact, reorderable transfer queue
 - Windows minimize-to-tray with Send files, Check for updates, and Exit actions
+- Windows launch-at-sign-in, minimized to tray by default and configurable in Settings
 - Android Share target integration
+- Personal-use Android app export/import as XAPK, including base/split APKs and optional OBB files
 - Accept or decline incoming transfers
 - Trusted devices with persistent device identities
-- Background receiving on Android
+- Favorite nearby devices, stored independently from transfer trust
+- Background receiving on Android, on by default with a persistent user preference
 - Tap the background notification to stop receiving
 - Transfer progress, speed, and ETA
 - Transfer cancellation and retry handling
 - SHA-256 file verification
+- Resumable chunk transfers with per-chunk checksums and restart recovery
 - Persistent transfer History
+- History search by filename/device/date and filters by file type and time
+- Confirmed send-again and retry actions that preserve separate attempts
 - Open file and delete-from-History actions
 - Configurable save location
 - Day, Sunset, Night, Device Time, and Custom Color themes
@@ -36,6 +42,7 @@ Bifrost is a private, local-network file-sharing app for **Android and Windows**
 - Illustrated theme backgrounds
 - Bifrost splash screen with custom branding and glow
 - In-app GitHub Releases updater
+- Cached Windows installer, Install now/Later prompts, and restart after updating
 - Automatic startup update checks
 - Update-size display before downloading
 - Download progress, speed, ETA, and cancellation
@@ -51,12 +58,14 @@ Bifrost is a private, local-network file-sharing app for **Android and Windows**
 - Application ID: `com.bifrost.app`
 - Local network access for discovery and transfers
 - Notification permission for transfer and update progress notifications
-- APK installation permission when installing an update inside Bifrost
+- APK installation permission when installing an update or a received XAPK inside Bifrost
+- All files access may be needed to include or restore Android OBB data
 
 ### Windows
 
 - Windows desktop build
 - Windows Firewall permission may be required for discovery and transfers
+- The installer creates desktop and Start-menu shortcuts; Windows users can pin Bifrost to Start manually
 - Inno Setup installer or portable ZIP
 - Explorer **Send with Bifrost** integration through the installer
 
@@ -80,7 +89,7 @@ Some phone hotspots enable **client isolation**, which prevents connected device
 
 ## Background receiving
 
-Enable **Settings → Background receiving** to keep Bifrost listening while the app is minimized.
+Background receiving is **on by default**. Use **Settings → Background receiving** to turn it off; the choice is saved across restarts.
 
 Android displays a persistent notification while it is active. Tapping the notification stops background receiving and closes the receiver. Trusted devices can be accepted automatically according to the device's trust setting.
 
@@ -88,7 +97,7 @@ Background activity uses local networking and should be disabled when it is not 
 
 ## History
 
-The History tab records completed, failed, cancelled, and active transfers. It includes:
+The History tab records completed, failed, cancelled, interrupted, and active transfers. Search by filename, device, or date, and filter by file type or time period. Interrupted outgoing transfers can be retried/resumed; completed outgoing items can be sent again after confirmation. The list includes:
 
 - Filename
 - Transfer direction
@@ -130,14 +139,14 @@ Open:
 Settings → Check for updates
 ```
 
-Bifrost displays the available version and download size before downloading. During the download it shows percentage, downloaded size, speed, and estimated remaining time. On Android, progress also appears in a notification.
+Bifrost displays the available version and download size before downloading. During the download it shows percentage, downloaded size, speed, and estimated remaining time. On Android, download progress also appears in a notification. On Windows, the update is downloaded and cached before the installer runs; if Bifrost was open, it closes for the upgrade and relaunches afterward.
 
 ### Automatic startup checks
 
-Bifrost silently checks for updates after startup. If a newer release exists, it displays an update prompt with:
+Bifrost silently checks for updates after startup. Android uses an in-app prompt; Windows shows a tray alert that opens the Install now/Later dialog. A deferred update is offered again on the next launch.
 
-- Update
-- Not now
+- Install now
+- Later
 - Download size
 
 The setting can be disabled here:
@@ -164,21 +173,21 @@ They build and publish releases automatically.
 The workflows read the version from `pubspec.yaml`:
 
 ```yaml
-version: 0.13.6+37
+version: 0.14.0+38
 ```
 
 When the versioned source is pushed to `main`, the workflows automatically create or update:
 
 ```text
-Bifrost v0.13.6+37
+Bifrost v0.14.0+38
 ```
 
 The release receives assets similar to:
 
 ```text
-Bifrost-Android-0.13.6+37.apk
-Bifrost-Windows-0.13.6+37.exe
-Bifrost-Windows-0.13.6+37-portable.zip
+Bifrost-Android-0.14.0+38.apk
+Bifrost-Windows-0.14.0+38.exe
+Bifrost-Windows-0.14.0+38-portable.zip
 ```
 
 The Android workflow creates the release and generates the release notes. The Windows workflow waits for that release and uploads the Windows installer and portable ZIP without creating duplicate notes.
@@ -260,8 +269,8 @@ Bifrost is designed as local-only software for file transfers. Core transfers do
 - Some hotspots and guest Wi-Fi networks block device-to-device traffic through client isolation.
 - Windows Firewall configuration can affect discovery and incoming transfers.
 - QR display exists, but camera QR scanning is not implemented.
-- Resume support for interrupted transfers is still a future improvement.
-- History filtering and search need further polish.
+- A transfer interrupted by a network/app stop needs a retry from History; it resumes saved, verified chunks when available.
+
 - Open File Location behavior on Windows needs continued testing across different install locations.
 - Update release notes are available through GitHub, but a dedicated in-app What's New screen is planned.
 
@@ -269,8 +278,8 @@ Bifrost is designed as local-only software for file transfers. Core transfers do
 
 Planned priorities include:
 
-- More polished History filtering and search
-- Resume interrupted transfers
+- More transfer reliability testing across real-world Wi-Fi and hotspot conditions
+- Additional automatic reconnection after network interruptions
 - Stronger handling of difficult hotspot networks
 - More complete update release-note display
 - Improved notification actions
