@@ -109,14 +109,22 @@ class BifrostServer {
     final digestSink = DigestCollector();
     final hashSink = sha256.startChunkedConversion(digestSink);
     var bytes = 0;
+    var lastProgressAt = DateTime.fromMillisecondsSinceEpoch(0);
+    void reportProgress({bool force = false}) {
+      final now = DateTime.now();
+      if (!force && now.difference(lastProgressAt) < const Duration(milliseconds: 200)) return;
+      lastProgressAt = now;
+      onFileProgress?.call(fileOffer, bytes, fileOffer.size, transferId);
+    }
     try {
       await for (final chunk in request) {
         if (_cancelled.contains(transferId)) throw const _ServerCancelled();
         bytes += chunk.length;
         hashSink.add(chunk);
         output.add(chunk);
-        onFileProgress?.call(fileOffer, bytes, fileOffer.size, transferId);
+        reportProgress();
       }
+      reportProgress(force: true);
       hashSink.close();
       await output.close();
       if (_cancelled.contains(transferId)) throw const _ServerCancelled();

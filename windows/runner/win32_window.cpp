@@ -1,6 +1,7 @@
 #include "win32_window.h"
 
 #include <dwmapi.h>
+#include <shellapi.h>
 #include <flutter_windows.h>
 
 #include "resource.h"
@@ -17,6 +18,10 @@ namespace {
 #endif
 
 constexpr const wchar_t kWindowClassName[] = L"FLUTTER_RUNNER_WIN32_WINDOW";
+constexpr UINT kTrayCallbackMessage = WM_APP + 1;
+constexpr UINT kTraySendFiles = 1;
+constexpr UINT kTrayCheckForUpdates = 2;
+constexpr UINT kTrayExit = 3;
 
 /// Registry key for app theme preference.
 ///
@@ -179,7 +184,32 @@ Win32Window::MessageHandler(HWND hwnd,
                             WPARAM const wparam,
                             LPARAM const lparam) noexcept {
   switch (message) {
+    case WM_CLOSE:
+      ShowWindow(hwnd, SW_HIDE);
+      return 0;
+    case kTrayCallbackMessage:
+      if (lparam == WM_LBUTTONDBLCLK) {
+        ShowWindow(hwnd, SW_RESTORE);
+        SetForegroundWindow(hwnd);
+      } else if (lparam == WM_RBUTTONUP || lparam == WM_CONTEXTMENU) {
+        HMENU menu = CreatePopupMenu();
+        if (menu) {
+          AppendMenu(menu, MF_STRING, kTraySendFiles, L"Send files");
+          AppendMenu(menu, MF_STRING, kTrayCheckForUpdates, L"Check for updates");
+          AppendMenu(menu, MF_STRING, kTrayExit, L"Exit");
+          POINT point;
+          GetCursorPos(&point);
+          SetForegroundWindow(hwnd);
+          UINT command = TrackPopupMenu(menu, TPM_RETURNCMD | TPM_NONOTIFY,
+                                        point.x, point.y, 0, hwnd, nullptr);
+          DestroyMenu(menu);
+          if (command == kTrayExit) DestroyWindow(hwnd);
+          else if (command != 0) OnTrayCommand(command);
+        }
+      }
+      return 0;
     case WM_DESTROY:
+      RemoveTrayIcon();
       window_handle_ = nullptr;
       Destroy();
       if (quit_on_close_) {
@@ -223,6 +253,7 @@ Win32Window::MessageHandler(HWND hwnd,
 
 void Win32Window::Destroy() {
   OnDestroy();
+  RemoveTrayIcon();
 
   if (window_handle_) {
     DestroyWindow(window_handle_);
@@ -270,6 +301,33 @@ bool Win32Window::OnCreate() {
 
 void Win32Window::OnDestroy() {
   // No-op; provided for subclasses.
+}
+
+void Win32Window::OnTrayCommand(UINT command) {}
+
+bool Win32Window::AddTrayIcon() {
+  if (tray_icon_added_ || !window_handle_) return tray_icon_added_;
+  NOTIFYICONDATA data{};
+  data.cbSize = sizeof(data);
+  data.hWnd = window_handle_;
+  data.uID = 1;
+  data.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+  data.uCallbackMessage = kTrayCallbackMessage;
+  data.hIcon = LoadIcon(GetModuleHandle(nullptr), MAKEINTRESOURCE(IDI_APP_ICON));
+  if (!data.hIcon) data.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+  wcscpy_s(data.szTip, L"Bifrost");
+  tray_icon_added_ = Shell_NotifyIcon(NIM_ADD, &data) != FALSE;
+  return tray_icon_added_;
+}
+
+void Win32Window::RemoveTrayIcon() {
+  if (!tray_icon_added_) return;
+  NOTIFYICONDATA data{};
+  data.cbSize = sizeof(data);
+  data.hWnd = window_handle_;
+  data.uID = 1;
+  Shell_NotifyIcon(NIM_DELETE, &data);
+  tray_icon_added_ = false;
 }
 
 void Win32Window::UpdateTheme(HWND const window) {

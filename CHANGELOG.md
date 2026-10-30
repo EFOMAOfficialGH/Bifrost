@@ -1,3 +1,10 @@
+## 0.13.6+37 — Large transfers, compact queue, and Windows tray
+- Rate-limit transfer progress notifications while preserving final byte counts; add a >200 MiB transfer regression test.
+- Expand dropped folders into readable files and safely ignore invalid paths.
+- Replace the expanded queue list with a compact summary and a reorderable/removable queue dialog.
+- Add Windows minimize-to-tray behavior with Send files, Check for updates, and Exit actions.
+- Update the English background activity text to “Keep Bifrost receiving while in background”.
+
 ## 0.13.5+36 — Arabic brand wording
 
 - Use “بايفروست” throughout Arabic UI text.

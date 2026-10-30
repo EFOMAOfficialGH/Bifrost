@@ -26,7 +26,7 @@ final appLanguageProvider = StateProvider<String>((ref) => 'en');
 final deviceNameProvider = StateProvider<String>((ref) => AppLocalizations.translateCurrent('Bifrost Device'));
 final customThemeColorProvider = StateProvider<Color>((ref) => const Color(0xFF3154B8));
 final textColorProvider = StateProvider<Color?>((ref) => null);
-const bifrostVersion = '0.13.5+36';
+const bifrostVersion = '0.13.6+37';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -220,15 +220,46 @@ class BifrostShell extends StatefulWidget {
 
 class _BifrostShellState extends State<BifrostShell> {
   int _selectedIndex = 0;
+  int _filePickerRequest = 0;
+  int _updateCheckRequest = 0;
   bool _startupUpdateChecked = false;
+  static const _trayChannel = MethodChannel('bifrost/tray');
 
   @override
   void initState() {
     super.initState();
+    if (Platform.isWindows) {
+      _trayChannel.setMethodCallHandler(_handleTrayMethodCall);
+    }
     AppStorage.instance.backgroundActivity().then((enabled) {
       if (enabled) BifrostDeviceRuntime.instance.ensureStarted();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkForUpdatesAtStartup());
+  }
+
+  Future<dynamic> _handleTrayMethodCall(MethodCall call) async {
+    if (!mounted) return null;
+    switch (call.method) {
+      case 'sendFiles':
+        setState(() {
+          _selectedIndex = 0;
+          _filePickerRequest++;
+        });
+        break;
+      case 'checkForUpdates':
+        setState(() {
+          _selectedIndex = 2;
+          _updateCheckRequest++;
+        });
+        break;
+    }
+    return null;
+  }
+
+  @override
+  void dispose() {
+    if (Platform.isWindows) _trayChannel.setMethodCallHandler(null);
+    super.dispose();
   }
 
   Future<void> _checkForUpdatesAtStartup() async {
@@ -283,9 +314,9 @@ class _BifrostShellState extends State<BifrostShell> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final pages = <Widget>[
-      NearbyPage(autoDiscover: widget.enableDiscovery),
+      NearbyPage(autoDiscover: widget.enableDiscovery, filePickerRequest: _filePickerRequest),
       const HistoryPage(),
-      const SettingsPage(),
+      SettingsPage(checkUpdateRequest: _updateCheckRequest),
     ];
     return Scaffold(
       body: SafeArea(child: IndexedStack(index: _selectedIndex, children: pages)),
@@ -503,7 +534,8 @@ String _relative(DateTime time) { final difference = DateTime.now().difference(t
 String _historyTime(DateTime time) { final local = time.toLocal(); final hour = local.hour % 12 == 0 ? 12 : local.hour % 12; final minute = local.minute.toString().padLeft(2, '0'); final period = local.hour >= 12 ? 'PM' : 'AM'; return '$hour:$minute $period'; }
 
 class SettingsPage extends ConsumerStatefulWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({this.checkUpdateRequest = 0, super.key});
+  final int checkUpdateRequest;
   @override
   ConsumerState<SettingsPage> createState() => _SettingsPageState();
 }
@@ -524,6 +556,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     AppStorage.instance.saveDirectoryPath().then((path) { if (mounted) setState(() => _savePath = path); });
     AppStorage.instance.backgroundActivity().then((enabled) { if (mounted) setState(() => _backgroundActivity = enabled); });
     AppStorage.instance.automaticUpdateChecks().then((enabled) { if (mounted) setState(() => _automaticUpdateChecks = enabled); });
+  }
+
+  @override
+  void didUpdateWidget(covariant SettingsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.checkUpdateRequest != widget.checkUpdateRequest) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_checkingForUpdates && !_updateDownloading) {
+          unawaited(_checkForUpdates());
+        }
+      });
+    }
   }
 
   @override
@@ -605,7 +649,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       const SizedBox(height: 8),
       TextField(controller: _nameController, textInputAction: TextInputAction.done, onSubmitted: (_) => _saveName(), decoration: InputDecoration(labelText: AppLocalizations.translate(context, 'Device name'), prefixIcon: const Icon(Icons.badge_outlined), suffixIcon: IconButton(tooltip: AppLocalizations.translate(context, 'Save device name'), onPressed: _saveName, icon: const Icon(Icons.check)))),
       ListTile(leading: const Icon(Icons.folder_outlined), title: const Text('Save location'), subtitle: Text(_savePath ?? AppStorage.instance.defaultSaveDirectory(), localized: false, textDirection: TextDirection.ltr), trailing: Icon(Directionality.of(context) == TextDirection.rtl ? Icons.chevron_left : Icons.chevron_right), onTap: _chooseSaveLocation),
-      SwitchListTile(value: _backgroundActivity, onChanged: _toggleBackground, title: const Text('Background receiving'), subtitle: const Text('Keep Bifrost listening while the app is in the background.'), secondary: const Icon(Icons.notifications_active_outlined)),
+      SwitchListTile(value: _backgroundActivity, onChanged: _toggleBackground, title: const Text('Background receiving'), subtitle: const Text('Keep Bifrost receiving while in background'), secondary: const Icon(Icons.notifications_active_outlined)),
       SwitchListTile(value: _automaticUpdateChecks, onChanged: (enabled) async { setState(() => _automaticUpdateChecks = enabled); await AppStorage.instance.setAutomaticUpdateChecks(enabled); }, title: const Text('Automatically check for updates'), subtitle: const Text('Silently check GitHub when Bifrost starts.'), secondary: const Icon(Icons.system_update_alt_outlined)),
       const SizedBox(height: 12),
       ListTile(leading: const Icon(Icons.verified_user_outlined), title: const Text('Trusted devices'), subtitle: const Text('Manage devices that can send without approval.'), trailing: Icon(Directionality.of(context) == TextDirection.rtl ? Icons.chevron_left : Icons.chevron_right), onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const TrustedDevicesPage()))),

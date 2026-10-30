@@ -71,6 +71,11 @@ class Win32Window {
   // Called when Destroy is called.
   virtual void OnDestroy();
 
+  // Called for application commands selected from the tray menu.
+  virtual void OnTrayCommand(UINT command);
+  bool AddTrayIcon();
+  void RemoveTrayIcon();
+
  private:
   friend class WindowClassRegistrar;
 
@@ -91,6 +96,7 @@ class Win32Window {
   static void UpdateTheme(HWND const window);
 
   bool quit_on_close_ = false;
+  bool tray_icon_added_ = false;
 
   // window handle for top level window.
   HWND window_handle_ = nullptr;

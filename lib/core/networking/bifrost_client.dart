@@ -45,17 +45,24 @@ class BifrostClient {
     request.headers.set('X-Bifrost-Filename', offer.files.single.name);
     request.headers.set('X-Bifrost-SHA256', digest);
     var sent = 0;
+    var lastProgressAt = DateTime.fromMillisecondsSinceEpoch(0);
+    final totalBytes = offer.files.single.size;
     final stream = file.openRead().transform(StreamTransformer<List<int>, List<int>>.fromHandlers(handleData: (chunk, sink) {
       if (cancellation?.isCancelled ?? false) {
         sink.addError(const TransferCancelledException());
         return;
       }
       sent += chunk.length;
-      onProgress?.call(sent, offer.files.single.size);
+      final now = DateTime.now();
+      if (sent == totalBytes || now.difference(lastProgressAt) >= const Duration(milliseconds: 200)) {
+        lastProgressAt = now;
+        onProgress?.call(sent, totalBytes);
+      }
       sink.add(chunk);
     }));
     try {
       await request.addStream(stream);
+      if (totalBytes == 0) onProgress?.call(0, 0);
       if (cancellation?.isCancelled ?? false) throw const TransferCancelledException();
       final response = await request.close();
       final responseBody = await utf8.decoder.bind(response).join();

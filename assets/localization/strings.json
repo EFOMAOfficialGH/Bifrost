@@ -184,7 +184,7 @@
     {
       "key": "nearby.clear_queue",
       "en": "Clear queued files",
-      "ar": "حذف قائمة الإرسال",
+      "ar": "إفراغ قائمة الإرسال",
       "context": "Queue action"
     },
     {
@@ -627,7 +627,7 @@
     },
     {
       "key": "settings.background_receiving_description",
-      "en": "Keep Bifrost listening while the app is in the background.",
+      "en": "Keep Bifrost receiving while in background",
       "ar": "يواصل بايفروست العمل فالخلفية",
       "context": "Setting description"
     },
@@ -1818,6 +1818,60 @@
       "en": "Bifrost device",
       "ar": "جهاز بايفروست",
       "context": "Brand or generated device-name fallback shown in the UI"
+    },
+    {
+      "key": "nearby.queue_summary",
+      "en": "Queue: {queued} • Sent: {sent}",
+      "ar": "قائمة الانتظار: {queued} • تم الإرسال: {sent}",
+      "context": "Compact transfer queue summary"
+    },
+    {
+      "key": "nearby.queue_open_hint",
+      "en": "Tap to view, remove, or reorder files.",
+      "ar": "اضغط لعرض الملفات أو حذفها أو تغيير ترتيبها.",
+      "context": "Compact queue summary hint"
+    },
+    {
+      "key": "nearby.queue_title",
+      "en": "Transfer queue",
+      "ar": "قائمة الإرسال",
+      "context": "Queue dialog title"
+    },
+    {
+      "key": "nearby.queue_empty",
+      "en": "No files queued.",
+      "ar": "لا توجد ملفات في قائمة الإرسال.",
+      "context": "Empty queue state"
+    },
+    {
+      "key": "nearby.queue_reorder_hint",
+      "en": "Drag the handle to change order.",
+      "ar": "اسحب المقبض لتغيير الترتيب.",
+      "context": "Queue reordering hint"
+    },
+    {
+      "key": "nearby.dropped_empty",
+      "en": "No files were found in the dropped item.",
+      "ar": "لم يتم العثور على ملفات في العنصر الذي أُفلت.",
+      "context": "Folder/file drop feedback"
+    },
+    {
+      "key": "nearby.dropped_unreadable",
+      "en": "Some dropped items could not be read.",
+      "ar": "تعذّرت قراءة بعض العناصر المُفلتة.",
+      "context": "Folder/file drop feedback"
+    },
+    {
+      "key": "nearby.file_picker_error",
+      "en": "Could not open file picker.",
+      "ar": "تعذّر فتح منتقي الملفات.",
+      "context": "File picker error"
+    },
+    {
+      "key": "nearby.file_unavailable",
+      "en": "Unavailable",
+      "ar": "غير متاح",
+      "context": "Queue file metadata fallback"
     }
   ]
 }

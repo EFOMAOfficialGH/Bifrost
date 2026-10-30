@@ -15,10 +15,12 @@ import '../../core/networking/device_runtime.dart';
 import '../../core/notifications/transfer_notifications.dart';
 import '../../core/platform/shared_file_bridge.dart';
 import '../../core/storage/app_storage.dart';
+import 'transfer_queue_dialog.dart';
 
 class NearbyPage extends StatefulWidget {
-  const NearbyPage({this.autoDiscover = true, super.key});
+  const NearbyPage({this.autoDiscover = true, this.filePickerRequest = 0, super.key});
   final bool autoDiscover;
+  final int filePickerRequest;
   @override
   State<NearbyPage> createState() => _NearbyPageState();
 }
@@ -30,6 +32,7 @@ class _NearbyPageState extends State<NearbyPage> {
   bool _searching = false;
   bool _sending = false;
   bool _dragging = false;
+  int _sentCount = 0;
   double _progress = 0;
   String? _transferStatus;
   String? _error;
@@ -54,6 +57,25 @@ class _NearbyPageState extends State<NearbyPage> {
   void _queueSharedFiles(List<String> paths) {
     _queueDropped(paths.map(File.new).where((file) => file.existsSync()).toList(growable: false));
     if (mounted && paths.isNotEmpty) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${paths.length} file${paths.length == 1 ? '' : 's'} added from Android Share')));
+  }
+
+  @override
+  void didUpdateWidget(covariant NearbyPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.filePickerRequest != widget.filePickerRequest) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _pickAndQueue();
+      });
+    }
+  }
+
+  Future<void> _pickAndQueue() async {
+    try {
+      final files = await _pickFiles();
+      if (mounted) _queueDropped(files);
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open file picker.')));
+    }
   }
 
   Future<void> _discover() async {
@@ -81,9 +103,70 @@ class _NearbyPageState extends State<NearbyPage> {
     return picked.where((file) => file.path != null).map((file) => File(file.path!)).toList(growable: false);
   }
 
-  void _queueDropped(List<File> files) {
-    if (files.isEmpty || _sending) return;
-    setState(() { _queuedFiles = [..._queuedFiles, ...files]; for (final file in files) { _queueStatuses[file.path] = 'Queued'; } _transferStatus = '${_queuedFiles.length} file${_queuedFiles.length == 1 ? '' : 's'} ready. Select a device to send.'; });
+  Future<void> _queueDroppedPaths(List<String> paths) async {
+    if (_sending || paths.isEmpty) return;
+    final files = <File>[];
+    var skipped = 0;
+    for (final path in paths) {
+      try {
+        final type = await FileSystemEntity.type(path, followLinks: false);
+        if (type == FileSystemEntityType.file) {
+          files.add(File(path));
+        } else if (type == FileSystemEntityType.directory) {
+          await for (final entity in Directory(path).list(recursive: true, followLinks: false)) {
+            if (entity is File) files.add(entity);
+          }
+        } else {
+          skipped++;
+        }
+      } on FileSystemException {
+        skipped++;
+      }
+    }
+    if (!mounted) return;
+    final added = _queueDropped(files);
+    if (added.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No files were found in the dropped item.')));
+    } else if (skipped > 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Some dropped items could not be read.')));
+    }
+  }
+
+  List<File> _queueDropped(List<File> files) {
+    if (files.isEmpty || _sending) return const [];
+    final paths = _queuedFiles.map((file) => file.path).toSet();
+    final valid = <File>[];
+    for (final file in files) {
+      try {
+        if (FileSystemEntity.typeSync(file.path, followLinks: false) == FileSystemEntityType.file && paths.add(file.path)) {
+          valid.add(file);
+        }
+      } on FileSystemException {
+        // Ignore dropped items that disappeared or cannot be read.
+      }
+    }
+    if (valid.isEmpty) return const [];
+    setState(() {
+      _queuedFiles = [..._queuedFiles, ...valid];
+      for (final file in valid) {
+        _queueStatuses[file.path] = 'Queued';
+      }
+      _transferStatus = '${_queuedFiles.length} file${_queuedFiles.length == 1 ? '' : 's'} ready. Select a device to send.';
+    });
+    return valid;
+  }
+
+  Future<void> _showQueue() async {
+    final updated = await showDialog<List<File>>(
+      context: context,
+      builder: (_) => TransferQueueDialog(files: _queuedFiles, statuses: Map<String, String>.of(_queueStatuses), sending: _sending),
+    );
+    if (!mounted || updated == null) return;
+    final retained = updated.map((file) => file.path).toSet();
+    setState(() {
+      _queuedFiles = updated;
+      _queueStatuses.removeWhere((path, _) => !retained.contains(path));
+    });
   }
 
   @override
@@ -95,7 +178,7 @@ class _NearbyPageState extends State<NearbyPage> {
     return DropTarget(
       onDragEntered: (_) => setState(() => _dragging = true),
       onDragExited: (_) => setState(() => _dragging = false),
-      onDragDone: (detail) => setState(() { _dragging = false; _queueDropped(detail.files.map((file) => File(file.path)).toList(growable: false)); }),
+      onDragDone: (detail) { setState(() => _dragging = false); unawaited(_queueDroppedPaths(detail.files.map((file) => file.path).toList(growable: false))); },
       child: CustomScrollView(slivers: [
         SliverPadding(padding: const EdgeInsets.fromLTRB(24, 24, 24, 12), sliver: SliverToBoxAdapter(child: Row(children: [const _BifrostMark(), const SizedBox(width: 12), Text('Bifrost', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)), const Spacer(), IconButton(tooltip: AppLocalizations.translate(context, 'Troubleshooting'), onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const TroubleshootingPage())), icon: const Icon(Icons.help_outline))]))),
         SliverPadding(padding: const EdgeInsets.fromLTRB(24, 8, 24, 24), sliver: SliverToBoxAdapter(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -104,9 +187,15 @@ class _NearbyPageState extends State<NearbyPage> {
           Text(_searching ? 'Searching this Wi-Fi network…' : 'Devices running Bifrost on this local network appear here.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant)),
           const SizedBox(height: 16),
           AnimatedContainer(duration: const Duration(milliseconds: 180), width: double.infinity, padding: const EdgeInsets.all(18), decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), color: _dragging ? colors.primaryContainer : colors.surfaceContainerHighest, border: Border.all(color: _dragging ? colors.primary : colors.outlineVariant, width: _dragging ? 2 : 1)), child: Row(children: [Icon(Icons.file_upload_outlined, color: _dragging ? colors.primary : colors.onSurfaceVariant), const SizedBox(width: 12), Expanded(child: Text(_dragging ? 'Drop files here' : Platform.isWindows ? 'Drop files here or press "Choose" to start sending files' : 'Press "Choose" to start sending files')), TextButton(onPressed: _sending ? null : () async { final files = await _pickFiles(); _queueDropped(files); }, child: const Text('Choose'))])),
-          if (_queuedFiles.isNotEmpty) ...[
+          if (_queuedFiles.isNotEmpty || _sentCount > 0) ...[
             const SizedBox(height: 12),
-            Card(child: Column(children: [for (final file in _queuedFiles) ListTile(dense: true, leading: Icon(_queueStatuses[file.path] == 'Completed' ? Icons.check_circle : _queueStatuses[file.path] == 'Failed' ? Icons.error_outline : Icons.insert_drive_file_outlined), title: Text(file.uri.pathSegments.last, localized: false), subtitle: Text('${_formatBytes(file.lengthSync())} • ${_queueStatuses[file.path] ?? 'Queued'}'), trailing: IconButton(icon: const Icon(Icons.close), tooltip: AppLocalizations.translate(context, 'Remove'), onPressed: _sending ? null : () => setState(() { _queuedFiles = _queuedFiles.where((item) => item.path != file.path).toList(); _queueStatuses.remove(file.path); }))), ListTile(leading: const Icon(Icons.clear_all), title: const Text('Clear queued files'), onTap: _sending ? null : () => setState(() { _queuedFiles = const []; _queueStatuses.clear(); }) )])),
+            Card(child: ListTile(
+              onTap: _showQueue,
+              leading: const Icon(Icons.queue_outlined),
+              title: Text('Queue: ${_queuedFiles.length} • Sent: $_sentCount'),
+              subtitle: const Text('Tap to view, remove, or reorder files.'),
+              trailing: Icon(Directionality.of(context) == TextDirection.rtl ? Icons.chevron_left : Icons.chevron_right),
+            )),
           ],
           const SizedBox(height: 20),
           if (_transferStatus != null) Card(child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(_transferStatus!), if (_sending) ...[const SizedBox(height: 10), LinearProgressIndicator(value: _progress), const SizedBox(height: 10), OutlinedButton.icon(onPressed: _cancelTransfer, icon: const Icon(Icons.cancel_outlined), label: const Text('Cancel transfer'))]]))),
@@ -126,9 +215,12 @@ class _NearbyPageState extends State<NearbyPage> {
   Future<void> _selectDevice(BifrostDevice device) async {
     if (_sending) return;
     var files = _queuedFiles;
-    if (files.isEmpty) files = await _pickFiles();
+    if (files.isEmpty) {
+      final picked = await _pickFiles();
+      if (picked.isEmpty || !mounted) return;
+      files = _queueDropped(picked);
+    }
     if (files.isEmpty) return;
-    setState(() { _queuedFiles = files; });
     await _sendFiles(device, files);
   }
 
@@ -171,7 +263,7 @@ class _NearbyPageState extends State<NearbyPage> {
           if (lastError != null) throw lastError;
           await AppStorage.instance.finish(TransferRecord(id: activityId, fileName: file.uri.pathSegments.last, bytes: size, direction: 'Sent', status: 'Completed', peer: device.name, time: DateTime.now(), path: file.path, peerHost: device.host, peerPort: device.port));
           completedCount++;
-          if (mounted) setState(() => _queueStatuses[file.path] = 'Completed');
+          if (mounted) setState(() { _queueStatuses.remove(file.path); _queuedFiles = _queuedFiles.where((item) => item.path != file.path).toList(growable: false); _sentCount++; });
           await TransferNotifications.instance.cancel(notificationId);
           await TransferNotifications.instance.complete(id: notificationId, title: 'Sent ${file.uri.pathSegments.last}', success: true);
         } catch (error) {
@@ -183,7 +275,7 @@ class _NearbyPageState extends State<NearbyPage> {
           failedCount++;
         }
       }
-      if (mounted) setState(() { if (failedCount == 0) { _queuedFiles = const []; _queueStatuses.clear(); } _transferStatus = failedCount == 0 ? 'Transfer complete: $completedCount file${completedCount == 1 ? '' : 's'} sent.' : 'Batch finished: $completedCount completed, $failedCount failed. Failed files remain queued.'; });
+      if (mounted) setState(() { _transferStatus = failedCount == 0 ? 'Transfer complete: $completedCount file${completedCount == 1 ? '' : 's'} sent.' : 'Batch finished: $completedCount completed, $failedCount failed. Failed files remain queued.'; });
     } catch (error) {
       if (mounted) setState(() => _transferStatus = error is TransferCancelledException ? 'Transfer cancelled.' : 'Transfer stopped: the other device may have declined, or the connection was lost.');
     } finally {
