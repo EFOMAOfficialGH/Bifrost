@@ -35,7 +35,7 @@ final customThemeColorProvider = StateProvider<Color>(
   (ref) => const Color(0xFF3154B8),
 );
 final textColorProvider = StateProvider<Color?>((ref) => null);
-const bifrostVersion = '0.14.1+39';
+const bifrostVersion = '0.14.2+40';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -644,6 +644,7 @@ class _BifrostShellState extends State<BifrostShell> {
     var eta = 0;
     var closed = false;
     StateSetter? repaint;
+    var lastPaint = DateTime.fromMillisecondsSinceEpoch(0);
     unawaited(
       showDialog<void>(
         context: context,
@@ -711,7 +712,11 @@ class _BifrostShellState extends State<BifrostShell> {
             speedBytesPerSecond: speed,
             etaSeconds: eta,
           );
-          repaint?.call(() {});
+          final now = DateTime.now();
+          if (now.difference(lastPaint).inMilliseconds >= 120) {
+            lastPaint = now;
+            repaint?.call(() {});
+          }
         },
       );
       await TransferNotifications.instance.updateComplete(

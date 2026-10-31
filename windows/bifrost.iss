@@ -49,6 +49,29 @@ Filename: "{app}\{#MyAppExeName}"; Description: "Run Bifrost"; Flags: postinstal
 var
   WasBifrostRunning: Boolean;
 
+function StopBifrostProcesses: Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM bifrost.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  if Result then
+    WasBifrostRunning := ResultCode = 0;
+end;
+
+function InitializeSetup: Boolean;
+begin
+  Result := StopBifrostProcesses;
+  if not Result then
+    MsgBox('Windows could not close Bifrost automatically. Please close Bifrost from the system tray and run the installer again.', mbError, MB_OK);
+end;
+
+function InitializeUninstall: Boolean;
+begin
+  Result := StopBifrostProcesses;
+  if not Result then
+    MsgBox('Windows could not close Bifrost automatically. Please close Bifrost from the system tray and try uninstalling again.', mbError, MB_OK);
+end;
+
 function ShouldShowRunBifrost: Boolean;
 begin
   Result := not WasBifrostRunning;
@@ -58,25 +81,16 @@ procedure CurStepChanged(CurStep: TSetupStep);
 var
   ResultCode: Integer;
 begin
-  if (CurStep = ssInstall) and FileExists(ExpandConstant('{app}\{#MyAppExeName}')) then
-  begin
-    if Exec(ExpandConstant('{app}\{#MyAppExeName}'), '--installer-shutdown', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-      WasBifrostRunning := ResultCode <> 0;
-  end
-  else if (CurStep = ssPostInstall) and WasBifrostRunning then
+  if (CurStep = ssPostInstall) and WasBifrostRunning then
   begin
     Exec(ExpandConstant('{app}\{#MyAppExeName}'), '', ExpandConstant('{app}'), SW_SHOWNORMAL, ewNoWait, ResultCode);
   end;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
-var
-  ResultCode: Integer;
 begin
   if CurUninstallStep = usUninstall then
   begin
-    if FileExists(ExpandConstant('{app}\{#MyAppExeName}')) then
-      Exec(ExpandConstant('{app}\{#MyAppExeName}'), '--installer-shutdown', ExpandConstant('{app}'), SW_HIDE, ewWaitUntilTerminated, ResultCode);
     RegDeleteValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run', 'Bifrost');
   end;
 end;

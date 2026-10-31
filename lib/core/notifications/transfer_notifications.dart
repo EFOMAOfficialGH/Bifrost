@@ -12,6 +12,26 @@ class TransferNotifications {
   Future<void> Function()? onUpdateNotificationTapped;
   DateTime _lastUpdateProgressAt = DateTime.fromMillisecondsSinceEpoch(0);
   final Map<int, DateTime> _lastTransferProgressAt = {};
+  final Map<int, Future<void>> _pendingTransferNotifications = {};
+  final Set<int> _terminalTransferNotifications = {};
+
+  Future<void> _serializeTransferNotification(int id, Future<void> Function() action) {
+    final previous = _pendingTransferNotifications[id] ?? Future<void>.value();
+    final operation = previous.catchError((Object _) {}).then((_) => action());
+    _pendingTransferNotifications[id] = operation;
+    return operation.whenComplete(() {
+      if (identical(_pendingTransferNotifications[id], operation)) {
+        _pendingTransferNotifications.remove(id);
+      }
+    });
+  }
+
+  void _markTransferNotificationTerminal(int id) {
+    _terminalTransferNotifications.add(id);
+    if (_terminalTransferNotifications.length > 512) {
+      _terminalTransferNotifications.remove(_terminalTransferNotifications.first);
+    }
+  }
 
   Future<void> initialize() async {
     if (_ready || !Platform.isAndroid) return;
@@ -43,15 +63,19 @@ class TransferNotifications {
   }
 
   Future<void> progress({required int id, required String title, required int sent, required int total, double speedBytesPerSecond = 0, int? etaSeconds}) async {
-    if (!Platform.isAndroid) return;
+    if (!Platform.isAndroid || _terminalTransferNotifications.contains(id)) return;
     final now = DateTime.now();
     final previous = _lastTransferProgressAt[id];
     if (previous != null && now.difference(previous) < const Duration(milliseconds: 750) && sent < total) return;
     _lastTransferProgressAt[id] = now;
-    await initialize();
-    final percent = total == 0 ? 0 : ((sent * 100) ~/ total).clamp(0, 100);
-    final details = speedBytesPerSecond > 0 ? ' • ${_format(speedBytesPerSecond.round())}/s${etaSeconds == null ? '' : ' • ${etaSeconds}s left'}' : '';
-    await _plugin.show(id: id, title: AppLocalizations.translateCurrent(title), body: AppLocalizations.translateCurrent('$percent% • ${_format(sent)} of ${_format(total)}$details'), notificationDetails: NotificationDetails(android: AndroidNotificationDetails('bifrost_transfers', AppLocalizations.translateCurrent('Bifrost transfers'), channelDescription: AppLocalizations.translateCurrent('File transfer progress'), ongoing: true, onlyAlertOnce: true, showProgress: true, maxProgress: 100, progress: percent, playSound: false)));
+    await _serializeTransferNotification(id, () async {
+      if (_terminalTransferNotifications.contains(id)) return;
+      await initialize();
+      if (_terminalTransferNotifications.contains(id)) return;
+      final percent = total == 0 ? 0 : ((sent * 100) ~/ total).clamp(0, 100);
+      final details = speedBytesPerSecond > 0 ? ' • ${_format(speedBytesPerSecond.round())}/s${etaSeconds == null ? '' : ' • ${etaSeconds}s left'}' : '';
+      await _plugin.show(id: id, title: AppLocalizations.translateCurrent(title), body: AppLocalizations.translateCurrent('$percent% • ${_format(sent)} of ${_format(total)}$details'), notificationDetails: NotificationDetails(android: AndroidNotificationDetails('bifrost_transfers', AppLocalizations.translateCurrent('Bifrost transfers'), channelDescription: AppLocalizations.translateCurrent('File transfer progress'), ongoing: false, autoCancel: true, onlyAlertOnce: true, showProgress: true, maxProgress: 100, progress: percent, playSound: false)));
+    });
   }
 
   Future<void> updateProgress({required int received, required int total, double speedBytesPerSecond = 0, int? etaSeconds}) async {
@@ -62,7 +86,7 @@ class TransferNotifications {
     await initialize();
     final percent = total == 0 ? 0 : ((received * 100) ~/ total).clamp(0, 100);
     final details = speedBytesPerSecond > 0 ? ' • ${_format(speedBytesPerSecond.round())}/s${etaSeconds == null ? '' : ' • ${etaSeconds}s left'}' : '';
-    await _plugin.show(id: 987655, title: AppLocalizations.translateCurrent('Downloading Bifrost update'), body: AppLocalizations.translateCurrent('$percent% • ${_format(received)} of ${_format(total)}$details'), notificationDetails: NotificationDetails(android: AndroidNotificationDetails('bifrost_updates', AppLocalizations.translateCurrent('Bifrost updates'), channelDescription: AppLocalizations.translateCurrent('Bifrost update download progress'), ongoing: true, autoCancel: false, onlyAlertOnce: true, showProgress: true, maxProgress: 100, progress: percent, importance: Importance.low, playSound: false)));
+    await _plugin.show(id: 987655, title: AppLocalizations.translateCurrent('Downloading Bifrost update'), body: AppLocalizations.translateCurrent('$percent% • ${_format(received)} of ${_format(total)}$details'), notificationDetails: NotificationDetails(android: AndroidNotificationDetails('bifrost_updates', AppLocalizations.translateCurrent('Bifrost updates'), channelDescription: AppLocalizations.translateCurrent('Bifrost update download progress'), ongoing: false, autoCancel: true, onlyAlertOnce: true, showProgress: true, maxProgress: 100, progress: percent, importance: Importance.low, playSound: false)));
   }
 
   Future<void> updateComplete({required String version}) async {
@@ -79,16 +103,22 @@ class TransferNotifications {
 
   Future<void> complete({required int id, required String title, required bool success, String? message}) async {
     if (!Platform.isAndroid) return;
+    _markTransferNotificationTerminal(id);
     _lastTransferProgressAt.remove(id);
-    await initialize();
-    await _plugin.show(id: id, title: AppLocalizations.translateCurrent(title), body: AppLocalizations.translateCurrent(message ?? (success ? 'Transfer complete' : 'Transfer failed')), notificationDetails: NotificationDetails(android: AndroidNotificationDetails('bifrost_transfers', AppLocalizations.translateCurrent('Bifrost transfers'), channelDescription: AppLocalizations.translateCurrent('File transfer progress'), ongoing: false, autoCancel: true, importance: Importance.defaultImportance)));
+    await _serializeTransferNotification(id, () async {
+      await initialize();
+      await _plugin.show(id: id, title: AppLocalizations.translateCurrent(title), body: AppLocalizations.translateCurrent(message ?? (success ? 'Transfer complete' : 'Transfer failed')), notificationDetails: NotificationDetails(android: AndroidNotificationDetails('bifrost_transfers', AppLocalizations.translateCurrent('Bifrost transfers'), channelDescription: AppLocalizations.translateCurrent('File transfer progress'), ongoing: false, autoCancel: true, importance: Importance.defaultImportance)));
+    });
   }
 
   Future<void> cancel(int id) async {
     if (!Platform.isAndroid) return;
+    _markTransferNotificationTerminal(id);
     _lastTransferProgressAt.remove(id);
-    await initialize();
-    await _plugin.cancel(id: id);
+    await _serializeTransferNotification(id, () async {
+      await initialize();
+      await _plugin.cancel(id: id);
+    });
   }
 
   Future<void> incoming({required int id, required String title, required String body}) async {
@@ -100,7 +130,7 @@ class TransferNotifications {
   Future<void> backgroundReady() async {
     if (!Platform.isAndroid) return;
     await initialize();
-    await _plugin.show(id: 987654, title: AppLocalizations.translateCurrent('Bifrost is ready'), body: AppLocalizations.translateCurrent('Listening for nearby file transfers • Tap to stop'), notificationDetails: NotificationDetails(android: AndroidNotificationDetails('bifrost_background', AppLocalizations.translateCurrent('Background receiving'), channelDescription: AppLocalizations.translateCurrent('Keeps Bifrost available while the app is in the background'), ongoing: true, autoCancel: false, onlyAlertOnce: true, importance: Importance.low, playSound: false)));
+    await _plugin.show(id: 987654, title: AppLocalizations.translateCurrent('Bifrost is ready'), body: AppLocalizations.translateCurrent('Background receiving is on. Turn it off in Settings.'), notificationDetails: NotificationDetails(android: AndroidNotificationDetails('bifrost_background', AppLocalizations.translateCurrent('Background receiving'), channelDescription: AppLocalizations.translateCurrent('Keeps Bifrost available while the app is in the background'), ongoing: false, autoCancel: true, onlyAlertOnce: true, importance: Importance.low, playSound: false)));
   }
 
   Future<void> clearBackgroundReady() async {

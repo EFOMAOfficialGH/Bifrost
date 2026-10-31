@@ -49,6 +49,16 @@ void main() {
     );
   });
 
+  test('background notification tells Arabic users to use Settings', () {
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Background receiving is on. Turn it off in Settings.',
+      ),
+      'الاستلام في الخلفية مفعّل. يمكنك إيقافه من الإعدادات.',
+    );
+  });
+
   test(
     'new startup, app-transfer, and history labels translate placeholders',
     () {

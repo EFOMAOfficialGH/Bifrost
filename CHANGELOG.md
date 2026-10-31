@@ -1,3 +1,11 @@
+## 0.14.2+40 — Windows updater and notification fixes
+
+- Close tray-resident Bifrost processes before the Windows installer replaces app files, then restart Bifrost if it was already running.
+- Update Windows drag-and-drop handling to the current file-and-folder drop API.
+- Show the total file size alongside transfer speed and ETA.
+- Serialize Android transfer progress and cancellation notifications so a late progress update cannot recreate a cancelled notice.
+- Make progress and background-receiving notifications dismissible; direct users to Settings to turn off background receiving.
+
 ## 0.14.1+39 — Faster Android app sharing
 
 - Send eligible single-APK apps directly without creating an XAPK archive.
