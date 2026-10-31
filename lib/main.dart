@@ -515,6 +515,9 @@ class _BifrostShellState extends State<BifrostShell> {
     super.initState();
     if (Platform.isWindows) {
       _trayChannel.setMethodCallHandler(_handleTrayMethodCall);
+      unawaited(
+        _trayChannel.invokeMethod<void>('readyForFileDrop').catchError((_) {}),
+      );
     }
     AppStorage.instance.backgroundActivity().then((enabled) {
       if (enabled) BifrostDeviceRuntime.instance.ensureStarted();
@@ -532,6 +535,13 @@ class _BifrostShellState extends State<BifrostShell> {
           _selectedIndex = 0;
           _filePickerRequest++;
         });
+        break;
+      case 'droppedFiles':
+        final paths = (call.arguments as List<dynamic>? ?? const [])
+            .whereType<String>()
+            .toList(growable: false);
+        setState(() => _selectedIndex = 0);
+        SharedFileBridge.instance.addFiles(paths);
         break;
       case 'checkForUpdates':
         setState(() {

@@ -7,6 +7,11 @@
 #include <memory>
 #include <string>
 
+inline constexpr wchar_t kBifrostWindowClassName[] =
+    L"EFOMA_BIFROST_RUNNER_WIN32_WINDOW";
+inline constexpr UINT kBifrostActivateExistingMessage = WM_APP + 3;
+inline constexpr ULONG_PTR kBifrostForwardFilesData = 0xB1F0;
+
 // A class abstraction for a high DPI-aware Win32 Window. Intended to be
 // inherited from by classes that wish to specialize with custom
 // rendering and input handling

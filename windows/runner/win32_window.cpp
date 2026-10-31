@@ -17,7 +17,6 @@ namespace {
 #define DWMWA_USE_IMMERSIVE_DARK_MODE 20
 #endif
 
-constexpr const wchar_t kWindowClassName[] = L"FLUTTER_RUNNER_WIN32_WINDOW";
 constexpr UINT kTrayCallbackMessage = WM_APP + 1;
 constexpr UINT kInstallerShutdownMessage = WM_APP + 2;
 constexpr UINT kTraySendFiles = 1;
@@ -96,7 +95,7 @@ const wchar_t* WindowClassRegistrar::GetWindowClass() {
   if (!class_registered_) {
     WNDCLASS window_class{};
     window_class.hCursor = LoadCursor(nullptr, IDC_ARROW);
-    window_class.lpszClassName = kWindowClassName;
+    window_class.lpszClassName = kBifrostWindowClassName;
     window_class.style = CS_HREDRAW | CS_VREDRAW;
     window_class.cbClsExtra = 0;
     window_class.cbWndExtra = 0;
@@ -109,11 +108,11 @@ const wchar_t* WindowClassRegistrar::GetWindowClass() {
     RegisterClass(&window_class);
     class_registered_ = true;
   }
-  return kWindowClassName;
+  return kBifrostWindowClassName;
 }
 
 void WindowClassRegistrar::UnregisterWindowClass() {
-  UnregisterClass(kWindowClassName, nullptr);
+  UnregisterClass(kBifrostWindowClassName, nullptr);
   class_registered_ = false;
 }
 
@@ -150,6 +149,10 @@ bool Win32Window::Create(const std::wstring& title,
     return false;
   }
 
+  ChangeWindowMessageFilterEx(window, kBifrostActivateExistingMessage,
+                              MSGFLT_ALLOW, nullptr);
+  ChangeWindowMessageFilterEx(window, WM_COPYDATA, MSGFLT_ALLOW, nullptr);
+  ChangeWindowMessageFilterEx(window, WM_DROPFILES, MSGFLT_ALLOW, nullptr);
   UpdateTheme(window);
 
   return OnCreate();

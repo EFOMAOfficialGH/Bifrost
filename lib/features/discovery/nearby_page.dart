@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart' hide Text;
 
 import '../../core/localization/localized_text.dart';
@@ -22,45 +21,6 @@ import '../app_transfer/app_transfer_picker.dart';
 import '../app_transfer/app_transfer_service.dart';
 import 'transfer_queue_dialog.dart';
 
-class _WindowsFileDropTarget extends StatelessWidget {
-  const _WindowsFileDropTarget({
-    required this.child,
-    required this.onEnter,
-    required this.onLeave,
-    required this.onFilesDropped,
-  });
-
-  final Widget child;
-  final VoidCallback onEnter;
-  final VoidCallback onLeave;
-  final Future<void> Function(List<String>) onFilesDropped;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!Platform.isWindows) return child;
-    return DropTarget(
-      acceptedKinds: const {DropItemKind.file, DropItemKind.directory},
-      onEnter: (_) => onEnter(),
-      onLeave: onLeave,
-      onDrop: (details) async {
-        onLeave();
-        final paths = <String>[];
-        for (final item in details.items) {
-          if (item is DropFileItem) {
-            final path = item.localPath;
-            if (path != null && path.isNotEmpty) paths.add(path);
-          } else if (item is DropDirectoryItem) {
-            final path = item.localPath;
-            if (path != null && path.isNotEmpty) paths.add(path);
-          }
-        }
-        await onFilesDropped(paths);
-      },
-      child: child,
-    );
-  }
-}
-
 class NearbyPage extends StatefulWidget {
   const NearbyPage({
     this.autoDiscover = true,
@@ -80,7 +40,6 @@ class _NearbyPageState extends State<NearbyPage> {
   List<File> _queuedFiles = const [];
   bool _searching = false;
   bool _sending = false;
-  bool _dragging = false;
   int _sentCount = 0;
   double _progress = 0;
   String? _transferStatus;
@@ -109,20 +68,7 @@ class _NearbyPageState extends State<NearbyPage> {
   }
 
   void _queueSharedFiles(List<String> paths) {
-    _queueDropped(
-      paths
-          .map(File.new)
-          .where((file) => file.existsSync())
-          .toList(growable: false),
-    );
-    if (mounted && paths.isNotEmpty)
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${paths.length} file${paths.length == 1 ? '' : 's'} added from Android Share',
-          ),
-        ),
-      );
+    unawaited(_queueDroppedPaths(paths));
   }
 
   @override
@@ -308,6 +254,16 @@ class _NearbyPageState extends State<NearbyPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Some dropped items could not be read.')),
       );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            added.length == 1
+                ? '1 file added to the transfer queue.'
+                : '${added.length} files added to the transfer queue.',
+          ),
+        ),
+      );
     }
   }
 
@@ -373,11 +329,7 @@ class _NearbyPageState extends State<NearbyPage> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return _WindowsFileDropTarget(
-      onEnter: () => setState(() => _dragging = true),
-      onLeave: () => setState(() => _dragging = false),
-      onFilesDropped: _queueDroppedPaths,
-      child: CustomScrollView(
+    return CustomScrollView(
         slivers: [
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
@@ -443,30 +395,22 @@ class _NearbyPageState extends State<NearbyPage> {
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      color: _dragging
-                          ? colors.primaryContainer
-                          : colors.surfaceContainerHighest,
+                      color: colors.surfaceContainerHighest,
                       border: Border.all(
-                        color: _dragging
-                            ? colors.primary
-                            : colors.outlineVariant,
-                        width: _dragging ? 2 : 1,
+                        color: colors.outlineVariant,
+                        width: 1,
                       ),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           Icons.file_upload_outlined,
-                          color: _dragging
-                              ? colors.primary
-                              : colors.onSurfaceVariant,
+                          color: colors.onSurfaceVariant,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            _dragging
-                                ? 'Drop files here'
-                                : Platform.isWindows
+                            Platform.isWindows
                                 ? 'Drop files here or press "Choose" to start sending files'
                                 : 'Press "Choose" to start sending files',
                           ),
@@ -648,7 +592,6 @@ class _NearbyPageState extends State<NearbyPage> {
             ),
           ),
         ],
-      ),
     );
   }
 

@@ -117,6 +117,20 @@ void main() {
       expect(
         AppLocalizations.translateFor(
           'ar',
+          '1 file added to the transfer queue.',
+        ),
+        'أُضيف ملف واحد إلى قائمة انتظار النقل.',
+      );
+      expect(
+        AppLocalizations.translateFor(
+          'ar',
+          '5 files added to the transfer queue.',
+        ),
+        'أُضيفت 5 ملفات إلى قائمة انتظار النقل.',
+      );
+      expect(
+        AppLocalizations.translateFor(
+          'ar',
           'Version 2.1 (42) · APK size 12 MB',
         ),
         'الإصدار 2.1 (42) · حجم APK ‏12 ميغابايت',

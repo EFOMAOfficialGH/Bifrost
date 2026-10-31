@@ -2316,6 +2316,18 @@
       "en": "{count} app added to the transfer queue.",
       "ar": "أُضيف تطبيق واحد إلى قائمة انتظار النقل.",
       "context": "App transfer picker queue confirmation"
+    },
+    {
+      "key": "nearby.shared_file_one",
+      "en": "1 file added to the transfer queue.",
+      "ar": "أُضيف ملف واحد إلى قائمة انتظار النقل.",
+      "context": "Shared or dropped file queue confirmation"
+    },
+    {
+      "key": "nearby.shared_files",
+      "en": "{count} files added to the transfer queue.",
+      "ar": "أُضيفت {count} ملفات إلى قائمة انتظار النقل.",
+      "context": "Shared or dropped file queue confirmation"
     }
   ]
 }
