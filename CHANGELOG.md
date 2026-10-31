@@ -1,7 +1,8 @@
 ## 0.14.2+40 — Windows updater and notification fixes
 
 - Close tray-resident Bifrost processes before the Windows installer replaces app files, then restart Bifrost if it was already running.
-- Update Windows drag-and-drop handling to the current file-and-folder drop API.
+- Route Windows file and folder drops through the runner so they reach the transfer queue without a plugin dependency.
+- Make repeated Start menu/shortcut launches restore and foreground the tray-resident instance instead of creating a duplicate window; forward file-open arguments to that instance.
 - Show the total file size alongside transfer speed and ETA.
 - Serialize Android transfer progress and cancellation notifications so a late progress update cannot recreate a cancelled notice.
 - Make progress and background-receiving notifications dismissible; direct users to Settings to turn off background receiving.

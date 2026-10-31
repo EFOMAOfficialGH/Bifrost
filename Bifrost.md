@@ -4,7 +4,7 @@ Bifrost is a private, local-network file-sharing app for **Android and Windows**
 
 > **Current version: v0.14.2+40**
 >
-> Version 0.14.2 fixes Windows tray-aware updates, file dropping, transfer notifications, and progress details.
+> Version 0.14.2 fixes Windows tray-aware updates, single-instance shortcut activation, native file/folder dropping, transfer notifications, and progress details.
 
 ## Highlights
 
@@ -16,7 +16,7 @@ Bifrost is a private, local-network file-sharing app for **Android and Windows**
 - Manual **Connect by IP address** fallback
 - Hotspot discovery improvements using interface-specific broadcasts
 - Multi-file transfer queues
-- Windows drag-and-drop
+- Native Windows file and folder drag-and-drop into the transfer queue
 - Folder drag-and-drop expansion and streamed large-file transfers
 - Compact, reorderable transfer queue
 - Windows minimize-to-tray with Send files, Check for updates, and Exit actions
@@ -27,7 +27,7 @@ Bifrost is a private, local-network file-sharing app for **Android and Windows**
 - Trusted devices with persistent device identities
 - Favorite nearby devices, stored independently from transfer trust
 - Background receiving on Android, on by default with a persistent user preference
-- Tap the background notification to stop receiving
+- Dismissible background-receiving notification; turn receiving off in Settings
 - Transfer progress, speed, and ETA
 - Transfer cancellation and retry handling
 - SHA-256 file verification

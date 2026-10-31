@@ -16,12 +16,26 @@ class SharedFileBridge {
     _pending.addAll(paths.where((path) => path.trim().isNotEmpty));
   }
 
+  void addFiles(Iterable<String> paths) {
+    final files = paths
+        .where((path) => path.trim().isNotEmpty)
+        .toList(growable: false);
+    if (files.isEmpty) return;
+    if (_initialized) {
+      _files.add(files);
+    } else {
+      _pending.addAll(files);
+    }
+  }
+
   Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'sharedFiles') {
-        final paths = (call.arguments as List<dynamic>? ?? const []).whereType<String>().toList(growable: false);
+        final paths = (call.arguments as List<dynamic>? ?? const [])
+            .whereType<String>()
+            .toList(growable: false);
         if (paths.isNotEmpty) _files.add(paths);
       }
     });
@@ -30,7 +44,11 @@ class SharedFileBridge {
       _pending.clear();
     }
     try {
-      final paths = (await _channel.invokeMethod<List<dynamic>>('getSharedFiles') ?? const []).whereType<String>().toList(growable: false);
+      final paths =
+          (await _channel.invokeMethod<List<dynamic>>('getSharedFiles') ??
+                  const [])
+              .whereType<String>()
+              .toList(growable: false);
       if (paths.isNotEmpty) _files.add(paths);
     } on MissingPluginException {
       // Windows uses command-line arguments instead of the Android channel.
