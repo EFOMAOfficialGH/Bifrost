@@ -22,6 +22,45 @@ import '../app_transfer/app_transfer_picker.dart';
 import '../app_transfer/app_transfer_service.dart';
 import 'transfer_queue_dialog.dart';
 
+class _WindowsFileDropTarget extends StatelessWidget {
+  const _WindowsFileDropTarget({
+    required this.child,
+    required this.onEnter,
+    required this.onLeave,
+    required this.onFilesDropped,
+  });
+
+  final Widget child;
+  final VoidCallback onEnter;
+  final VoidCallback onLeave;
+  final Future<void> Function(List<String>) onFilesDropped;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!Platform.isWindows) return child;
+    return DropTarget(
+      acceptedKinds: const {DropItemKind.file, DropItemKind.directory},
+      onEnter: (_) => onEnter(),
+      onLeave: onLeave,
+      onDrop: (details) async {
+        onLeave();
+        final paths = <String>[];
+        for (final item in details.items) {
+          if (item is DropFileItem) {
+            final path = item.localPath;
+            if (path != null && path.isNotEmpty) paths.add(path);
+          } else if (item is DropDirectoryItem) {
+            final path = item.localPath;
+            if (path != null && path.isNotEmpty) paths.add(path);
+          }
+        }
+        await onFilesDropped(paths);
+      },
+      child: child,
+    );
+  }
+}
+
 class NearbyPage extends StatefulWidget {
   const NearbyPage({
     this.autoDiscover = true,
@@ -334,17 +373,10 @@ class _NearbyPageState extends State<NearbyPage> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return DropTarget(
-      onDragEntered: (_) => setState(() => _dragging = true),
-      onDragExited: (_) => setState(() => _dragging = false),
-      onDragDone: (detail) {
-        setState(() => _dragging = false);
-        unawaited(
-          _queueDroppedPaths(
-            detail.files.map((file) => file.path).toList(growable: false),
-          ),
-        );
-      },
+    return _WindowsFileDropTarget(
+      onEnter: () => setState(() => _dragging = true),
+      onLeave: () => setState(() => _dragging = false),
+      onFilesDropped: _queueDroppedPaths,
       child: CustomScrollView(
         slivers: [
           SliverPadding(
@@ -753,7 +785,7 @@ class _NearbyPageState extends State<NearbyPage> {
                       final speed = current?.speedBytesPerSecond ?? 0;
                       final eta = current?.etaSeconds;
                       _transferStatus =
-                          'Sending $fileName: ${total == 0 ? 100 : (sent * 100 ~/ total)}%${speed > 0 ? ' • ${_formatSpeed(speed)}/s' : ''}${eta != null ? ' • ${_formatEta(eta)} left' : ''}';
+                          'Sending $fileName: ${total == 0 ? 100 : (sent * 100 ~/ total)}%${speed > 0 ? ' • ${_formatSpeed(speed)}/s' : ''}${eta != null ? ' • ${_formatEta(eta)} left' : ''} • ${_formatBytes(total)}';
                     });
                   TransferNotifications.instance.progress(
                     id: notificationId,

@@ -1137,9 +1137,9 @@
     },
     {
       "key": "notification.listening",
-      "en": "Listening for nearby file transfers • Tap to stop",
-      "ar": "يستمع التطبيق إلى عمليات نقل الملفات القريبة • انقر للإيقاف",
-      "context": "Persistent notification body"
+      "en": "Background receiving is on. Turn it off in Settings.",
+      "ar": "الاستلام في الخلفية مفعّل. يمكنك إيقافه من الإعدادات.",
+      "context": "Android background-receiving notification body"
     },
     {
       "key": "share.title",
@@ -1629,9 +1629,9 @@
     },
     {
       "key": "notification.tap_stop",
-      "en": "Listening for nearby file transfers • Tap to stop",
-      "ar": "يستمع التطبيق إلى عمليات نقل الملفات القريبة • انقر للإيقاف",
-      "context": "Android notification body"
+      "en": "Background receiving is on. Turn it off in Settings.",
+      "ar": "الاستلام في الخلفية مفعّل. يمكنك إيقافه من الإعدادات.",
+      "context": "Android background-receiving notification body"
     },
     {
       "key": "notification.progress_body",
