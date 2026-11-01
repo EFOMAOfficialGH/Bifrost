@@ -2211,26 +2211,26 @@
     },
     {
       "key": "app_transfer.filter_single",
-      "en": "Single APK",
-      "ar": "ملف APK واحد",
+      "en": "APK",
+      "ar": "APK فقط",
       "context": "App transfer picker or history"
     },
     {
       "key": "app_transfer.filter_split",
-      "en": "Split apps",
-      "ar": "التطبيقات ذات ملفات APK المجزأة",
+      "en": "APK & OBB",
+      "ar": "APK و OBB",
       "context": "App transfer picker or history"
     },
     {
       "key": "app_transfer.obb_toggle",
-      "en": "Include optional OBB data",
-      "ar": "تضمين بيانات OBB الاختيارية",
+      "en": "Include OBB",
+      "ar": "تضمين OBB",
       "context": "App transfer picker or history"
     },
     {
       "key": "app_transfer.obb_selected_only",
-      "en": "Only selected apps are scanned. APK size is shown without OBB data.",
-      "ar": "يُفحَص ما تحدده فقط. يُعرض حجم ملفات APK دون بيانات OBB.",
+      "en": "OBB files were found for one or more selected apps. Include them in the app packages?",
+      "ar": "عُثر على ملفات OBB لتطبيق واحد أو أكثر من التطبيقات المحددة. هل تريد تضمينها مع حزم التطبيقات؟",
       "context": "App transfer picker or history"
     },
     {
@@ -2328,6 +2328,72 @@
       "en": "{count} files added to the transfer queue.",
       "ar": "أُضيفت {count} ملفات إلى قائمة انتظار النقل.",
       "context": "Shared or dropped file queue confirmation"
+    },
+    {
+      "key": "app_transfer.obb_check_title",
+      "en": "Check for OBB data?",
+      "ar": "هل تريد التحقق من بيانات OBB؟",
+      "context": "App transfer OBB detection prompt"
+    },
+    {
+      "key": "app_transfer.obb_access_prompt",
+      "en": "Bifrost needs All files access to detect and include optional OBB files. You can continue with APK files only, or open Settings to grant access.",
+      "ar": "يحتاج بايفروست إلى إذن الوصول إلى جميع الملفات لاكتشاف ملفات OBB الاختيارية وتضمينها. يمكنك المتابعة بملفات APK فقط أو فتح الإعدادات لمنح الإذن.",
+      "context": "App transfer OBB permission prompt"
+    },
+    {
+      "key": "app_transfer.apk_only",
+      "en": "APK only",
+      "ar": "APK فقط",
+      "context": "App transfer OBB choice"
+    },
+    {
+      "key": "app_transfer.check_obb",
+      "en": "Check for OBB",
+      "ar": "تحقّق من OBB",
+      "context": "App transfer OBB choice"
+    },
+    {
+      "key": "app_transfer.obb_access_return",
+      "en": "Return from Settings and tap Send selected again to check for OBB files.",
+      "ar": "ارجع من الإعدادات واضغط «إرسال المحدد» مجددًا للتحقق من ملفات OBB.",
+      "context": "App transfer OBB permission fallback"
+    },
+    {
+      "key": "app_transfer.obb_found",
+      "en": "OBB data found",
+      "ar": "عُثر على بيانات OBB",
+      "context": "App transfer OBB confirmation title"
+    },
+    {
+      "key": "app_transfer.grid_columns",
+      "en": "Grid columns",
+      "ar": "أعمدة الشبكة",
+      "context": "App transfer grid layout setting"
+    },
+    {
+      "key": "app_transfer.grid_auto",
+      "en": "Auto columns (current)",
+      "ar": "أعمدة تلقائية (الحالي)",
+      "context": "App transfer grid layout setting"
+    },
+    {
+      "key": "app_transfer.grid_three",
+      "en": "3 columns",
+      "ar": "٣ أعمدة",
+      "context": "App transfer grid layout setting"
+    },
+    {
+      "key": "app_transfer.grid_four",
+      "en": "4 columns",
+      "ar": "٤ أعمدة",
+      "context": "App transfer grid layout setting"
+    },
+    {
+      "key": "app_transfer.obb_access_cancelled",
+      "en": "OBB check cancelled. You can continue with APK files only.",
+      "ar": "أُلغي التحقق من OBB. يمكنك المتابعة بملفات APK فقط.",
+      "context": "App transfer OBB permission fallback"
     }
   ]
 }

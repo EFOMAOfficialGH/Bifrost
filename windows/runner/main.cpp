@@ -1,5 +1,6 @@
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
+#include <ole2.h>
 #include <shellapi.h>
 #include <windows.h>
 
@@ -105,9 +106,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     CreateAndAttachConsole();
   }
 
-  // Initialize COM, so that it is available for use in the library and/or
-  // plugins.
-  ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+  // Initialize OLE for native Windows drag-and-drop and COM-based plugins.
+  ::OleInitialize(nullptr);
 
   flutter::DartProject project(L"data");
   std::vector<std::string> command_line_arguments = GetCommandLineArguments();
@@ -117,7 +117,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
   if (!window.Create(L"Bifrost", origin, size)) {
-    ::CoUninitialize();
+    ::OleUninitialize();
     ReleaseMutex(single_instance_mutex);
     CloseHandle(single_instance_mutex);
     return EXIT_FAILURE;
@@ -130,7 +130,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     ::DispatchMessage(&msg);
   }
 
-  ::CoUninitialize();
+  ::OleUninitialize();
   ReleaseMutex(single_instance_mutex);
   CloseHandle(single_instance_mutex);
   return EXIT_SUCCESS;

@@ -1,3 +1,10 @@
+## 0.14.3+41 — App picker and Windows drop fixes
+
+- Fix the app picker returning to an empty screen after preparing selected apps by closing its route exactly once.
+- Add selectable grid layouts: current automatic sizing, 3 columns, or 4 columns.
+- Detect OBB files automatically, prompt whether to include them, and categorize apps as All, APK, or APK & OBB without exposing APK split details.
+- Replace Windows `WM_DROPFILES`-only handling with an OLE drop target for Explorer file and folder drags; newly dropped files can queue while another transfer is running.
+
 ## 0.14.2+40 — Windows updater and notification fixes
 
 - Close tray-resident Bifrost processes before the Windows installer replaces app files, then restart Bifrost if it was already running.

@@ -119,6 +119,9 @@ class AppTransferPlugin(
                         if (index == 0) "base.apk" else File(path).name
                     }
                     val apkSize = apkPaths.sumOf { File(it).length() }
+                    val obbRoot = File(Environment.getExternalStorageDirectory(), "Android/obb/${app.packageName}")
+                    val hasObb = (Build.VERSION.SDK_INT < 30 || Environment.isExternalStorageManager()) &&
+                        obbRoot.isDirectory && obbRoot.walkTopDown().any { it.isFile && it.extension.equals("obb", ignoreCase = true) }
                     mapOf(
                         "name" to pm.getApplicationLabel(app).toString(),
                         "packageName" to app.packageName,
@@ -128,6 +131,7 @@ class AppTransferPlugin(
                         "apkSizeBytes" to apkSize,
                         "apkPaths" to apkPaths,
                         "apkNames" to apkNames,
+                        "hasObb" to hasObb,
                         "iconPng" to iconBytes(app),
                     )
                 } catch (_: Exception) {

@@ -92,6 +92,31 @@ void main() {
         AppLocalizations.translateFor('ar', 'Switch to grid view'),
         'التبديل إلى العرض الشبكي',
       );
+      expect(AppLocalizations.translateFor('ar', 'APK'), 'APK فقط');
+      expect(AppLocalizations.translateFor('ar', 'APK & OBB'), 'APK و OBB');
+      expect(
+        AppLocalizations.translateFor(
+          'ar',
+          'OBB files were found for one or more selected apps. Include them in the app packages?',
+        ),
+        'عُثر على ملفات OBB لتطبيق واحد أو أكثر من التطبيقات المحددة. هل تريد تضمينها مع حزم التطبيقات؟',
+      );
+      expect(AppLocalizations.translateFor('ar', '4 columns'), '٤ أعمدة');
+      expect(
+        AppLocalizations.translateFor('ar', 'Check for OBB data?'),
+        'هل تريد التحقق من بيانات OBB؟',
+      );
+      expect(
+        AppLocalizations.translateFor('ar', 'Check for OBB'),
+        'تحقّق من OBB',
+      );
+      expect(
+        AppLocalizations.translateFor(
+          'ar',
+          'Return from Settings and tap Send selected again to check for OBB files.',
+        ),
+        'ارجع من الإعدادات واضغط «إرسال المحدد» مجددًا للتحقق من ملفات OBB.',
+      );
       expect(
         AppLocalizations.translateFor('ar', '2 APK splits'),
         '2 من ملفات APK المجزأة',

@@ -2,9 +2,9 @@
 
 Bifrost is a private, local-network file-sharing app for **Android and Windows**. It transfers files directly between nearby devices without accounts, cloud storage, ads, telemetry, or an internet connection for core transfers.
 
-> **Current version: v0.14.2+40**
+> **Current version: v0.14.3+41**
 >
-> Version 0.14.2 fixes Windows tray-aware updates, single-instance shortcut activation, native file/folder dropping, transfer notifications, and progress details.
+> Version 0.14.3 fixes the app picker flow, adds adjustable grid layouts and automatic OBB prompts, and replaces Windows file-drop handling with native OLE drag-and-drop.
 
 ## Highlights
 
@@ -16,13 +16,14 @@ Bifrost is a private, local-network file-sharing app for **Android and Windows**
 - Manual **Connect by IP address** fallback
 - Hotspot discovery improvements using interface-specific broadcasts
 - Multi-file transfer queues
-- Native Windows file and folder drag-and-drop into the transfer queue
+- Native Windows file and folder drag-and-drop into the transfer queue (OLE drop target)
 - Folder drag-and-drop expansion and streamed large-file transfers
 - Compact, reorderable transfer queue
 - Windows minimize-to-tray with Send files, Check for updates, and Exit actions
 - Windows launch-at-sign-in, minimized to tray by default and configurable in Settings
+- Adjustable app-picker grid (automatic, 3-column, or 4-column) and list views
 - Android Share target integration
-- Personal-use Android app export/import as XAPK, including base/split APKs and optional OBB files
+- Personal-use Android app export/import, with All/APK/APK & OBB filters and optional OBB confirmation
 - Accept or decline incoming transfers
 - Trusted devices with persistent device identities
 - Favorite nearby devices, stored independently from transfer trust
@@ -193,21 +194,21 @@ They build and publish releases automatically.
 The workflows read the version from `pubspec.yaml`:
 
 ```yaml
-version: 0.14.2+40
+version: 0.14.3+41
 ```
 
 When the versioned source is pushed to `main`, the workflows automatically create or update:
 
 ```text
-Bifrost v0.14.2+40
+Bifrost v0.14.3+41
 ```
 
 The release receives assets similar to:
 
 ```text
-Bifrost-Android-0.14.2+40.apk
-Bifrost-Windows-0.14.2+40.exe
-Bifrost-Windows-0.14.2+40-portable.zip
+Bifrost-Android-0.14.3+41.apk
+Bifrost-Windows-0.14.3+41.exe
+Bifrost-Windows-0.14.3+41-portable.zip
 ```
 
 The Windows workflow builds and uploads its packages first. The Android workflow then downloads those matching packages, embeds the Windows installer into the APK, and publishes the Android APK, Windows installer, and Windows portable ZIP together with the release notes.

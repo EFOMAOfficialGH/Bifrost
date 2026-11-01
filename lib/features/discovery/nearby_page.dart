@@ -96,7 +96,7 @@ class _NearbyPageState extends State<NearbyPage> {
   Future<void> _chooseInstalledApp() async {
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
-        builder: (pickerContext) => AppTransferPicker(
+        builder: (_) => AppTransferPicker(
           onAppsReady: (artifacts) async {
             final queued = _queueDropped(
               artifacts.map((artifact) => artifact.file).toList(),
@@ -118,7 +118,7 @@ class _NearbyPageState extends State<NearbyPage> {
               throw StateError(
                 'The selected apps could not be added to the transfer queue.',
               );
-            if (mounted && pickerContext.mounted) {
+            if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
@@ -128,7 +128,6 @@ class _NearbyPageState extends State<NearbyPage> {
                   ),
                 ),
               );
-              Navigator.of(pickerContext).pop();
             }
           },
         ),
@@ -221,7 +220,7 @@ class _NearbyPageState extends State<NearbyPage> {
   }
 
   Future<void> _queueDroppedPaths(List<String> paths) async {
-    if (_sending || paths.isEmpty) return;
+    if (paths.isEmpty) return;
     final files = <File>[];
     var skipped = 0;
     for (final path in paths) {
@@ -268,7 +267,7 @@ class _NearbyPageState extends State<NearbyPage> {
   }
 
   List<File> _queueDropped(List<File> files) {
-    if (files.isEmpty || _sending) return const [];
+    if (files.isEmpty) return const [];
     final paths = _queuedFiles.map((file) => file.path).toSet();
     final valid = <File>[];
     for (final file in files) {

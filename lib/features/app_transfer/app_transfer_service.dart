@@ -13,6 +13,7 @@ class TransferableApp {
     required this.apkSizeBytes,
     required this.apkPaths,
     required this.apkNames,
+    this.hasObb = false,
     this.iconPng,
   });
 
@@ -24,6 +25,7 @@ class TransferableApp {
   final int apkSizeBytes;
   final List<String> apkPaths;
   final List<String> apkNames;
+  final bool hasObb;
   final Uint8List? iconPng;
 
   factory TransferableApp.fromMap(Map<dynamic, dynamic> map) {
@@ -48,6 +50,7 @@ class TransferableApp {
                 )
                 .toList(growable: false)
           : names,
+      hasObb: map['hasObb'] as bool? ?? false,
       iconPng: map['iconPng'] is Uint8List ? map['iconPng'] as Uint8List : null,
     );
   }
