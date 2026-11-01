@@ -42,6 +42,7 @@ class FlutterWindow : public Win32Window {
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> tray_channel_;
   std::vector<std::string> pending_dropped_files_;
   bool dart_ready_for_drops_ = false;
+  bool drop_delivery_in_flight_ = false;
   FileDropTarget* file_drop_target_ = nullptr;
   bool drop_target_registered_on_window_ = false;
   bool drop_target_registered_on_view_ = false;

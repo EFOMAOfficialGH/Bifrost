@@ -528,7 +528,8 @@ class _BifrostShellState extends State<BifrostShell> {
   }
 
   Future<dynamic> _handleTrayMethodCall(MethodCall call) async {
-    if (!mounted) return null;
+    if (!mounted)
+      throw StateError('Bifrost is not ready to accept dropped files.');
     switch (call.method) {
       case 'sendFiles':
         setState(() {
@@ -542,7 +543,7 @@ class _BifrostShellState extends State<BifrostShell> {
             .toList(growable: false);
         setState(() => _selectedIndex = 0);
         SharedFileBridge.instance.addFiles(paths);
-        break;
+        return true;
       case 'checkForUpdates':
         setState(() {
           _selectedIndex = 2;
@@ -550,7 +551,7 @@ class _BifrostShellState extends State<BifrostShell> {
         });
         break;
     }
-    return null;
+    return true;
   }
 
   Future<void> _showWindowsUpdateBalloon() async {
@@ -1230,7 +1231,10 @@ class _HistoryPageState extends State<HistoryPage> {
     final path = record.path;
     final exists = path != null && File(path).existsSync();
     final isApk = path != null && path.toLowerCase().endsWith('.apk');
-    final isXapk = path != null && path.toLowerCase().endsWith('.xapk');
+    final isAppArchive =
+        path != null &&
+        (path.toLowerCase().endsWith('.xapk') ||
+            path.toLowerCase().endsWith('.apks'));
     final action = await showModalBottomSheet<String>(
       context: context,
       builder: (sheetContext) => SafeArea(
@@ -1242,17 +1246,18 @@ class _HistoryPageState extends State<HistoryPage> {
               title: const Text('Transfer details'),
               onTap: () => Navigator.pop(sheetContext, 'details'),
             ),
-            if (exists && Platform.isAndroid && isXapk)
+            if (exists && Platform.isAndroid && isAppArchive)
               ListTile(
                 leading: const Icon(Icons.install_mobile),
                 title: const Text('Install app package'),
-                onTap: () => Navigator.pop(sheetContext, 'installXapk'),
+                onTap: () => Navigator.pop(sheetContext, 'installAppArchive'),
               ),
             if (exists)
               ListTile(
                 leading: Icon(isApk ? Icons.install_mobile : Icons.open_in_new),
                 title: Text(isApk ? 'Install APK' : 'Open'),
-                onTap: () => Navigator.pop(sheetContext, 'open'),
+                onTap: () =>
+                    Navigator.pop(sheetContext, isApk ? 'installApk' : 'open'),
               ),
             if (exists && Platform.isWindows)
               ListTile(
@@ -1324,9 +1329,21 @@ class _HistoryPageState extends State<HistoryPage> {
           false;
       if (confirmed)
         await _retryRecord(record, fresh: record.status == 'Completed');
-    } else if (action == 'installXapk') {
+    } else if (action == 'installAppArchive') {
       try {
-        await AppTransferService().installXapk(File(path!));
+        await AppTransferService().installAppArchive(File(path!));
+        if (mounted)
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('App installation completed.')),
+          );
+      } catch (error) {
+        if (mounted)
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+    } else if (action == 'installApk') {
+      try {
+        await AppTransferService().installApk(File(path!));
         if (mounted)
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('App installation completed.')),
@@ -1512,7 +1529,7 @@ class _HistoryPageState extends State<HistoryPage> {
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                '${_formatSpeed(record.speedBytesPerSecond)}/s${record.etaSeconds == null ? '' : ' • ${_formatEta(record.etaSeconds!)} left'}',
+                '${_formatSpeed(record.speedBytesPerSecond)}/s${record.etaSeconds == null ? '' : ' • ${_formatEta(record.etaSeconds!)} left'} • ${_historyBytes(record.bytes)}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),

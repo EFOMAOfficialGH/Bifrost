@@ -1,5 +1,6 @@
 #include "flutter_window.h"
 
+#include <algorithm>
 #include <optional>
 #include <atomic>
 #include <functional>
@@ -15,6 +16,26 @@
 #include "utils.h"
 
 namespace {
+class DropDeliveryResult final
+    : public flutter::MethodResult<flutter::EncodableValue> {
+ public:
+  explicit DropDeliveryResult(std::function<void(bool)> on_complete)
+      : on_complete_(std::move(on_complete)) {}
+
+ protected:
+  void SuccessInternal(const flutter::EncodableValue*) override {
+    on_complete_(true);
+  }
+  void ErrorInternal(const std::string&, const std::string&,
+                     const flutter::EncodableValue*) override {
+    on_complete_(false);
+  }
+  void NotImplementedInternal() override { on_complete_(false); }
+
+ private:
+  std::function<void(bool)> on_complete_;
+};
+
 bool ShouldStartMinimizedToTray() {
   int argument_count = 0;
   LPWSTR* arguments = CommandLineToArgvW(GetCommandLineW(), &argument_count);
@@ -245,18 +266,29 @@ void FlutterWindow::QueueDroppedFiles(std::vector<std::string> paths) {
 
 void FlutterWindow::FlushPendingDroppedFiles() {
   if (!dart_ready_for_drops_ || !tray_channel_ ||
-      pending_dropped_files_.empty()) {
+      pending_dropped_files_.empty() || drop_delivery_in_flight_) {
     return;
   }
   flutter::EncodableList paths;
   paths.reserve(pending_dropped_files_.size());
-  for (auto& path : pending_dropped_files_) {
-    paths.emplace_back(std::move(path));
+  for (const auto& path : pending_dropped_files_) {
+    paths.emplace_back(path);
   }
-  pending_dropped_files_.clear();
+  const size_t delivered_count = pending_dropped_files_.size();
+  drop_delivery_in_flight_ = true;
   tray_channel_->InvokeMethod(
       "droppedFiles",
-      std::make_unique<flutter::EncodableValue>(std::move(paths)));
+      std::make_unique<flutter::EncodableValue>(std::move(paths)),
+      std::make_unique<DropDeliveryResult>([this, delivered_count](bool accepted) {
+        drop_delivery_in_flight_ = false;
+        if (accepted) {
+          const size_t acknowledged =
+              std::min(delivered_count, pending_dropped_files_.size());
+          pending_dropped_files_.erase(pending_dropped_files_.begin(),
+                                       pending_dropped_files_.begin() + acknowledged);
+        }
+        if (accepted) FlushPendingDroppedFiles();
+      }));
 }
 
 LRESULT

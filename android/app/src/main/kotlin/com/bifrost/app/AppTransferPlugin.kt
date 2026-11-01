@@ -85,7 +85,8 @@ class AppTransferPlugin(
                     mainHandler.post { result.success(null) }
                 }
             }
-            "installXapk" -> installXapk(call, result)
+            "installApk" -> installApk(call, result)
+            "installAppArchive" -> installXapk(call, result)
             else -> result.notImplemented()
         }
     }
@@ -212,7 +213,8 @@ class AppTransferPlugin(
                 val totalBytes = (apkFiles + obbFiles).sumOf { it.length() }.coerceAtLeast(1L)
                 val outputDirectory = activity.getExternalFilesDir("BifrostExports") ?: File(activity.cacheDir, "BifrostExports")
                 if (!outputDirectory.exists() && !outputDirectory.mkdirs()) throw IOException("Cannot create the app export folder")
-                output = File(outputDirectory, "$safeName-${System.currentTimeMillis()}.xapk")
+                val archiveExtension = if (obbFiles.isNotEmpty()) "xapk" else "apks"
+                output = File(outputDirectory, "$safeName-${System.currentTimeMillis()}.$archiveExtension")
                 var copied = 0L
                 var lastProgressAt = 0L
                 ZipOutputStream(BufferedOutputStream(FileOutputStream(output))).use { zip ->
@@ -250,7 +252,7 @@ class AppTransferPlugin(
                 reportProgress(1.0)
                 val artifact = mapOf(
                     "path" to output.absolutePath,
-                    "remoteName" to "$safeName.xapk",
+                    "remoteName" to "$safeName.${if (obbFiles.isNotEmpty()) "xapk" else "apks"}",
                     "temporary" to true,
                     "isArchive" to true,
                 )
@@ -272,7 +274,8 @@ class AppTransferPlugin(
         val isOwnedExport = exportDirectories().any { root ->
             target.path.startsWith(root.path + File.separator)
         }
-        if (!isOwnedExport || !target.isFile || !target.name.endsWith(".xapk", ignoreCase = true)) return false
+        val isAppArchive = target.name.endsWith(".xapk", ignoreCase = true) || target.name.endsWith(".apks", ignoreCase = true)
+        if (!isOwnedExport || !target.isFile || !isAppArchive) return false
         return target.delete()
     }
 
@@ -282,7 +285,7 @@ class AppTransferPlugin(
         }.toSet()
         for (root in exportDirectories()) {
             root.listFiles()?.filter { file ->
-                file.isFile && file.name.endsWith(".xapk", ignoreCase = true) && file.canonicalPath !in retained
+                file.isFile && (file.name.endsWith(".xapk", ignoreCase = true) || file.name.endsWith(".apks", ignoreCase = true)) && file.canonicalPath !in retained
             }?.forEach { it.delete() }
         }
     }
@@ -314,6 +317,84 @@ class AppTransferPlugin(
 
     private fun reportProgress(progress: Double) {
         mainHandler.post { channel.invokeMethod("packagingProgress", progress) }
+    }
+
+    private fun installApk(call: MethodCall, result: MethodChannel.Result) {
+        synchronized(this) {
+            if (installQueued || pendingInstall != null) {
+                result.error("INSTALL_BUSY", "Another app installation is still in progress.", null)
+                return
+            }
+            installQueued = true
+        }
+        if (Build.VERSION.SDK_INT >= 26 && !activity.packageManager.canRequestPackageInstalls()) {
+            synchronized(this) { installQueued = false }
+            result.error("UNKNOWN_SOURCES_NOT_ALLOWED", "Enable Install unknown apps for Bifrost, then retry.", null)
+            return
+        }
+        val apk = File(call.argument<String>("path") ?: "")
+        if (!apk.isFile || apk.length() <= 0) {
+            synchronized(this) { installQueued = false }
+            result.error("INVALID_APK", "The received APK could not be found or is empty.", null)
+            return
+        }
+        worker.execute {
+            var sessionId: Int? = null
+            try {
+                val packageInfo = if (Build.VERSION.SDK_INT >= 33) {
+                    activity.packageManager.getPackageArchiveInfo(
+                        apk.path,
+                        android.content.pm.PackageManager.PackageInfoFlags.of(0),
+                    )
+                } else {
+                    @Suppress("DEPRECATION")
+                    activity.packageManager.getPackageArchiveInfo(apk.path, 0)
+                } ?: throw IOException("Android could not read this APK package")
+                if (!packageInfo.splitNames.isNullOrEmpty()) {
+                    throw IOException("This APK is a split package; use the complete .apks app package instead")
+                }
+                val packageName = packageInfo.packageName
+                if (!packageName.matches(Regex("^[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+$"))) {
+                    throw IOException("The APK contains an invalid package name")
+                }
+                val installer = activity.packageManager.packageInstaller
+                val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
+                params.setAppPackageName(packageName)
+                sessionId = installer.createSession(params)
+                installer.openSession(sessionId!!).use { session ->
+                    session.openWrite("base.apk", 0, apk.length()).use { output ->
+                        FileInputStream(apk).use { input -> input.copyTo(output, COPY_BUFFER_SIZE) }
+                        session.fsync(output)
+                    }
+                    synchronized(this) {
+                        pendingInstall = result
+                        pendingXapk = null
+                        pendingStaging = null
+                        pendingObbEntries = emptyList()
+                        pendingPackageName = packageName
+                    }
+                    val intent = Intent(activity, PackageInstallResultReceiver::class.java).setAction(INSTALL_RESULT)
+                    val mutabilityFlag = if (Build.VERSION.SDK_INT >= 31) PendingIntent.FLAG_MUTABLE else 0
+                    val pending = PendingIntent.getBroadcast(
+                        activity,
+                        sessionId!!,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or mutabilityFlag,
+                    )
+                    session.commit(pending.intentSender)
+                }
+            } catch (error: Exception) {
+                sessionId?.let { try { activity.packageManager.packageInstaller.abandonSession(it) } catch (_: Exception) {} }
+                mainHandler.post {
+                    synchronized(this) {
+                        if (pendingInstall === result) clearPendingInstall()
+                        else installQueued = false
+                    }
+                    val detail = error.localizedMessage ?: "Could not start the installation."
+                    result.error("APK_INSTALL_FAILED", installErrorMessage(detail), detail)
+                }
+            }
+        }
     }
 
     private fun installXapk(call: MethodCall, result: MethodChannel.Result) {
@@ -399,6 +480,7 @@ class AppTransferPlugin(
 
                     val installer = activity.packageManager.packageInstaller
                     val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
+                    params.setAppPackageName(packageName)
                     sessionId = installer.createSession(params)
                     installer.openSession(sessionId!!).use { session ->
                         for ((file, sessionName) in stagedApks) {

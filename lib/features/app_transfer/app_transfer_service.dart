@@ -214,13 +214,12 @@ class AppTransferService {
     });
   }
 
-  /// Install all APK splits in one PackageInstaller session. OBB files are
-  /// copied only after the APK install succeeds; platform errors remain visible.
-  Future<void> installXapk(File xapk) async {
+  /// Install a standalone APK in a PackageInstaller session.
+  Future<void> installApk(File apk) async {
     _requireAndroid();
-    if (!await xapk.exists()) {
+    if (!await apk.exists()) {
       throw const AppTransferException(
-        'The received XAPK file could not be found.',
+        'The received APK file could not be found.',
       );
     }
     if (!await canInstallUnknownApps()) {
@@ -231,7 +230,35 @@ class AppTransferService {
       );
     }
     try {
-      await _channel.invokeMethod<void>('installXapk', {'path': xapk.path});
+      await _channel.invokeMethod<void>('installApk', {'path': apk.path});
+    } on PlatformException catch (error) {
+      throw AppTransferException(
+        error.message ?? 'Android could not install this APK.',
+        code: error.code,
+      );
+    }
+  }
+
+  /// Install a Bifrost app archive containing all APK splits; any OBB files
+  /// are copied only after the APK install succeeds.
+  Future<void> installAppArchive(File archive) async {
+    _requireAndroid();
+    if (!await archive.exists()) {
+      throw const AppTransferException(
+        'The received app package could not be found.',
+      );
+    }
+    if (!await canInstallUnknownApps()) {
+      await requestInstallUnknownApps();
+      throw const AppTransferException(
+        'Enable “Install unknown apps” for Bifrost in Settings, then retry installation.',
+        code: 'UNKNOWN_SOURCES_NOT_ALLOWED',
+      );
+    }
+    try {
+      await _channel.invokeMethod<void>('installAppArchive', {
+        'path': archive.path,
+      });
     } on PlatformException catch (error) {
       throw AppTransferException(
         error.message ?? 'Android could not install this app.',
