@@ -35,15 +35,15 @@ Name: "startmenushortcut"; Description: "Create a Start-menu shortcut"; GroupDes
 Source: "..\build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
 
 [Icons]
-Name: "{autoprograms}\Bifrost"; Filename: "{app}\{#MyAppExeName}"; Tasks: startmenushortcut
-Name: "{autodesktop}\Bifrost"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{userprograms}\Bifrost"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: startmenushortcut
+Name: "{autodesktop}\Bifrost"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Registry]
 Root: HKCR; Subkey: "*\shell\Send with Bifrost"; ValueType: string; ValueName: ""; ValueData: "Send with Bifrost"; Flags: uninsdeletekey
 Root: HKCR; Subkey: "*\shell\Send with Bifrost\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "Run Bifrost"; Flags: postinstall nowait skipifsilent; Check: ShouldShowRunBifrost
+Filename: "{app}\{#MyAppExeName}"; Description: "Run Bifrost"; Flags: postinstall nowait skipifsilent runasoriginaluser; Check: ShouldShowRunBifrost
 
 [Code]
 var
@@ -83,7 +83,7 @@ var
 begin
   if (CurStep = ssPostInstall) and WasBifrostRunning then
   begin
-    Exec(ExpandConstant('{app}\{#MyAppExeName}'), '', ExpandConstant('{app}'), SW_SHOWNORMAL, ewNoWait, ResultCode);
+    ExecAsOriginalUser(ExpandConstant('{app}\{#MyAppExeName}'), '', ExpandConstant('{app}'), SW_SHOWNORMAL, ewNoWait, ResultCode);
   end;
 end;
 

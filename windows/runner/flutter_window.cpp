@@ -2,12 +2,10 @@
 
 #include <algorithm>
 #include <optional>
-#include <atomic>
 #include <functional>
 #include <iterator>
-#include <objidl.h>
+#include <commctrl.h>
 #include <shellapi.h>
-#include <shlobj.h>
 #include <string>
 #include <utility>
 #include <vector>
@@ -53,94 +51,16 @@ bool ShouldStartMinimizedToTray() {
 
 }  // namespace
 
-class FileDropTarget final : public IDropTarget {
- public:
-  explicit FileDropTarget(std::function<void(std::vector<std::string>)> on_drop)
-      : on_drop_(std::move(on_drop)) {}
-
-  HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** object) override {
-    if (!object) return E_POINTER;
-    if (iid == IID_IUnknown || iid == IID_IDropTarget) {
-      *object = static_cast<IDropTarget*>(this);
-      AddRef();
-      return S_OK;
-    }
-    *object = nullptr;
-    return E_NOINTERFACE;
+LRESULT CALLBACK ForwardChildFileDrop(HWND window, UINT message,
+                                      WPARAM wparam, LPARAM lparam,
+                                      UINT_PTR subclass_id,
+                                      DWORD_PTR reference_data) {
+  if (message == WM_DROPFILES) {
+    const HWND owner = reinterpret_cast<HWND>(reference_data);
+    if (owner && PostMessageW(owner, WM_DROPFILES, wparam, 0)) return 0;
   }
-
-  ULONG STDMETHODCALLTYPE AddRef() override { return ++references_; }
-
-  ULONG STDMETHODCALLTYPE Release() override {
-    const ULONG remaining = --references_;
-    if (remaining == 0) delete this;
-    return remaining;
-  }
-
-  HRESULT STDMETHODCALLTYPE DragEnter(IDataObject* data, DWORD, POINTL,
-                                       DWORD* effect) override {
-    if (!effect) return E_POINTER;
-    *effect = SupportsFiles(data) ? DROPEFFECT_COPY : DROPEFFECT_NONE;
-    return S_OK;
-  }
-
-  HRESULT STDMETHODCALLTYPE DragOver(DWORD, POINTL, DWORD* effect) override {
-    if (!effect) return E_POINTER;
-    *effect = DROPEFFECT_COPY;
-    return S_OK;
-  }
-
-  HRESULT STDMETHODCALLTYPE DragLeave() override { return S_OK; }
-
-  HRESULT STDMETHODCALLTYPE Drop(IDataObject* data, DWORD, POINTL,
-                                  DWORD* effect) override {
-    if (!effect) return E_POINTER;
-    *effect = DROPEFFECT_NONE;
-    if (!data) return E_INVALIDARG;
-
-    FORMATETC format{};
-    format.cfFormat = CF_HDROP;
-    format.dwAspect = DVASPECT_CONTENT;
-    format.lindex = -1;
-    format.tymed = TYMED_HGLOBAL;
-    STGMEDIUM medium{};
-    const HRESULT result = data->GetData(&format, &medium);
-    if (FAILED(result)) return result;
-
-    const HDROP drop = static_cast<HDROP>(medium.hGlobal);
-    const UINT count = DragQueryFileW(drop, 0xFFFFFFFF, nullptr, 0);
-    std::vector<std::string> paths;
-    paths.reserve(count);
-    for (UINT index = 0; index < count; ++index) {
-      const UINT length = DragQueryFileW(drop, index, nullptr, 0);
-      std::wstring path(length + 1, L'\0');
-      const UINT copied = DragQueryFileW(drop, index, path.data(), length + 1);
-      path.resize(copied);
-      auto utf8_path = Utf8FromUtf16(path.c_str());
-      if (!utf8_path.empty()) paths.push_back(std::move(utf8_path));
-    }
-    ReleaseStgMedium(&medium);
-    if (!paths.empty()) {
-      on_drop_(std::move(paths));
-      *effect = DROPEFFECT_COPY;
-    }
-    return S_OK;
-  }
-
- private:
-  static bool SupportsFiles(IDataObject* data) {
-    if (!data) return false;
-    FORMATETC format{};
-    format.cfFormat = CF_HDROP;
-    format.dwAspect = DVASPECT_CONTENT;
-    format.lindex = -1;
-    format.tymed = TYMED_HGLOBAL;
-    return SUCCEEDED(data->QueryGetData(&format));
-  }
-
-  std::atomic<ULONG> references_{1};
-  std::function<void(std::vector<std::string>)> on_drop_;
-};
+  return DefSubclassProc(window, message, wparam, lparam);
+}
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -165,17 +85,12 @@ bool FlutterWindow::OnCreate() {
   RegisterPlugins(flutter_controller_->engine());
   HWND flutter_view = flutter_controller_->view()->GetNativeWindow();
   SetChildContent(flutter_view);
-  file_drop_target_ = new FileDropTarget(
-      [this](std::vector<std::string> paths) {
-        QueueDroppedFiles(std::move(paths));
-      });
-  drop_target_registered_on_window_ =
-      SUCCEEDED(RegisterDragDrop(GetHandle(), file_drop_target_));
-  drop_target_registered_on_view_ =
-      SUCCEEDED(RegisterDragDrop(flutter_view, file_drop_target_));
   DragAcceptFiles(GetHandle(), TRUE);
   DragAcceptFiles(flutter_view, TRUE);
-  ChangeWindowMessageFilterEx(flutter_view, WM_DROPFILES, MSGFLT_ALLOW, nullptr);
+  if (!SetWindowSubclass(flutter_view, ForwardChildFileDrop, 0,
+                         reinterpret_cast<DWORD_PTR>(GetHandle()))) {
+    DragAcceptFiles(flutter_view, FALSE);
+  }
   tray_channel_ = std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
       flutter_controller_->engine()->messenger(), "bifrost/tray",
       &flutter::StandardMethodCodec::GetInstance());
@@ -226,18 +141,9 @@ void FlutterWindow::OnDestroy() {
   if (flutter_controller_ && flutter_controller_->view()) {
     HWND flutter_view = flutter_controller_->view()->GetNativeWindow();
     if (flutter_view) {
-      if (drop_target_registered_on_view_) RevokeDragDrop(flutter_view);
+      RemoveWindowSubclass(flutter_view, ForwardChildFileDrop, 0);
       DragAcceptFiles(flutter_view, FALSE);
     }
-  }
-  if (drop_target_registered_on_window_ && GetHandle()) {
-    RevokeDragDrop(GetHandle());
-  }
-  drop_target_registered_on_view_ = false;
-  drop_target_registered_on_window_ = false;
-  if (file_drop_target_) {
-    file_drop_target_->Release();
-    file_drop_target_ = nullptr;
   }
   DragAcceptFiles(GetHandle(), FALSE);
   tray_channel_.reset();

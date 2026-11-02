@@ -35,7 +35,7 @@ final customThemeColorProvider = StateProvider<Color>(
   (ref) => const Color(0xFF3154B8),
 );
 final textColorProvider = StateProvider<Color?>((ref) => null);
-const bifrostVersion = '0.14.4+42';
+const bifrostVersion = '0.14.5+43';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();

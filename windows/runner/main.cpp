@@ -106,7 +106,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     CreateAndAttachConsole();
   }
 
-  // Initialize OLE for native Windows drag-and-drop and COM-based plugins.
+  // Initialize COM/OLE for Windows plugins that require an STA apartment.
   ::OleInitialize(nullptr);
 
   flutter::DartProject project(L"data");
