@@ -35,7 +35,7 @@ final customThemeColorProvider = StateProvider<Color>(
   (ref) => const Color(0xFF3154B8),
 );
 final textColorProvider = StateProvider<Color?>((ref) => null);
-const bifrostVersion = '0.14.5+43';
+const bifrostVersion = '0.14.6+44';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -1252,12 +1252,17 @@ class _HistoryPageState extends State<HistoryPage> {
                 title: const Text('Install app package'),
                 onTap: () => Navigator.pop(sheetContext, 'installAppArchive'),
               ),
-            if (exists)
+            if (exists && Platform.isAndroid && isApk)
               ListTile(
-                leading: Icon(isApk ? Icons.install_mobile : Icons.open_in_new),
-                title: Text(isApk ? 'Install APK' : 'Open'),
-                onTap: () =>
-                    Navigator.pop(sheetContext, isApk ? 'installApk' : 'open'),
+                leading: const Icon(Icons.install_mobile),
+                title: const Text('Install APK'),
+                onTap: () => Navigator.pop(sheetContext, 'installApk'),
+              ),
+            if (exists && !(Platform.isAndroid && isApk))
+              ListTile(
+                leading: const Icon(Icons.open_in_new),
+                title: const Text('Open'),
+                onTap: () => Navigator.pop(sheetContext, 'open'),
               ),
             if (exists && Platform.isWindows)
               ListTile(
@@ -2029,21 +2034,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               : _checkForUpdates,
         ),
         const Divider(height: 32),
-        ListTile(
-          leading: const Icon(Icons.share_outlined),
-          title: const Text('Share Bifrost'),
-          subtitle: Text(
-            Platform.isAndroid
-                ? 'Share the Android APK or Windows installer'
-                : 'Package sharing is available on Android',
+        if (Platform.isAndroid)
+          ListTile(
+            leading: const Icon(Icons.share_outlined),
+            title: const Text('Share Bifrost'),
+            subtitle: const Text('Share the Android APK or Windows installer'),
+            trailing: Icon(
+              Directionality.of(context) == TextDirection.rtl
+                  ? Icons.chevron_left
+                  : Icons.chevron_right,
+            ),
+            onTap: _shareBifrost,
           ),
-          trailing: Icon(
-            Directionality.of(context) == TextDirection.rtl
-                ? Icons.chevron_left
-                : Icons.chevron_right,
-          ),
-          onTap: Platform.isAndroid ? _shareBifrost : null,
-        ),
         ListTile(
           leading: const Icon(Icons.info_outline),
           title: const Text('About Bifrost'),

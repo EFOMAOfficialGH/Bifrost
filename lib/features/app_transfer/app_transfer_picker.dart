@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart' hide Text;
@@ -19,10 +18,7 @@ class AppTransferPicker extends StatefulWidget {
   State<AppTransferPicker> createState() => _AppTransferPickerState();
 }
 
-enum _AppFilter { all, apk, apkAndObb }
-
-class _AppTransferPickerState extends State<AppTransferPicker>
-    with WidgetsBindingObserver {
+class _AppTransferPickerState extends State<AppTransferPicker> {
   late final AppTransferService _service =
       widget.service ?? AppTransferService();
   List<TransferableApp> _apps = const [];
@@ -33,33 +29,14 @@ class _AppTransferPickerState extends State<AppTransferPicker>
   bool _preparing = false;
   String? _error;
   String _query = '';
-  _AppFilter _filter = _AppFilter.all;
   int _preparingIndex = 0;
   int _preparingTotal = 0;
   String? _preparingName;
   double _progress = 0;
-  Completer<void>? _settingsReturn;
-
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     _load();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed &&
-        _settingsReturn != null &&
-        !_settingsReturn!.isCompleted) {
-      _settingsReturn!.complete();
-    }
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
   }
 
   Future<void> _load() async {
@@ -94,12 +71,7 @@ class _AppTransferPickerState extends State<AppTransferPicker>
               '${app.name} ${app.packageName} ${app.versionName}'
                   .toLowerCase()
                   .contains(query);
-          final matchesFilter = switch (_filter) {
-            _AppFilter.all => true,
-            _AppFilter.apk => !app.hasObb,
-            _AppFilter.apkAndObb => app.hasObb,
-          };
-          return matchesQuery && matchesFilter;
+          return matchesQuery;
         })
         .toList(growable: false);
   }
@@ -123,105 +95,10 @@ class _AppTransferPickerState extends State<AppTransferPicker>
   }
 
   Future<void> _sendSelected() async {
-    var chosen = _apps
+    final chosen = _apps
         .where((app) => _selected.contains(app.packageName))
         .toList(growable: false);
     if (chosen.isEmpty || _preparing) return;
-
-    var includeObb = false;
-    final hasStorageAccess = await _service.hasAllFilesAccess();
-    if (!hasStorageAccess) {
-      if (!mounted) return;
-      final checkObb = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: const Text('Check for OBB data?'),
-          content: const Text(
-            'Bifrost needs All files access to detect and include optional OBB files. You can continue with APK files only, or open Settings to grant access.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('APK only'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Check for OBB'),
-            ),
-          ],
-        ),
-      );
-      if (!mounted) return;
-      if (checkObb == true) {
-        final settingsReturn = Completer<void>();
-        _settingsReturn = settingsReturn;
-        await _service.requestAllFilesAccess();
-        if (!mounted) return;
-        try {
-          await settingsReturn.future.timeout(const Duration(minutes: 2));
-        } on TimeoutException {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'OBB check cancelled. You can continue with APK files only.',
-                ),
-              ),
-            );
-          }
-          return;
-        } finally {
-          if (identical(_settingsReturn, settingsReturn)) {
-            _settingsReturn = null;
-          }
-        }
-        if (!mounted) return;
-        final hasAccessAfterSettings = await _service.hasAllFilesAccess();
-        if (!mounted) return;
-        if (hasAccessAfterSettings) {
-          await _load();
-          chosen = _apps
-              .where((app) => _selected.contains(app.packageName))
-              .toList(growable: false);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Return from Settings and tap Send selected again to check for OBB files.',
-              ),
-            ),
-          );
-          return;
-        }
-      }
-    }
-
-    final appsWithObb = chosen.where((app) => app.hasObb).toList();
-    if (appsWithObb.isNotEmpty) {
-      if (!mounted) return;
-      includeObb =
-          await showDialog<bool>(
-            context: context,
-            builder: (dialogContext) => AlertDialog(
-              title: const Text('OBB data found'),
-              content: const Text(
-                'OBB files were found for one or more selected apps. Include them in the app packages?',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext, false),
-                  child: const Text('APK only'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.pop(dialogContext, true),
-                  child: const Text('Include OBB'),
-                ),
-              ],
-            ),
-          ) ??
-          false;
-      if (!mounted) return;
-    }
 
     final artifacts = <AppTransferArtifact>[];
     setState(() {
@@ -241,8 +118,7 @@ class _AppTransferPickerState extends State<AppTransferPicker>
             _progress = 0;
           });
         }
-        final includeAppObb = includeObb && app.hasObb;
-        final artifact = app.apkPaths.length == 1 && !includeAppObb
+        final artifact = app.apkPaths.length == 1
             ? AppTransferArtifact(
                 file: File(app.apkPaths.single),
                 remoteName: '${_safeFileName(app.name)}.apk',
@@ -251,7 +127,6 @@ class _AppTransferPickerState extends State<AppTransferPicker>
               )
             : await _service.prepareAppTransfer(
                 app,
-                includeObb: includeAppObb,
                 onProgress: (value) {
                   if (mounted) setState(() => _progress = value);
                 },
@@ -334,11 +209,9 @@ class _AppTransferPickerState extends State<AppTransferPicker>
               'Version ${app.versionName} (${app.versionCode}) · APK size ${_size(app.apkSizeBytes)}',
             ),
           ),
-          Text(app.hasObb ? 'APK & OBB' : 'APK'),
         ],
       ),
       controlAffinity: ListTileControlAffinity.trailing,
-      isThreeLine: true,
     ),
   );
 
@@ -381,7 +254,7 @@ class _AppTransferPickerState extends State<AppTransferPicker>
             ),
             const Spacer(),
             Text(
-              '${AppLocalizations.translate(context, app.hasObb ? 'APK & OBB' : 'APK')} · ${_size(app.apkSizeBytes)}',
+              '${AppLocalizations.translate(context, 'APK')} · ${_size(app.apkSizeBytes)}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall,
@@ -439,7 +312,7 @@ class _AppTransferPickerState extends State<AppTransferPicker>
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 10, 16, 4),
             child: Text(
-              'App Transfer is intended for personal use with apps you own. Only APKs and optional OBB files are included; app data is never copied.',
+              'App Transfer is intended for personal use with apps you own. APK files only; app data is never copied.',
             ),
           ),
           Padding(
@@ -452,19 +325,6 @@ class _AppTransferPickerState extends State<AppTransferPicker>
                 isDense: true,
               ),
               onChanged: (value) => setState(() => _query = value),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _filterChip('All apps', _AppFilter.all),
-                  _filterChip('APK', _AppFilter.apk),
-                  _filterChip('APK & OBB', _AppFilter.apkAndObb),
-                ],
-              ),
             ),
           ),
           if (_preparing)
@@ -572,13 +432,4 @@ class _AppTransferPickerState extends State<AppTransferPicker>
       ),
     );
   }
-
-  Widget _filterChip(String label, _AppFilter value) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 4),
-    child: ChoiceChip(
-      label: Text(label),
-      selected: _filter == value,
-      onSelected: _preparing ? null : (_) => setState(() => _filter = value),
-    ),
-  );
 }

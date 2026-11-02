@@ -53,9 +53,9 @@ class ResumeFinalizeResult {
   final bool newlyCompleted;
 }
 
-/// File-backed resume journal. A chunk is flushed before its manifest entry is
-/// committed. If the app stops between those writes, the sender safely retries
-/// that chunk; it never assumes unrecorded bytes are complete.
+/// File-backed resume journal. Chunks are checksum-verified before their
+/// manifest entries are committed, and every recorded chunk is revalidated on
+/// resume. Incomplete or unpersisted chunks are safely requested again.
 class ResumableSessionStore {
   ResumableSessionStore(this.saveDirectory);
 
@@ -199,11 +199,7 @@ class ResumableSessionStore {
 
     final chunkDirectory = _chunksDirectory(transferId, fileId);
     await chunkDirectory.create(recursive: true);
-    await _chunkFile(
-      transferId,
-      fileId,
-      index,
-    ).writeAsBytes(bytes, flush: true);
+    await _chunkFile(transferId, fileId, index).writeAsBytes(bytes);
     final chunks = Map<String, String>.from(manifest['receivedChunks'] as Map);
     chunks['$index'] = actualDigest;
     manifest['receivedChunks'] = chunks;

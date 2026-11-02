@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:bifrost/features/app_transfer/app_transfer_picker.dart';
 import 'package:bifrost/features/app_transfer/app_transfer_service.dart';
 import 'package:flutter/services.dart';
@@ -19,10 +21,31 @@ class _PickerService extends AppTransferService {
       apkPaths: ['/example/base.apk'],
       apkNames: ['base.apk'],
     ),
+    TransferableApp(
+      name: 'Split App',
+      packageName: 'org.example.split',
+      versionName: '2.0',
+      versionCode: 2,
+      sizeBytes: 200,
+      apkSizeBytes: 200,
+      apkPaths: ['/example/split-base.apk', '/example/split-config.apk'],
+      apkNames: ['base.apk', 'split_config.arm64_v8a.apk'],
+    ),
   ];
 
   @override
-  Future<bool> hasAllFilesAccess() async => true;
+  Future<AppTransferArtifact> prepareAppTransfer(
+    TransferableApp app, {
+    void Function(double progress)? onProgress,
+  }) async {
+    onProgress?.call(1);
+    return AppTransferArtifact(
+      file: File('/example/${app.packageName}.apks'),
+      remoteName: '${app.name}.apks',
+      isTemporary: true,
+      isArchive: true,
+    );
+  }
 }
 
 void main() {
@@ -92,5 +115,34 @@ void main() {
     await tester.tap(find.text('3 columns'));
     await tester.pumpAndSettle();
     expect(find.text('Widget App'), findsOneWidget);
+  });
+
+  testWidgets('split APK apps stay selectable without OBB categories', (
+    tester,
+  ) async {
+    AppTransferArtifact? prepared;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AppTransferPicker(
+          service: _PickerService(),
+          onAppsReady: (artifacts) async {
+            prepared = artifacts.single;
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Split App'), findsOneWidget);
+    expect(find.text('APK & OBB'), findsNothing);
+    expect(find.text('All apps'), findsNothing);
+
+    await tester.tap(find.text('Split App'));
+    await tester.pump();
+    await tester.tap(find.text('Send 1 selected'));
+    await tester.pumpAndSettle();
+
+    expect(prepared?.isArchive, isTrue);
+    expect(prepared?.file.path, '/example/org.example.split.apks');
   });
 }

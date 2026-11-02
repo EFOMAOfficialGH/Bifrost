@@ -13,7 +13,6 @@ class TransferableApp {
     required this.apkSizeBytes,
     required this.apkPaths,
     required this.apkNames,
-    this.hasObb = false,
     this.iconPng,
   });
 
@@ -25,7 +24,6 @@ class TransferableApp {
   final int apkSizeBytes;
   final List<String> apkPaths;
   final List<String> apkNames;
-  final bool hasObb;
   final Uint8List? iconPng;
 
   factory TransferableApp.fromMap(Map<dynamic, dynamic> map) {
@@ -50,7 +48,6 @@ class TransferableApp {
                 )
                 .toList(growable: false)
           : names,
-      hasObb: map['hasObb'] as bool? ?? false,
       iconPng: map['iconPng'] is Uint8List ? map['iconPng'] as Uint8List : null,
     );
   }
@@ -98,8 +95,8 @@ class AppTransferException implements Exception {
   String toString() => message;
 }
 
-/// Android PackageManager and PackageInstaller operations. Multi-split/OBB
-/// packages are streamed natively; a single APK without OBB is sent directly.
+/// Android PackageManager and PackageInstaller operations. Multi-split APK
+/// packages are archived natively; a single APK is sent directly.
 class AppTransferService {
   AppTransferService({MethodChannel? channel})
     : _channel = channel ?? _defaultChannel {
@@ -139,15 +136,8 @@ class AppTransferService {
   Future<void> requestInstallUnknownApps() =>
       _channel.invokeMethod<void>('requestInstallUnknownApps');
 
-  Future<bool> hasAllFilesAccess() async =>
-      await _channel.invokeMethod<bool>('hasAllFilesAccess') ?? false;
-
-  Future<void> requestAllFilesAccess() =>
-      _channel.invokeMethod<void>('requestAllFilesAccess');
-
   Future<AppTransferArtifact> prepareAppTransfer(
     TransferableApp app, {
-    bool includeObb = false,
     void Function(double progress)? onProgress,
   }) async {
     _requireAndroid();
@@ -156,14 +146,6 @@ class AppTransferService {
         'No valid APK files were found for this app.',
       );
     }
-    if (includeObb && !await hasAllFilesAccess()) {
-      await requestAllFilesAccess();
-      throw const AppTransferException(
-        'Grant All files access, return to Bifrost, and tap Send selected again to include optional OBB data.',
-        code: 'ALL_FILES_ACCESS_REQUIRED',
-      );
-    }
-
     _onProgress = onProgress;
     try {
       final result = await _channel.invokeMapMethod<dynamic, dynamic>(
@@ -175,7 +157,6 @@ class AppTransferService {
           'versionCode': app.versionCode,
           'apkPaths': app.apkPaths,
           'apkNames': app.apkNames,
-          'includeObb': includeObb,
         },
       );
       if (result == null) {

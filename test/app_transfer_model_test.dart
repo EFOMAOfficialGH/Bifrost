@@ -15,7 +15,6 @@ void main() {
       'apkSizeBytes': 1000,
       'apkPaths': ['/data/app/base.apk', '/data/app/split_config.apk'],
       'apkNames': ['base.apk', 'split_config.apk'],
-      'hasObb': true,
       'iconPng': icon,
     });
 
@@ -27,7 +26,6 @@ void main() {
     expect(app.apkSizeBytes, 1000);
     expect(app.apkPaths, hasLength(2));
     expect(app.apkNames, ['base.apk', 'split_config.apk']);
-    expect(app.hasObb, isTrue);
     expect(app.iconPng, icon);
   });
 }

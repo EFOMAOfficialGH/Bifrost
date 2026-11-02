@@ -1929,8 +1929,8 @@
     },
     {
       "key": "app_transfer.privacy",
-      "en": "App Transfer is intended for personal use with apps you own. Only APKs and optional OBB files are included; app data is never copied.",
-      "ar": "ميزة نقل التطبيقات مخصّصة للاستخدام الشخصي مع التطبيقات التي تملكها. تُضمَّن ملفات APK وملفات OBB الاختيارية فقط؛ ولا تُنسخ بيانات التطبيقات مطلقًا.",
+      "en": "App Transfer is intended for personal use with apps you own. APK files only; app data is never copied.",
+      "ar": "ميزة نقل التطبيقات مخصّصة للاستخدام الشخصي مع التطبيقات التي تملكها. تُضمَّن ملفات APK فقط؛ ولا تُنسخ بيانات التطبيقات مطلقًا.",
       "context": "App transfer privacy note"
     },
     {

@@ -29,6 +29,19 @@ class TransferCancelledException implements Exception {
   String toString() => 'Transfer cancelled';
 }
 
+Stream<List<int>> _uploadSegments(
+  List<int> bytes,
+  void Function(int sentInChunk) onProgress,
+) async* {
+  const segmentSize = 128 * 1024;
+  for (var offset = 0; offset < bytes.length; offset += segmentSize) {
+    final proposedEnd = offset + segmentSize;
+    final end = proposedEnd < bytes.length ? proposedEnd : bytes.length;
+    onProgress(end);
+    yield bytes.sublist(offset, end);
+  }
+}
+
 class BifrostClient {
   BifrostClient({HttpClient? httpClient}) : _http = httpClient ?? HttpClient();
   final HttpClient _http;
@@ -199,6 +212,13 @@ class BifrostClient {
           .toInt();
     }
     onProgress?.call(sentBytes, totalBytes);
+    var lastReportedBytes = sentBytes;
+    void reportProgress(int candidate) {
+      if (candidate <= lastReportedBytes) return;
+      lastReportedBytes = candidate;
+      onProgress?.call(candidate, totalBytes);
+    }
+
     final handle = await file.open(mode: FileMode.read);
     var lastProgressAt = DateTime.fromMillisecondsSinceEpoch(0);
     try {
@@ -219,19 +239,23 @@ class BifrostClient {
         request.contentLength = bytes.length;
         request.headers.set('X-Bifrost-Chunk-SHA256', chunkDigest);
         request.headers.set('X-Bifrost-Resume-Token', resumeToken);
-        request.add(bytes);
+        await request.addStream(
+          _uploadSegments(bytes, (sentInChunk) {
+            final now = DateTime.now();
+            if (sentInChunk == bytes.length ||
+                now.difference(lastProgressAt) >=
+                    const Duration(milliseconds: 150)) {
+              lastProgressAt = now;
+              reportProgress(sentBytes + sentInChunk);
+            }
+          }),
+        );
         final response = await request.close();
         final responseBody = await utf8.decoder.bind(response).join();
         if (response.statusCode != 201)
           throw StateError('Receiver rejected a file chunk: $responseBody');
         sentBytes += bytes.length;
-        final now = DateTime.now();
-        if (sentBytes == totalBytes ||
-            now.difference(lastProgressAt) >=
-                const Duration(milliseconds: 200)) {
-          lastProgressAt = now;
-          onProgress?.call(sentBytes, totalBytes);
-        }
+        reportProgress(sentBytes);
       }
     } finally {
       await handle.close();

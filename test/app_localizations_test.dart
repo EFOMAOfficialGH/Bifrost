@@ -76,9 +76,9 @@ void main() {
       expect(
         AppLocalizations.translateFor(
           'ar',
-          'App Transfer is intended for personal use with apps you own. Only APKs and optional OBB files are included; app data is never copied.',
+          'App Transfer is intended for personal use with apps you own. APK files only; app data is never copied.',
         ),
-        'ميزة نقل التطبيقات مخصّصة للاستخدام الشخصي مع التطبيقات التي تملكها. تُضمَّن ملفات APK وملفات OBB الاختيارية فقط؛ ولا تُنسخ بيانات التطبيقات مطلقًا.',
+        'ميزة نقل التطبيقات مخصّصة للاستخدام الشخصي مع التطبيقات التي تملكها. تُضمَّن ملفات APK فقط؛ ولا تُنسخ بيانات التطبيقات مطلقًا.',
       );
       expect(
         AppLocalizations.translateFor('ar', 'Version 2.1 (42) · Size 12 MB'),

@@ -65,11 +65,6 @@ class AppTransferPlugin(
                 }
                 result.success(null)
             }
-            "hasAllFilesAccess" -> result.success(Build.VERSION.SDK_INT < 30 || Environment.isExternalStorageManager())
-            "requestAllFilesAccess" -> {
-                requestAllFilesAccess()
-                result.success(null)
-            }
             "prepareAppTransfer" -> prepareAppTransfer(call, result)
             "deleteTemporaryExport" -> {
                 val path = call.argument<String>("path")
@@ -120,9 +115,6 @@ class AppTransferPlugin(
                         if (index == 0) "base.apk" else File(path).name
                     }
                     val apkSize = apkPaths.sumOf { File(it).length() }
-                    val obbRoot = File(Environment.getExternalStorageDirectory(), "Android/obb/${app.packageName}")
-                    val hasObb = (Build.VERSION.SDK_INT < 30 || Environment.isExternalStorageManager()) &&
-                        obbRoot.isDirectory && obbRoot.walkTopDown().any { it.isFile && it.extension.equals("obb", ignoreCase = true) }
                     mapOf(
                         "name" to pm.getApplicationLabel(app).toString(),
                         "packageName" to app.packageName,
@@ -132,7 +124,6 @@ class AppTransferPlugin(
                         "apkSizeBytes" to apkSize,
                         "apkPaths" to apkPaths,
                         "apkNames" to apkNames,
-                        "hasObb" to hasObb,
                         "iconPng" to iconBytes(app),
                     )
                 } catch (_: Exception) {
@@ -164,19 +155,6 @@ class AppTransferPlugin(
         null
     }
 
-    private fun collectFiles(directory: File): List<File> {
-        val canonicalRoot = directory.canonicalFile
-        val children = directory.listFiles() ?: throw IOException("Cannot read ${directory.path}")
-        val files = mutableListOf<File>()
-        for (child in children) {
-            val canonical = child.canonicalFile
-            if (!canonical.path.startsWith(canonicalRoot.path + File.separator)) continue
-            if (child.isDirectory) files += collectFiles(child)
-            else if (child.isFile) files += child
-        }
-        return files
-    }
-
     private fun prepareAppTransfer(call: MethodCall, result: MethodChannel.Result) {
         val name = call.argument<String>("name") ?: "App"
         val packageName = call.argument<String>("packageName")
@@ -184,23 +162,16 @@ class AppTransferPlugin(
         val versionCode = (call.argument<Number>("versionCode"))?.toLong() ?: 0L
         val apkPaths = call.argument<List<String>>("apkPaths")
         val apkNames = call.argument<List<String>>("apkNames")
-        val includeObb = call.argument<Boolean>("includeObb") ?: false
         val safeName = name.replace(Regex("[^A-Za-z0-9._-]+"), "_").trim('.').ifBlank { packageName ?: "App" }
         if (packageName.isNullOrBlank() || !packageName.matches(Regex("^[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+$")) || apkPaths.isNullOrEmpty() || apkNames == null || apkNames.size != apkPaths.size || apkPaths.any { !File(it).isFile } || apkNames.firstOrNull() != "base.apk" || apkNames.any { !it.matches(Regex("^[A-Za-z0-9._-]+\\.apk$")) } || apkNames.toSet().size != apkNames.size) {
             result.error("INVALID_APP", "The app's APK files could not be found.", null)
             return
         }
-        if (includeObb && Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager()) {
-            result.error("ALL_FILES_ACCESS_REQUIRED", "Grant All files access to check for and include optional OBB files.", null)
-            return
-        }
         worker.execute {
             var output: File? = null
             try {
-                val obbRoot = File(Environment.getExternalStorageDirectory(), "Android/obb/$packageName")
-                val obbFiles = if (includeObb && obbRoot.isDirectory) collectFiles(obbRoot).sortedBy { it.path } else emptyList()
                 val apkFiles = apkPaths.map(::File)
-                if (apkFiles.size == 1 && obbFiles.isEmpty()) {
+                if (apkFiles.size == 1) {
                     val directArtifact = mapOf(
                         "path" to apkFiles.first().absolutePath,
                         "remoteName" to "$safeName.apk",
@@ -210,11 +181,10 @@ class AppTransferPlugin(
                     mainHandler.post { result.success(directArtifact) }
                     return@execute
                 }
-                val totalBytes = (apkFiles + obbFiles).sumOf { it.length() }.coerceAtLeast(1L)
+                val totalBytes = apkFiles.sumOf { it.length() }.coerceAtLeast(1L)
                 val outputDirectory = activity.getExternalFilesDir("BifrostExports") ?: File(activity.cacheDir, "BifrostExports")
                 if (!outputDirectory.exists() && !outputDirectory.mkdirs()) throw IOException("Cannot create the app export folder")
-                val archiveExtension = if (obbFiles.isNotEmpty()) "xapk" else "apks"
-                output = File(outputDirectory, "$safeName-${System.currentTimeMillis()}.$archiveExtension")
+                output = File(outputDirectory, "$safeName-${System.currentTimeMillis()}.apks")
                 var copied = 0L
                 var lastProgressAt = 0L
                 ZipOutputStream(BufferedOutputStream(FileOutputStream(output))).use { zip ->
@@ -223,7 +193,7 @@ class AppTransferPlugin(
                         .put("version_name", versionName)
                         .put("version_code", versionCode)
                         .put("apk_files", JSONArray(apkNames))
-                        .put("has_obb", obbFiles.isNotEmpty())
+                        .put("has_obb", false)
                     zip.putNextEntry(ZipEntry("manifest.json"))
                     zip.write(manifest.toString(2).toByteArray(Charsets.UTF_8))
                     zip.closeEntry()
@@ -236,23 +206,11 @@ class AppTransferPlugin(
                             }
                         }
                     }
-                    val canonicalObbRoot = obbRoot.canonicalFile
-                    for (file in obbFiles) {
-                        val relative = file.canonicalPath.removePrefix(canonicalObbRoot.path + File.separator).replace(File.separatorChar, '/')
-                        if (relative.isBlank() || relative.split('/').any { it.isBlank() || it == "." || it == ".." }) continue
-                        copied = writeFileEntry(zip, file, "Android/obb/$packageName/$relative", copied, totalBytes) { progress ->
-                            val now = SystemClock.elapsedRealtime()
-                            if (now - lastProgressAt >= 200) {
-                                lastProgressAt = now
-                                reportProgress(progress)
-                            }
-                        }
-                    }
                 }
                 reportProgress(1.0)
                 val artifact = mapOf(
                     "path" to output.absolutePath,
-                    "remoteName" to "$safeName.${if (obbFiles.isNotEmpty()) "xapk" else "apks"}",
+                    "remoteName" to "$safeName.apks",
                     "temporary" to true,
                     "isArchive" to true,
                 )
@@ -469,10 +427,17 @@ class AppTransferPlugin(
                         if (packageInfo.packageName != packageName) throw IOException("The APK package name does not match the XAPK manifest")
                         val splitNames = packageInfo.splitNames?.toList().orEmpty()
                         val sessionName = if (name == "base.apk") {
-                            if (splitNames.isNotEmpty()) throw IOException("The XAPK APK list does not start with a base APK")
                             "base.apk"
                         } else {
-                            splitNames.singleOrNull()?.let { "split_$it.apk" } ?: name
+                            val declaredName = splitNames.singleOrNull()
+                                ?: name.removePrefix("split_").removeSuffix(".apk")
+                            val normalizedName = declaredName
+                                .removePrefix("split_")
+                                .removeSuffix(".apk")
+                            if (!normalizedName.matches(Regex("^[A-Za-z0-9._-]+$"))) {
+                                throw IOException("The app archive contains an invalid split APK name")
+                            }
+                            "split_$normalizedName.apk"
                         }
                         if (!sessionNames.add(sessionName)) throw IOException("The XAPK contains duplicate package splits")
                         stagedApks += destination to sessionName
