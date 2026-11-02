@@ -418,22 +418,26 @@ class AppTransferPlugin(
                         if (entry.isDirectory || entry.size <= 0 || entry.size > MAX_ENTRY_SIZE) throw IOException("APK file $name has an invalid size")
                         val destination = File(staging, name)
                         copyZipEntry(archive, entry, destination, entry.size)
-                        val packageInfo = if (Build.VERSION.SDK_INT >= 33) {
-                            activity.packageManager.getPackageArchiveInfo(destination.path, android.content.pm.PackageManager.PackageInfoFlags.of(0))
-                        } else {
-                            @Suppress("DEPRECATION")
-                            activity.packageManager.getPackageArchiveInfo(destination.path, 0)
-                        } ?: throw IOException("APK file $name is invalid")
-                        if (packageInfo.packageName != packageName) throw IOException("The APK package name does not match the XAPK manifest")
-                        val splitNames = packageInfo.splitNames?.toList().orEmpty()
+                        val hasAndroidManifest = try {
+                            ZipFile(destination).use { it.getEntry("AndroidManifest.xml") != null }
+                        } catch (_: Exception) {
+                            false
+                        }
+                        if (!hasAndroidManifest) throw IOException("APK file $name is invalid")
                         val sessionName = if (name == "base.apk") {
+                            val packageInfo = if (Build.VERSION.SDK_INT >= 33) {
+                                activity.packageManager.getPackageArchiveInfo(destination.path, android.content.pm.PackageManager.PackageInfoFlags.of(0))
+                            } else {
+                                @Suppress("DEPRECATION")
+                                activity.packageManager.getPackageArchiveInfo(destination.path, 0)
+                            } ?: throw IOException("The app archive base APK is invalid")
+                            if (packageInfo.packageName != packageName) throw IOException("The APK package name does not match the app archive manifest")
                             "base.apk"
                         } else {
-                            val declaredName = splitNames.singleOrNull()
-                                ?: name.removePrefix("split_").removeSuffix(".apk")
-                            val normalizedName = declaredName
-                                .removePrefix("split_")
-                                .removeSuffix(".apk")
+                            // Android's archive parser may reject a split when
+                            // inspected by itself; PackageInstaller validates
+                            // each split against the base APK at commit time.
+                            val normalizedName = name.removePrefix("split_").removeSuffix(".apk")
                             if (!normalizedName.matches(Regex("^[A-Za-z0-9._-]+$"))) {
                                 throw IOException("The app archive contains an invalid split APK name")
                             }
