@@ -57,7 +57,10 @@ LRESULT CALLBACK ForwardChildFileDrop(HWND window, UINT message,
                                       DWORD_PTR reference_data) {
   if (message == WM_DROPFILES) {
     const HWND owner = reinterpret_cast<HWND>(reference_data);
-    if (owner && PostMessageW(owner, WM_DROPFILES, wparam, 0)) return 0;
+    if (owner && IsWindow(owner)) {
+      SendMessageW(owner, WM_DROPFILES, wparam, 0);
+      return 0;
+    }
   }
   return DefSubclassProc(window, message, wparam, lparam);
 }

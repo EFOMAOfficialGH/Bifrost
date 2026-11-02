@@ -20,39 +20,52 @@ class SharedFileBridge {
     final files = paths
         .where((path) => path.trim().isNotEmpty)
         .toList(growable: false);
-    if (files.isEmpty) return;
-    if (_initialized) {
-      _files.add(files);
-    } else {
-      _pending.addAll(files);
-    }
+    _publishOrBuffer(files);
   }
 
   Future<void> initialize() async {
-    if (_initialized) return;
-    _initialized = true;
-    _channel.setMethodCallHandler((call) async {
-      if (call.method == 'sharedFiles') {
-        final paths = (call.arguments as List<dynamic>? ?? const [])
-            .whereType<String>()
-            .toList(growable: false);
-        if (paths.isNotEmpty) _files.add(paths);
-      }
-    });
-    if (_pending.isNotEmpty) {
-      _files.add(List<String>.from(_pending));
-      _pending.clear();
+    if (!_initialized) {
+      _initialized = true;
+      _channel.setMethodCallHandler((call) async {
+        if (call.method == 'sharedFiles') {
+          final paths = (call.arguments as List<dynamic>? ?? const [])
+              .whereType<String>()
+              .toList(growable: false);
+          _publishOrBuffer(paths);
+        }
+      });
     }
+    _flushPending();
+    if (_fetchedSharedFiles) return;
+    _fetchedSharedFiles = true;
     try {
       final paths =
           (await _channel.invokeMethod<List<dynamic>>('getSharedFiles') ??
                   const [])
               .whereType<String>()
               .toList(growable: false);
-      if (paths.isNotEmpty) _files.add(paths);
+      _publishOrBuffer(paths);
     } on MissingPluginException {
       // Windows uses command-line arguments instead of the Android channel.
     }
+  }
+
+  bool _fetchedSharedFiles = false;
+
+  void _publishOrBuffer(List<String> paths) {
+    if (paths.isEmpty) return;
+    if (_files.hasListener) {
+      _files.add(paths);
+    } else {
+      _pending.addAll(paths);
+    }
+  }
+
+  void _flushPending() {
+    if (!_files.hasListener || _pending.isEmpty) return;
+    final pending = List<String>.from(_pending);
+    _pending.clear();
+    _files.add(pending);
   }
 
   void dispose() => _files.close();
