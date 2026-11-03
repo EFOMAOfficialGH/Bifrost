@@ -1863,7 +1863,10 @@ class _SettingsGlassSurface extends StatelessWidget {
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 7, sigmaY: 7),
-        child: ColoredBox(color: glassColor, child: child),
+        child: ColoredBox(
+          color: glassColor,
+          child: Material(type: MaterialType.transparency, child: child),
+        ),
       ),
     );
   }
