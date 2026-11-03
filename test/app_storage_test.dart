@@ -12,6 +12,12 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final storage = AppStorage.instance;
 
+    expect(await storage.legacyTheme(), isFalse);
+    await storage.setLegacyTheme(true);
+    expect(await storage.legacyTheme(), isTrue);
+    await storage.setLegacyTheme(false);
+    expect(await storage.legacyTheme(), isFalse);
+
     expect(await storage.backgroundActivity(), isTrue);
     await storage.setBackgroundActivity(false);
     expect(await storage.backgroundActivity(), isFalse);

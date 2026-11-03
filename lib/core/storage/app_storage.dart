@@ -201,6 +201,10 @@ class AppStorage {
       (await _preferences).getString('themeChoice') ?? 'day';
   Future<void> setThemeChoice(String choice) async =>
       (await _preferences).setString('themeChoice', choice);
+  Future<bool> legacyTheme() async =>
+      (await _preferences).getBool('legacyTheme') ?? false;
+  Future<void> setLegacyTheme(bool enabled) async =>
+      (await _preferences).setBool('legacyTheme', enabled);
   Future<String?> customThemeColor() async =>
       (await _preferences).getString('customThemeColor');
   Future<void> setCustomThemeColor(String value) async =>

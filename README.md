@@ -2,9 +2,9 @@
 
 Bifrost is a private, local-network file-sharing app for **Android and Windows**. It transfers files directly between nearby devices without accounts, cloud storage, ads, telemetry, or an internet connection for core transfers.
 
-> **Current version: v0.14.3+41**
+> **Current version: v0.14.10+48**
 >
-> Version 0.14.3 fixes the app picker flow, adds adjustable grid layouts and automatic OBB prompts, and replaces Windows file-drop handling with native OLE drag-and-drop.
+> Version 0.14.10 refreshes the Bifrost logo, adds theme-specific Android splash artwork with a classic-theme switch, and improves Settings background readability.
 
 ## Highlights
 
@@ -194,21 +194,21 @@ They build and publish releases automatically.
 The workflows read the version from `pubspec.yaml`:
 
 ```yaml
-version: 0.14.3+41
+version: 0.14.10+48
 ```
 
 When the versioned source is pushed to `main`, the workflows automatically create or update:
 
 ```text
-Bifrost v0.14.3+41
+Bifrost v0.14.10+48
 ```
 
 The release receives assets similar to:
 
 ```text
-Bifrost-Android-0.14.3+41.apk
-Bifrost-Windows-0.14.3+41.exe
-Bifrost-Windows-0.14.3+41-portable.zip
+Bifrost-Android-0.14.10+48.apk
+Bifrost-Windows-0.14.10+48.exe
+Bifrost-Windows-0.14.10+48-portable.zip
 ```
 
 The Windows workflow builds and uploads its packages first. The Android workflow then downloads those matching packages, embeds the Windows installer into the APK, and publishes the Android APK, Windows installer, and Windows portable ZIP together with the release notes.

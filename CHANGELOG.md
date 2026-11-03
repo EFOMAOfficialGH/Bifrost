@@ -1,3 +1,9 @@
+## 0.14.10+48 — New branding and Android splash themes
+
+- Replace the Bifrost logo across app icons, the Nearby header, and the startup welcome screen.
+- Add Day, Sunset, and Night splash artwork on Android, with a persisted “Lagacy Theme” switch to restore the classic appearance.
+- Add a darker translucent blur treatment behind Settings for improved readability across themes.
+
 ## 0.14.3+41 — App picker and Windows drop fixes
 
 - Fix the app picker returning to an empty screen after preparing selected apps by closing its route exactly once.
