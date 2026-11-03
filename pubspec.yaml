@@ -1,7 +1,7 @@
 name: bifrost
 description: "Bifrost — local-network file sharing for Android and Windows."
 publish_to: 'none'
-version: 0.14.8+46
+version: 0.14.9+47
 
 environment:
   sdk: ^3.13.5
@@ -15,7 +15,6 @@ dependencies:
   cupertino_icons: 1.0.8
   crypto: 3.0.6
   shelf: 1.4.2
-  qr_flutter: 4.1.0
   file_picker: 13.1.0
   shared_preferences: 2.5.3
   flutter_local_notifications: 22.3.2

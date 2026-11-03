@@ -11,10 +11,14 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('Bifrost first-run wizard contains setup controls', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(
-      child: MaterialApp(home: FirstRunPage(onComplete: _noop)),
-    ));
+  testWidgets('Bifrost first-run wizard contains setup controls', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(home: FirstRunPage(onComplete: _noop)),
+      ),
+    );
     await tester.pump();
 
     expect(find.text('Welcome to Bifrost'), findsOneWidget);
@@ -24,7 +28,9 @@ void main() {
     expect(find.text('English'), findsOneWidget);
   });
 
-  testWidgets('Arabic locale lays out widgets RTL', (WidgetTester tester) async {
+  testWidgets('Arabic locale lays out widgets RTL', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       const MaterialApp(
         locale: Locale('ar'),
@@ -47,14 +53,17 @@ void main() {
   });
 
   testWidgets('Bifrost shell opens on Nearby', (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(
-      child: MaterialApp(home: BifrostShell(enableDiscovery: false)),
-    ));
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: MaterialApp(home: BifrostShell(enableDiscovery: false)),
+      ),
+    );
     await tester.pump();
 
     expect(find.text('Bifrost'), findsOneWidget);
     expect(find.text('Nearby devices'), findsOneWidget);
-    expect(find.text('Connect by IP address'), findsOneWidget);
+    expect(find.text('Connect by IP address'), findsNothing);
+    expect(find.byTooltip('Cycle theme'), findsOneWidget);
   });
 }
 

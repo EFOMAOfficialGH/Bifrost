@@ -106,6 +106,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.byType(Checkbox), findsNothing);
+    expect(find.text('org.example.widget'), findsNothing);
+    await tester.tap(find.text('Widget App'));
+    await tester.pump();
+    expect(find.text('Send 1 selected'), findsOneWidget);
+    await tester.tap(find.text('Widget App'));
+    await tester.pump();
+
     await tester.tap(find.byType(PopupMenuButton<int>));
     await tester.pumpAndSettle();
     expect(find.text('Auto columns (current)'), findsOneWidget);

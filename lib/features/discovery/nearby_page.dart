@@ -7,7 +7,6 @@ import '../../core/localization/localized_text.dart';
 import '../../core/localization/app_localizations.dart';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../core/networking/bifrost_client.dart';
 import '../../core/networking/discovery.dart';
@@ -25,10 +24,12 @@ class NearbyPage extends StatefulWidget {
   const NearbyPage({
     this.autoDiscover = true,
     this.filePickerRequest = 0,
+    this.onThemeCycle,
     super.key,
   });
   final bool autoDiscover;
   final int filePickerRequest;
+  final VoidCallback? onThemeCycle;
   @override
   State<NearbyPage> createState() => _NearbyPageState();
 }
@@ -156,36 +157,9 @@ class _NearbyPageState extends State<NearbyPage> {
       if (mounted)
         setState(() {
           _searching = false;
-          _error = 'Discovery could not start. You can connect by IP address instead.';
+          _error = 'Discovery could not start. Check your network or run connection diagnostics.';
         });
     }
-  }
-
-  Future<void> _manualConnect() async {
-    final result = await showDialog<(String, int)?>(
-      context: context,
-      builder: (_) => const _ManualConnectionDialog(),
-    );
-    if (result == null) return;
-    setState(() {
-      _searching = true;
-      _error = null;
-    });
-    final devices = await _service.discover(
-      manualHost: result.$1,
-      manualPort: result.$2,
-      localDeviceId: BifrostDeviceRuntime.instance.deviceId,
-    );
-    final favorites = await AppStorage.instance.favoriteDeviceIds();
-    if (!mounted) return;
-    setState(() {
-      _favoriteDeviceIds = favorites;
-      _devices = _sortDevices(devices);
-      _searching = false;
-      _error = devices.isEmpty
-          ? 'Could not reach that address. Check the IP, port, and Wi-Fi connection.'
-          : null;
-    });
   }
 
   List<BifrostDevice> _sortDevices(List<BifrostDevice> devices) {
@@ -329,300 +303,250 @@ class _NearbyPageState extends State<NearbyPage> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return CustomScrollView(
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-            sliver: SliverToBoxAdapter(
-              child: Row(
-                children: [
-                  const _BifrostMark(),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Bifrost',
-                    style: Theme.of(context).textTheme.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.w700),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+          sliver: SliverToBoxAdapter(
+            child: Row(
+              children: [
+                IconButton(
+                  tooltip: AppLocalizations.translate(context, 'Cycle theme'),
+                  onPressed: widget.onThemeCycle,
+                  icon: const _BifrostMark(),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Bifrost',
+                  style: Theme.of(context).textTheme.headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const Spacer(),
+                IconButton(
+                  tooltip: AppLocalizations.translate(
+                    context,
+                    'Troubleshooting',
                   ),
-                  const Spacer(),
-                  IconButton(
-                    tooltip: AppLocalizations.translate(
-                      context,
-                      'Troubleshooting',
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const TroubleshootingPage(),
                     ),
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const TroubleshootingPage(),
-                      ),
-                    ),
-                    icon: const Icon(Icons.help_outline),
                   ),
-                ],
-              ),
+                  icon: const Icon(Icons.help_outline),
+                ),
+              ],
             ),
           ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Nearby devices',
+                        style: Theme.of(context).textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _searching ? null : _discover,
+                      tooltip: AppLocalizations.translate(context, 'Refresh'),
+                      icon: const Icon(Icons.refresh),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _searching ? 'Searching this Wi-Fi network…' : 'Devices running Bifrost on this local network will appear here.',
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(color: colors.onSurfaceVariant),
+                ),
+                const SizedBox(height: 16),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: colors.surfaceContainerHighest,
+                    border: Border.all(color: colors.outlineVariant, width: 1),
+                  ),
+                  child: Row(
                     children: [
+                      Icon(
+                        Icons.file_upload_outlined,
+                        color: colors.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Nearby devices',
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w700),
+                          Platform.isWindows
+                              ? 'Drop files here or press "Choose" to start sending files'
+                              : 'Press "Choose" to start sending files',
                         ),
                       ),
-                      IconButton(
-                        onPressed: _searching ? null : _discover,
-                        tooltip: AppLocalizations.translate(context, 'Refresh'),
-                        icon: const Icon(Icons.refresh),
+                      TextButton(
+                        onPressed: _sending
+                            ? null
+                            : () async {
+                                final files = await _pickFiles();
+                                _queueDropped(files);
+                              },
+                        child: const Text('Choose'),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    _searching ? 'Searching this Wi-Fi network…' : 'Devices running Bifrost on this local network appear here.',
-                    style: Theme.of(context).textTheme.bodyMedium
-                        ?.copyWith(color: colors.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 16),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: colors.surfaceContainerHighest,
-                      border: Border.all(
-                        color: colors.outlineVariant,
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.file_upload_outlined,
-                          color: colors.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            Platform.isWindows
-                                ? 'Drop files here or press "Choose" to start sending files'
-                                : 'Press "Choose" to start sending files',
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: _sending
-                              ? null
-                              : () async {
-                                  final files = await _pickFiles();
-                                  _queueDropped(files);
-                                },
-                          child: const Text('Choose'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (Platform.isAndroid)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: _sending ? null : _chooseInstalledApp,
-                          icon: const Icon(Icons.android),
-                          label: const Text('Transfer an installed app'),
-                        ),
-                      ),
-                    ),
-                  if (_queuedFiles.isNotEmpty || _sentCount > 0) ...[
-                    const SizedBox(height: 12),
-                    Card(
-                      child: ListTile(
-                        onTap: _showQueue,
-                        leading: const Icon(Icons.queue_outlined),
-                        title: Text(
-                          'Queue: ${_queuedFiles.length} • Sent: $_sentCount',
-                        ),
-                        subtitle: const Text(
-                          'Tap to view, remove, or reorder files.',
-                        ),
-                        trailing: Icon(
-                          Directionality.of(context) == TextDirection.rtl
-                              ? Icons.chevron_left
-                              : Icons.chevron_right,
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 20),
-                  if (_transferStatus != null)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(_transferStatus!),
-                            if (_sending) ...[
-                              const SizedBox(height: 10),
-                              LinearProgressIndicator(value: _progress),
-                              const SizedBox(height: 10),
-                              OutlinedButton.icon(
-                                onPressed: _cancelTransfer,
-                                icon: const Icon(Icons.cancel_outlined),
-                                label: const Text('Cancel transfer'),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  if (_error != null)
-                    Card(
-                      color: colors.errorContainer,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(
-                              Icons.warning_amber,
-                              color: colors.onErrorContainer,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                _error!,
-                                style: TextStyle(
-                                  color: colors.onErrorContainer,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  if (_devices.isEmpty)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(18),
-                        child: Row(
-                          children: [
-                            Icon(Icons.radar, color: colors.primary),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                _searching
-                                    ? 'No nearby devices found yet. Searching again automatically…'
-                                    : 'No nearby devices found yet. Try refresh, manual IP, or check the troubleshooting guide.',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  for (final device in _devices)
-                    Card(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      child: ListTile(
-                        onTap: () => _selectDevice(device),
-                        leading: CircleAvatar(
-                          backgroundColor: colors.primaryContainer,
-                          child: Icon(
-                            device.type == 'windows'
-                                ? Icons.computer
-                                : Icons.phone_android,
-                            color: colors.onPrimaryContainer,
-                          ),
-                        ),
-                        title: Text(device.name, localized: false),
-                        subtitle: Text(
-                          '${device.host}:${device.port} • ${device.source}',
-                          textDirection: TextDirection.ltr,
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              tooltip: AppLocalizations.translate(
-                                context,
-                                _favoriteDeviceIds.contains(device.id)
-                                    ? 'Remove favorite device'
-                                    : 'Add favorite device',
-                              ),
-                              icon: Icon(
-                                _favoriteDeviceIds.contains(device.id)
-                                    ? Icons.star
-                                    : Icons.star_border,
-                              ),
-                              onPressed: () => _toggleFavorite(device),
-                            ),
-                            IconButton(
-                              tooltip: AppLocalizations.translate(
-                                context,
-                                'Show connection QR',
-                              ),
-                              icon: const Icon(Icons.qr_code_2),
-                              onPressed: () => _showQr(device),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _manualConnect,
-                      icon: const Icon(Icons.pin_drop_outlined),
-                      label: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 13),
-                        child: Text('Connect by IP address'),
+                ),
+                if (Platform.isAndroid)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _sending ? null : _chooseInstalledApp,
+                        icon: const Icon(Icons.android),
+                        label: const Text('Transfer an installed app'),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                if (_queuedFiles.isNotEmpty || _sentCount > 0) ...[
+                  const SizedBox(height: 12),
+                  Card(
+                    child: ListTile(
+                      onTap: _showQueue,
+                      leading: const Icon(Icons.queue_outlined),
+                      title: Text(
+                        'Queue: ${_queuedFiles.length} • Sent: $_sentCount',
+                      ),
+                      subtitle: const Text(
+                        'Tap to view, remove, or reorder files.',
+                      ),
+                      trailing: Icon(
+                        Directionality.of(context) == TextDirection.rtl
+                            ? Icons.chevron_left
+                            : Icons.chevron_right,
+                      ),
+                    ),
+                  ),
                 ],
-              ),
+                const SizedBox(height: 20),
+                if (_transferStatus != null)
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(_transferStatus!),
+                          if (_sending) ...[
+                            const SizedBox(height: 10),
+                            TweenAnimationBuilder<double>(
+                              tween: Tween<double>(begin: 0, end: _progress),
+                              duration: const Duration(milliseconds: 220),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, progress, _) =>
+                                  LinearProgressIndicator(value: progress),
+                            ),
+                            const SizedBox(height: 10),
+                            OutlinedButton.icon(
+                              onPressed: _cancelTransfer,
+                              icon: const Icon(Icons.cancel_outlined),
+                              label: const Text('Cancel transfer'),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                if (_error != null)
+                  Card(
+                    color: colors.errorContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.warning_amber,
+                            color: colors.onErrorContainer,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _error!,
+                              style: TextStyle(color: colors.onErrorContainer),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (_devices.isEmpty)
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Row(
+                        children: [
+                          Icon(Icons.radar, color: colors.primary),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _searching
+                                  ? 'No nearby devices found yet. Searching again automatically…'
+                                  : 'No nearby devices found yet. Try refresh or check the troubleshooting guide.',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                for (final device in _devices)
+                  Card(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    child: ListTile(
+                      onTap: () => _selectDevice(device),
+                      leading: CircleAvatar(
+                        backgroundColor: colors.primaryContainer,
+                        child: Icon(
+                          device.type == 'windows'
+                              ? Icons.computer
+                              : Icons.phone_android,
+                          color: colors.onPrimaryContainer,
+                        ),
+                      ),
+                      title: Text(device.name, localized: false),
+                      subtitle: Text(
+                        '${device.host}:${device.port} • ${device.source}',
+                        textDirection: TextDirection.ltr,
+                      ),
+                      trailing: IconButton(
+                        tooltip: AppLocalizations.translate(
+                          context,
+                          _favoriteDeviceIds.contains(device.id)
+                              ? 'Remove favorite device'
+                              : 'Add favorite device',
+                        ),
+                        icon: Icon(
+                          _favoriteDeviceIds.contains(device.id)
+                              ? Icons.star
+                              : Icons.star_border,
+                        ),
+                        onPressed: () => _toggleFavorite(device),
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 16),
+              ],
             ),
           ),
-        ],
-    );
-  }
-
-  void _showQr(BifrostDevice device) => showDialog<void>(
-    context: context,
-    builder: (_) => AlertDialog(
-      title: Text(device.name, localized: false),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          QrImageView(data: device.connectionCode, size: 220),
-          const SizedBox(height: 12),
-          SelectableText(
-            device.connectionCode,
-            textAlign: TextAlign.center,
-            textDirection: TextDirection.ltr,
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Use this code with a future Bifrost scanner, or enter the address manually.',
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Close'),
         ),
       ],
-    ),
-  );
+    );
+  }
 
   Future<void> _selectDevice(BifrostDevice device) async {
     if (_sending) return;
@@ -870,67 +794,6 @@ bool _isRetryable(Object error) =>
     error is HttpException ||
     error is TimeoutException;
 
-class _ManualConnectionDialog extends StatefulWidget {
-  const _ManualConnectionDialog();
-  @override
-  State<_ManualConnectionDialog> createState() =>
-      _ManualConnectionDialogState();
-}
-
-class _ManualConnectionDialogState extends State<_ManualConnectionDialog> {
-  final _host = TextEditingController();
-  final _port = TextEditingController(text: '43821');
-  @override
-  void dispose() {
-    _host.dispose();
-    _port.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Connect by IP'),
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        TextField(
-          controller: _host,
-          autofocus: true,
-          textDirection: TextDirection.ltr,
-          keyboardType: TextInputType.url,
-          decoration: InputDecoration(
-            labelText: AppLocalizations.translate(context, 'IP address'),
-            hintText: '192.168.1.42',
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _port,
-          textDirection: TextDirection.ltr,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            labelText: AppLocalizations.translate(context, 'Port'),
-          ),
-        ),
-      ],
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
-      ),
-      FilledButton(
-        onPressed: () {
-          final port = int.tryParse(_port.text.trim());
-          if (_host.text.trim().isNotEmpty && port != null)
-            Navigator.pop(context, (_host.text.trim(), port));
-        },
-        child: const Text('Connect'),
-      ),
-    ],
-  );
-}
-
 class TroubleshootingPage extends StatelessWidget {
   const TroubleshootingPage({super.key});
 
@@ -987,7 +850,7 @@ class TroubleshootingPage extends StatelessWidget {
         const _HelpItem(
           icon: Icons.router,
           title: 'Client isolation',
-          text: 'Guest Wi-Fi and some hotspots block devices from talking to each other. Try the main home network or manual IP.',
+          text: 'Guest Wi-Fi and some hotspots block devices from talking to each other. Try the main home network or run connection diagnostics.',
         ),
         const _HelpItem(
           icon: Icons.vpn_lock,
@@ -998,11 +861,6 @@ class TroubleshootingPage extends StatelessWidget {
           icon: Icons.security,
           title: 'Windows network profile',
           text: 'Set the Windows network to Private and allow Bifrost through the Windows Firewall when prompted.',
-        ),
-        const _HelpItem(
-          icon: Icons.pin,
-          title: 'Manual IP fallback',
-          text: 'Use Connect by IP when automatic discovery is blocked. Check the receiver address on Connection diagnostics.',
         ),
         const _HelpItem(
           icon: Icons.refresh,

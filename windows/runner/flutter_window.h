@@ -5,12 +5,15 @@
 #include <flutter/flutter_view_controller.h>
 #include <flutter/method_channel.h>
 #include <flutter/standard_method_codec.h>
+#include <oleidl.h>
 
 #include <memory>
 #include <string>
 #include <vector>
 
 #include "win32_window.h"
+
+class FileDropTarget;
 
 // A window that does nothing but host a Flutter view.
 class FlutterWindow : public Win32Window {
@@ -28,6 +31,8 @@ class FlutterWindow : public Win32Window {
                          LPARAM const lparam) noexcept override;
 
  private:
+  friend class FileDropTarget;
+  void SetFileDropHover(bool hovering);
   void QueueDroppedFiles(std::vector<std::string> paths);
   void FlushPendingDroppedFiles();
 
@@ -37,9 +42,13 @@ class FlutterWindow : public Win32Window {
   // The Flutter instance hosted by this window.
   std::unique_ptr<flutter::FlutterViewController> flutter_controller_;
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> tray_channel_;
+  FileDropTarget* file_drop_target_ = nullptr;
   std::vector<std::string> pending_dropped_files_;
   bool dart_ready_for_drops_ = false;
   bool drop_delivery_in_flight_ = false;
+  bool drop_target_registered_on_view_ = false;
+  bool child_drop_subclassed_ = false;
+  bool file_drop_hover_ = false;
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_

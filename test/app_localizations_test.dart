@@ -42,6 +42,35 @@ void main() {
     );
   });
 
+  test("Nearby drop and What's New copy translate to Arabic", () {
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Devices running Bifrost on this local network will appear here.',
+      ),
+      'ستظهر هنا الأجهزة التي تستخدم بايفروست على هذه الشبكة المحلية.',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Release to add files to the transfer list',
+      ),
+      'أفلِت لإضافة الملفات إلى قائمة النقل',
+    );
+    expect(AppLocalizations.translateFor('ar', "What's New?"), 'ما الجديد؟');
+    expect(
+      AppLocalizations.translateFor('ar', 'Highlights for version 0.14.9+47'),
+      'أبرز الإضافات في الإصدار 0.14.9+47',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Tap the Bifrost mark in Nearby to cycle themes.',
+      ),
+      'اضغط على شعار بايفروست في صفحة الأجهزة القريبة للتبديل بين المظاهر.',
+    );
+  });
+
   test('English locale remains unchanged', () {
     expect(
       AppLocalizations.translateFor('en', 'Welcome to Bifrost'),

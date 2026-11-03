@@ -107,7 +107,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   }
 
   // Initialize COM/OLE for Windows plugins that require an STA apartment.
-  ::OleInitialize(nullptr);
+  const HRESULT ole_initialize_result = ::OleInitialize(nullptr);
+  const bool ole_initialized = SUCCEEDED(ole_initialize_result);
 
   flutter::DartProject project(L"data");
   std::vector<std::string> command_line_arguments = GetCommandLineArguments();
@@ -117,7 +118,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
   if (!window.Create(L"Bifrost", origin, size)) {
-    ::OleUninitialize();
+    if (ole_initialized) ::OleUninitialize();
     ReleaseMutex(single_instance_mutex);
     CloseHandle(single_instance_mutex);
     return EXIT_FAILURE;
@@ -130,7 +131,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     ::DispatchMessage(&msg);
   }
 
-  ::OleUninitialize();
+  if (ole_initialized) ::OleUninitialize();
   ReleaseMutex(single_instance_mutex);
   CloseHandle(single_instance_mutex);
   return EXIT_SUCCESS;

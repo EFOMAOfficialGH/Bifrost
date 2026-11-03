@@ -86,9 +86,15 @@
       "context": "Nearby page heading"
     },
     {
+      "key": "nearby.cycle_theme",
+      "en": "Cycle theme",
+      "ar": "تبديل المظهر",
+      "context": "Tooltip on the Bifrost mark in Nearby"
+    },
+    {
       "key": "nearby.empty_subtitle",
-      "en": "Devices on your local Wi-Fi will appear here.",
-      "ar": "ستظهر هنا الأجهزة المتصلة بشبكة Wi-Fi المحلية.",
+      "en": "Devices running Bifrost on this local network will appear here.",
+      "ar": "ستظهر هنا الأجهزة التي تستخدم بايفروست على هذه الشبكة المحلية.",
       "context": "Nearby empty state"
     },
     {
@@ -152,6 +158,18 @@
       "context": "Windows drag-and-drop prompt; keep quoted button term consistent"
     },
     {
+      "key": "nearby.drop_release",
+      "en": "Release to add files to the transfer list",
+      "ar": "أفلِت لإضافة الملفات إلى قائمة النقل",
+      "context": "Windows drag-hover overlay; avoid the term queue"
+    },
+    {
+      "key": "nearby.discovery_error",
+      "en": "Discovery could not start. Check your network or run connection diagnostics.",
+      "ar": "تعذّر بدء اكتشاف الأجهزة. تحقّق من الشبكة أو شغّل فحص الاتصال.",
+      "context": "Nearby discovery error"
+    },
+    {
       "key": "nearby.press_choose",
       "en": "Press \"Choose\" to start sending files",
       "ar": "اضغط على «اختر» لبدء إرسال الملفات",
@@ -201,8 +219,8 @@
     },
     {
       "key": "nearby.no_devices_idle",
-      "en": "No nearby devices found yet. Try refresh, manual IP, or check the troubleshooting guide.",
-      "ar": "لم يُعثر على أي أجهزة قريبة بعد. جرّب التحديث، أو أدخل عنوان IP يدويًا، أو راجع دليل استكشاف الأخطاء وإصلاحها.",
+      "en": "No nearby devices found yet. Try refresh or check the troubleshooting guide.",
+      "ar": "لم يُعثر على أجهزة قريبة بعد. جرّب التحديث أو راجع دليل استكشاف الأخطاء وإصلاحها.",
       "context": "Nearby empty state"
     },
     {
@@ -363,8 +381,8 @@
     },
     {
       "key": "help.client_isolation_body",
-      "en": "Guest Wi-Fi and some hotspots block devices from talking to each other. Try the main home network or manual IP.",
-      "ar": "قد تمنع شبكات Wi-Fi المخصصة للضيوف وبعض نقاط الاتصال الأجهزة من التواصل فيما بينها. جرّب شبكة المنزل الرئيسية أو الاتصال يدويًا بعنوان IP.",
+      "en": "Guest Wi-Fi and some hotspots block devices from talking to each other. Try the main home network or run connection diagnostics.",
+      "ar": "قد تمنع شبكات Wi-Fi المخصصة للضيوف وبعض نقاط الاتصال الأجهزة من التواصل فيما بينها. جرّب شبكة المنزل الرئيسية أو شغّل فحص الاتصال.",
       "context": "Help instructions"
     },
     {
@@ -696,6 +714,60 @@
       "en": "Download updates without opening GitHub",
       "ar": "نزّل التحديثات دون فتح GitHub",
       "context": "Setting subtitle"
+    },
+    {
+      "key": "settings.whats_new",
+      "en": "What's New?",
+      "ar": "ما الجديد؟",
+      "context": "Settings entry and dialog title"
+    },
+    {
+      "key": "settings.whats_new_version",
+      "en": "Highlights for version {version}",
+      "ar": "أبرز الإضافات في الإصدار {version}",
+      "context": "What's New subtitle; {version} is the app version"
+    },
+    {
+      "key": "whats_new.smooth_progress",
+      "en": "Live transfer progress moves more smoothly.",
+      "ar": "أصبح عرض تقدّم نقل الملفات أكثر سلاسة.",
+      "context": "What's New highlight"
+    },
+    {
+      "key": "whats_new.drop_overlay",
+      "en": "Windows drag-and-drop previews where files will be added.",
+      "ar": "يعرض ويندوز موضع إضافة الملفات عند سحبها إلى بايفروست.",
+      "context": "What's New highlight"
+    },
+    {
+      "key": "whats_new.grid_selection",
+      "en": "Select apps by tapping the whole grid tile.",
+      "ar": "حدّد التطبيقات بالضغط على البطاقة كاملة في عرض الشبكة.",
+      "context": "What's New highlight"
+    },
+    {
+      "key": "whats_new.theme_cycle",
+      "en": "Tap the Bifrost mark in Nearby to cycle themes.",
+      "ar": "اضغط على شعار بايفروست في صفحة الأجهزة القريبة للتبديل بين المظاهر.",
+      "context": "What's New highlight"
+    },
+    {
+      "key": "whats_new.removed_connect_options",
+      "en": "QR and manual IP connection options have been removed.",
+      "ar": "تمت إزالة خياري رمز QR والاتصال اليدوي بعنوان IP.",
+      "context": "What's New highlight"
+    },
+    {
+      "key": "whats_new.arabic_nearby",
+      "en": "Arabic Nearby status text has been improved.",
+      "ar": "تحسّن عرض رسائل حالة الأجهزة القريبة باللغة العربية.",
+      "context": "What's New highlight"
+    },
+    {
+      "key": "common.done",
+      "en": "Done",
+      "ar": "تم",
+      "context": "Dialog dismissal button"
     },
     {
       "key": "settings.share_bifrost",

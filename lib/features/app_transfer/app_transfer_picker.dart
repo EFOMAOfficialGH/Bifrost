@@ -215,61 +215,65 @@ class _AppTransferPickerState extends State<AppTransferPicker> {
     ),
   );
 
-  Widget _buildGridCard(TransferableApp app) => Card(
-    clipBehavior: Clip.antiAlias,
-    child: InkWell(
-      onTap: _preparing ? null : () => _toggleSelected(app),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _appIcon(app, size: 44),
-                const Spacer(),
-                Checkbox(
-                  value: _selected.contains(app.packageName),
-                  onChanged: _preparing ? null : (_) => _toggleSelected(app),
+  Widget _buildGridCard(TransferableApp app) {
+    final selected = _selected.contains(app.packageName);
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: _preparing ? null : () => _toggleSelected(app),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          decoration: BoxDecoration(
+            color: selected
+                ? colors.primary.withValues(alpha: 0.14)
+                : colors.surfaceContainerLow,
+            border: Border.all(
+              color: selected ? colors.primary : colors.outlineVariant,
+              width: selected ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _appIcon(app, size: 56),
+                    const SizedBox(height: 10),
+                    Text(
+                      app.name,
+                      localized: false,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 7),
-            Text(
-              app.name,
-              localized: false,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              app.packageName,
-              localized: false,
-              textDirection: TextDirection.ltr,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const Spacer(),
-            Text(
-              '${AppLocalizations.translate(context, 'APK')} · ${_size(app.apkSizeBytes)}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            Text(
-              'Version ${app.versionName}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
+              ),
+              IgnorePointer(
+                child: AnimatedOpacity(
+                  opacity: selected ? 0.94 : 0,
+                  duration: const Duration(milliseconds: 150),
+                  child: Icon(
+                    Icons.check_circle,
+                    size: 56,
+                    color: colors.primary,
+                    shadows: [Shadow(color: colors.surface, blurRadius: 8)],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

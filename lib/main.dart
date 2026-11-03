@@ -35,7 +35,7 @@ final customThemeColorProvider = StateProvider<Color>(
   (ref) => const Color(0xFF3154B8),
 );
 final textColorProvider = StateProvider<Color?>((ref) => null);
-const bifrostVersion = '0.14.8+46';
+const bifrostVersion = '0.14.9+47';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -495,19 +495,20 @@ class _FirstRunPageState extends ConsumerState<FirstRunPage> {
   );
 }
 
-class BifrostShell extends StatefulWidget {
+class BifrostShell extends ConsumerStatefulWidget {
   const BifrostShell({this.enableDiscovery = true, super.key});
   final bool enableDiscovery;
 
   @override
-  State<BifrostShell> createState() => _BifrostShellState();
+  ConsumerState<BifrostShell> createState() => _BifrostShellState();
 }
 
-class _BifrostShellState extends State<BifrostShell> {
+class _BifrostShellState extends ConsumerState<BifrostShell> {
   int _selectedIndex = 0;
   int _filePickerRequest = 0;
   int _updateCheckRequest = 0;
   bool _startupUpdateChecked = false;
+  bool _fileDropHover = false;
   static const _trayChannel = MethodChannel('bifrost/tray');
 
   @override
@@ -546,6 +547,12 @@ class _BifrostShellState extends State<BifrostShell> {
         setState(() => _selectedIndex = 0);
         SharedFileBridge.instance.addFiles(paths);
         return true;
+      case 'fileDropHover':
+        final hovering = call.arguments == true;
+        if (_fileDropHover != hovering) {
+          setState(() => _fileDropHover = hovering);
+        }
+        return true;
       case 'checkForUpdates':
         setState(() {
           _selectedIndex = 2;
@@ -554,6 +561,16 @@ class _BifrostShellState extends State<BifrostShell> {
         break;
     }
     return true;
+  }
+
+  Future<void> _cycleTheme() async {
+    final themes = AppThemeKind.values;
+    final current = ref.read(appThemeProvider);
+    final next = themes[(themes.indexOf(current) + 1) % themes.length];
+    ref.read(appThemeProvider.notifier).state = next;
+    ref.read(textColorProvider.notifier).state = null;
+    await AppStorage.instance.setThemeChoice(next.name);
+    await AppStorage.instance.clearTextColor();
   }
 
   Future<void> _showWindowsUpdateBalloon() async {
@@ -767,34 +784,89 @@ class _BifrostShellState extends State<BifrostShell> {
       NearbyPage(
         autoDiscover: widget.enableDiscovery,
         filePickerRequest: _filePickerRequest,
+        onThemeCycle: _cycleTheme,
       ),
       const HistoryPage(),
       SettingsPage(checkUpdateRequest: _updateCheckRequest),
     ];
-    return Scaffold(
-      body: SafeArea(
-        child: IndexedStack(index: _selectedIndex, children: pages),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) =>
-            setState(() => _selectedIndex = index),
-        destinations: [
-          NavigationDestination(
-            icon: Icon(Icons.radar),
-            label: AppLocalizations.translate(context, 'Nearby'),
+    return Stack(
+      children: [
+        Scaffold(
+          body: SafeArea(
+            child: IndexedStack(index: _selectedIndex, children: pages),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.history),
-            label: AppLocalizations.translate(context, 'History'),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: (index) =>
+                setState(() => _selectedIndex = index),
+            destinations: [
+              NavigationDestination(
+                icon: const Icon(Icons.radar),
+                label: AppLocalizations.translate(context, 'Nearby'),
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.history),
+                label: AppLocalizations.translate(context, 'History'),
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.settings_outlined),
+                label: AppLocalizations.translate(context, 'Settings'),
+              ),
+            ],
+            backgroundColor: colors.surface,
           ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            label: AppLocalizations.translate(context, 'Settings'),
+        ),
+        if (Platform.isWindows)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: AnimatedOpacity(
+                opacity: _fileDropHover ? 1 : 0,
+                duration: const Duration(milliseconds: 120),
+                child: ColoredBox(
+                  color: colors.scrim.withValues(alpha: 0.38),
+                  child: Center(
+                    child: Container(
+                      margin: const EdgeInsets.all(32),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 28,
+                        vertical: 24,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.surface.withValues(alpha: 0.96),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: colors.primary, width: 2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.24),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.file_download_outlined,
+                            size: 48,
+                            color: colors.primary,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Release to add files to the transfer list',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-        ],
-        backgroundColor: colors.surface,
-      ),
+      ],
     );
   }
 }
@@ -1514,22 +1586,31 @@ class _HistoryPageState extends State<HistoryPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Icon(Icons.sync, size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  record.fileName,
-                  localized: false,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+          TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0, end: record.progress),
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            builder: (context, progress, _) => Column(
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.sync, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        record.fileName,
+                        localized: false,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    Text('${(progress * 100).round()}%'),
+                  ],
                 ),
-              ),
-              Text('${(record.progress * 100).round()}%'),
-            ],
+                const SizedBox(height: 10),
+                LinearProgressIndicator(value: progress),
+              ],
+            ),
           ),
-          const SizedBox(height: 10),
-          LinearProgressIndicator(value: record.progress),
           const SizedBox(height: 6),
           Text('${record.direction} • ${record.peer}'),
           if (record.speedBytesPerSecond > 0)
@@ -1696,6 +1777,28 @@ String _historyTime(DateTime time) {
   final minute = local.minute.toString().padLeft(2, '0');
   final period = local.hour >= 12 ? 'PM' : 'AM';
   return '$hour:$minute $period';
+}
+
+class _WhatsNewItem extends StatelessWidget {
+  const _WhatsNewItem(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 5),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          Icons.check_circle_outline,
+          size: 20,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        const SizedBox(width: 10),
+        Expanded(child: Text(text)),
+      ],
+    ),
+  );
 }
 
 class SettingsPage extends ConsumerStatefulWidget {
@@ -2035,6 +2138,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               ? null
               : _checkForUpdates,
         ),
+        ListTile(
+          leading: const Icon(Icons.new_releases_outlined),
+          title: const Text("What's New?"),
+          subtitle: Text('Highlights for version $bifrostVersion'),
+          trailing: Icon(
+            Directionality.of(context) == TextDirection.rtl
+                ? Icons.chevron_left
+                : Icons.chevron_right,
+          ),
+          onTap: _showWhatsNew,
+        ),
         const Divider(height: 32),
         if (Platform.isAndroid)
           ListTile(
@@ -2328,6 +2442,39 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       if (mounted) setState(() => _checkingForUpdates = false);
     }
   }
+
+  Future<void> _showWhatsNew() => showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text("What's New?"),
+      content: SizedBox(
+        width: 480,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              _WhatsNewItem('Live transfer progress moves more smoothly.'),
+              _WhatsNewItem(
+                'Windows drag-and-drop previews where files will be added.',
+              ),
+              _WhatsNewItem('Select apps by tapping the whole grid tile.'),
+              _WhatsNewItem('Tap the Bifrost mark in Nearby to cycle themes.'),
+              _WhatsNewItem(
+                'QR and manual IP connection options have been removed.',
+              ),
+              _WhatsNewItem('Arabic Nearby status text has been improved.'),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext),
+          child: const Text('Done'),
+        ),
+      ],
+    ),
+  );
 
   Future<void> _downloadAndInstall(BifrostRelease release, String url) async {
     if (!mounted) return;
