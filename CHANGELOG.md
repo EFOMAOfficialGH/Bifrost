@@ -1,3 +1,11 @@
+## 0.15.0+50 — Full-screen Android theme artwork
+
+- Use the supplied Day, Sunset, and Night images as the Android app-wide backgrounds, including startup, rather than limiting them to the splash screen.
+- Keep the existing painter-based themes behind “Lagacy Theme”; disable Custom Color in the new artwork mode and restore it in legacy mode.
+- Fall back to Day if a saved Custom Color theme is encountered with legacy mode off.
+- Refresh “What’s New?” with the current theme changes and translate the Legacy Theme switch copy and highlights into Arabic.
+- Carry the refreshed logo through the Windows runner/taskbar icon and Windows installer icon.
+
 ## 0.14.10+48 — New branding and Android splash themes
 
 - Replace the Bifrost logo across app icons, the Nearby header, and the startup welcome screen.

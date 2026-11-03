@@ -37,7 +37,7 @@ final customThemeColorProvider = StateProvider<Color>(
   (ref) => const Color(0xFF3154B8),
 );
 final textColorProvider = StateProvider<Color?>((ref) => null);
-const bifrostVersion = '0.14.10+48';
+const bifrostVersion = '0.15.0+50';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -180,6 +180,7 @@ class _BifrostAppState extends ConsumerState<BifrostApp>
     final language = ref.watch(appLanguageProvider);
     AppLocalizations.currentLanguageCode = language;
     final kind = ref.watch(appThemeProvider);
+    final legacyTheme = ref.watch(legacyThemeProvider);
     final customColor = ref.watch(customThemeColorProvider);
     final textColor = ref.watch(textColorProvider);
     return MaterialApp(
@@ -202,6 +203,7 @@ class _BifrostAppState extends ConsumerState<BifrostApp>
       builder: (context, child) => ThemeBackdrop(
         kind: kind,
         customColor: customColor,
+        usePhoneArtwork: Platform.isAndroid && !legacyTheme,
         child: child ?? const SizedBox.shrink(),
       ),
       home: BifrostSplash(
@@ -217,13 +219,22 @@ class _BifrostAppState extends ConsumerState<BifrostApp>
     final saved = await AppStorage.instance.themeChoice();
     final legacyTheme = await AppStorage.instance.legacyTheme();
     final custom = await AppStorage.instance.customThemeColor();
-    final text = await AppStorage.instance.textColor();
+    var text = await AppStorage.instance.textColor();
     if (!mounted) return;
     AppLocalizations.currentLanguageCode = language;
     ref.read(appLanguageProvider.notifier).state = language;
-    final kind = AppThemeKind.values
+    var kind = AppThemeKind.values
         .where((item) => item.name == saved)
         .firstOrNull;
+    if (Platform.isAndroid &&
+        !legacyTheme &&
+        kind == AppThemeKind.customColor) {
+      kind = AppThemeKind.day;
+      text = null;
+      await AppStorage.instance.setThemeChoice(kind.name);
+      await AppStorage.instance.clearTextColor();
+      if (!mounted) return;
+    }
     if (kind != null) ref.read(appThemeProvider.notifier).state = kind;
     ref.read(legacyThemeProvider.notifier).state = legacyTheme;
     final customColor = _parseColor(custom);
@@ -259,87 +270,64 @@ class _BifrostSplashState extends State<BifrostSplash> {
   );
 }
 
-class _SplashArtwork extends ConsumerWidget {
+class _SplashArtwork extends StatelessWidget {
   const _SplashArtwork({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = ref.watch(appThemeProvider);
-    final legacyTheme = ref.watch(legacyThemeProvider);
-    final splashAsset = Platform.isAndroid && !legacyTheme
-        ? switch (resolvedThemeKind(theme)) {
-            AppThemeKind.day => 'assets/splash_day.png',
-            AppThemeKind.sunset => 'assets/splash_sunset.png',
-            AppThemeKind.night => 'assets/splash_night.png',
-            _ => null,
-          }
-        : null;
-    return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
+  Widget build(BuildContext context) => Scaffold(
+    body: Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (splashAsset != null)
-            Image.asset(splashAsset, fit: BoxFit.cover)
-          else
-            const SizedBox.expand(),
-          if (splashAsset != null)
-            ColoredBox(color: Colors.black.withValues(alpha: .08)),
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
-                  child: Image.asset(
-                    'assets/icon.png',
-                    width: 112,
-                    height: 112,
-                    fit: BoxFit.cover,
-                  ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(22),
+            child: Image.asset(
+              'assets/icon.png',
+              width: 112,
+              height: 112,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Bifrost',
+            style: TextStyle(
+              fontFamily: 'MisticalSpring',
+              fontSize: 64,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.4,
+              color: Colors.white,
+              shadows: [
+                Shadow(
+                  color: const Color(0xFFFFD54F).withAlpha(210),
+                  blurRadius: 24,
                 ),
-                const SizedBox(height: 24),
-                Text(
-                  'Bifrost',
-                  style: TextStyle(
-                    fontFamily: 'MisticalSpring',
-                    fontSize: 64,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.4,
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(
-                        color: const Color(0xFFFFD54F).withAlpha(210),
-                        blurRadius: 24,
-                      ),
-                      const Shadow(color: Color(0xCCFFB300), blurRadius: 42),
-                    ],
-                  ),
+                const Shadow(color: Color(0xCCFFB300), blurRadius: 42),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Your bridge between worlds',
+            style: TextStyle(
+              fontFamily: 'Helvetica',
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: .3,
+              shadows: [
+                Shadow(
+                  color: const Color(0xFFFFD54F).withAlpha(210),
+                  blurRadius: 12,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Your bridge between worlds',
-                  style: TextStyle(
-                    fontFamily: 'Helvetica',
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: .3,
-                    shadows: [
-                      Shadow(
-                        color: const Color(0xFFFFD54F).withAlpha(210),
-                        blurRadius: 12,
-                      ),
-                      const Shadow(color: Color(0xCCFFB300), blurRadius: 22),
-                    ],
-                  ),
-                ),
+                const Shadow(color: Color(0xCCFFB300), blurRadius: 22),
               ],
             ),
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
 }
 
 class BifrostGate extends StatefulWidget {
@@ -602,7 +590,11 @@ class _BifrostShellState extends ConsumerState<BifrostShell> {
   }
 
   Future<void> _cycleTheme() async {
-    final themes = AppThemeKind.values;
+    final themes = Platform.isAndroid && !ref.read(legacyThemeProvider)
+        ? AppThemeKind.values
+              .where((kind) => kind != AppThemeKind.customColor)
+              .toList(growable: false)
+        : AppThemeKind.values;
     final current = ref.read(appThemeProvider);
     final next = themes[(themes.indexOf(current) + 1) % themes.length];
     ref.read(appThemeProvider.notifier).state = next;
@@ -2250,27 +2242,28 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           title: const Text('Choose a theme'),
           children: [
             for (final kind in AppThemeKind.values)
-              SimpleDialogOption(
-                onPressed: () => Navigator.pop(dialogContext, kind),
-                child: ListTile(
-                  leading: Icon(
-                    kind == AppThemeKind.day
-                        ? Icons.wb_sunny_outlined
-                        : kind == AppThemeKind.sunset
-                        ? Icons.wb_twilight
-                        : Icons.nightlight_outlined,
-                  ),
-                  title: Text(kind.label),
-                  subtitle: Text(kind.description),
-                ),
-              ),
+              _themeOption(dialogContext, kind, legacyTheme: legacyTheme),
             if (Platform.isAndroid) ...[
               const Divider(height: 8),
               SwitchListTile(
                 value: legacyTheme,
                 title: const Text('Lagacy Theme'),
-                subtitle: const Text('Use the current classic theme styling'),
+                subtitle: const Text(
+                  'Turn on for the classic theme style options and the costum color option',
+                ),
                 onChanged: (enabled) {
+                  if (!enabled &&
+                      ref.read(appThemeProvider) == AppThemeKind.customColor) {
+                    ref.read(appThemeProvider.notifier).state =
+                        AppThemeKind.day;
+                    ref.read(textColorProvider.notifier).state = null;
+                    unawaited(
+                      AppStorage.instance.setThemeChoice(
+                        AppThemeKind.day.name,
+                      ),
+                    );
+                    unawaited(AppStorage.instance.clearTextColor());
+                  }
                   setDialogState(() => legacyTheme = enabled);
                   ref.read(legacyThemeProvider.notifier).state = enabled;
                   unawaited(AppStorage.instance.setLegacyTheme(enabled));
@@ -2287,6 +2280,39 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     await AppStorage.instance.setThemeChoice(selected.name);
     await AppStorage.instance.clearTextColor();
     if (selected == AppThemeKind.customColor) await _chooseCustomColor();
+  }
+
+  Widget _themeOption(
+    BuildContext dialogContext,
+    AppThemeKind kind, {
+    required bool legacyTheme,
+  }) {
+    final customUnavailable =
+        Platform.isAndroid &&
+        !legacyTheme &&
+        kind == AppThemeKind.customColor;
+    final icon = switch (kind) {
+      AppThemeKind.day => Icons.wb_sunny_outlined,
+      AppThemeKind.sunset => Icons.wb_twilight,
+      AppThemeKind.night => Icons.nightlight_outlined,
+      AppThemeKind.deviceTime => Icons.schedule_outlined,
+      AppThemeKind.customColor => Icons.palette_outlined,
+    };
+    return SimpleDialogOption(
+      onPressed: customUnavailable
+          ? null
+          : () => Navigator.pop(dialogContext, kind),
+      child: ListTile(
+        enabled: !customUnavailable,
+        leading: Icon(icon),
+        title: Text(kind.label),
+        subtitle: Text(
+          customUnavailable
+              ? 'Available when Lagacy Theme is on'
+              : kind.description,
+        ),
+      ),
+    );
   }
 
   Future<void> _chooseCustomColor() async {
@@ -2533,16 +2559,21 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: const [
-              _WhatsNewItem('Live transfer progress moves more smoothly.'),
               _WhatsNewItem(
-                'Windows drag-and-drop previews where files will be added.',
+                'The updated logo now appears in the Windows app and installer icons.',
               ),
-              _WhatsNewItem('Select apps by tapping the whole grid tile.'),
-              _WhatsNewItem('Tap the Bifrost mark in Nearby to cycle themes.'),
               _WhatsNewItem(
-                'QR and manual IP connection options have been removed.',
+                'Day, Sunset, and Night images now theme the entire Android app, not only startup.',
               ),
-              _WhatsNewItem('Arabic Nearby status text has been improved.'),
+              _WhatsNewItem(
+                'The startup screen now shares the selected app theme background.',
+              ),
+              _WhatsNewItem(
+                'Turn on “Lagacy Theme” for the classic backgrounds and Custom Color option.',
+              ),
+              _WhatsNewItem(
+                'Custom Color is disabled unless “Lagacy Theme” is on.',
+              ),
             ],
           ),
         ),

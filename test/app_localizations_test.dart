@@ -69,6 +69,49 @@ void main() {
       ),
       'اضغط على شعار بايفروست في صفحة الأجهزة القريبة للتبديل بين المظاهر.',
     );
+    expect(
+      AppLocalizations.translateFor('ar', 'Lagacy Theme'),
+      'المظهر الكلاسيكي',
+    );
+    expect(
+      AppLocalizations.translateFor('ar', 'Available when Lagacy Theme is on'),
+      'متاح عند تفعيل «المظهر الكلاسيكي»',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Turn on for the classic theme style options and the costum color option',
+      ),
+      'فعّل هذا الخيار لاستخدام خيارات نمط المظهر الكلاسيكي وخيار اللون المخصص.',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Day, Sunset, and Night images now theme the entire Android app, not only startup.',
+      ),
+      'أصبحت صور النهار والغروب والليل خلفياتٍ لكامل تطبيق أندرويد، وليس لشاشة بدء التشغيل فقط.',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'The updated logo now appears in the Windows app and installer icons.',
+      ),
+      'يظهر الشعار المحدّث الآن في أيقونة تطبيق ويندوز والمُثبّت.',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Custom Color is disabled unless “Lagacy Theme” is on.',
+      ),
+      'يكون خيار اللون المخصص معطّلًا ما لم يتم تفعيل «المظهر الكلاسيكي».',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Turn on “Lagacy Theme” for the classic backgrounds and Custom Color option.',
+      ),
+      'فعّل «المظهر الكلاسيكي» لاستعادة الخلفيات الكلاسيكية وخيار اللون المخصص.',
+    );
   });
 
   test('English locale remains unchanged', () {

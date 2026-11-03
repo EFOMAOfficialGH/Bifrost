@@ -55,9 +55,10 @@ abstract final class AppTheme {
 }
 
 class ThemeBackdrop extends StatefulWidget {
-  const ThemeBackdrop({required this.kind, required this.child, this.customColor, super.key});
+  const ThemeBackdrop({required this.kind, required this.child, this.customColor, this.usePhoneArtwork = false, super.key});
   final AppThemeKind kind;
   final Color? customColor;
+  final bool usePhoneArtwork;
   final Widget child;
   @override State<ThemeBackdrop> createState() => _ThemeBackdropState();
 }
@@ -65,9 +66,31 @@ class ThemeBackdrop extends StatefulWidget {
 class _ThemeBackdropState extends State<ThemeBackdrop> {
   Timer? _clock;
   @override void initState() { super.initState(); _clock = Timer.periodic(const Duration(minutes: 1), (_) { if (mounted && widget.kind == AppThemeKind.deviceTime) setState(() {}); }); }
-  @override void didUpdateWidget(covariant ThemeBackdrop oldWidget) { super.didUpdateWidget(oldWidget); if (oldWidget.kind != widget.kind || oldWidget.customColor != widget.customColor) setState(() {}); }
+  @override void didUpdateWidget(covariant ThemeBackdrop oldWidget) { super.didUpdateWidget(oldWidget); if (oldWidget.kind != widget.kind || oldWidget.customColor != widget.customColor || oldWidget.usePhoneArtwork != widget.usePhoneArtwork) setState(() {}); }
   @override void dispose() { _clock?.cancel(); super.dispose(); }
-  @override Widget build(BuildContext context) => Stack(children: [Positioned.fill(child: CustomPaint(painter: _SkyPainter(widget.kind, widget.customColor))), Positioned.fill(child: widget.child)]);
+  @override
+  Widget build(BuildContext context) {
+    final visualKind = resolvedThemeKind(widget.kind);
+    final artwork = switch (visualKind) {
+      AppThemeKind.day => 'assets/splash_day.png',
+      AppThemeKind.sunset => 'assets/splash_sunset.png',
+      AppThemeKind.night => 'assets/splash_night.png',
+      AppThemeKind.deviceTime || AppThemeKind.customColor =>
+        'assets/splash_day.png',
+    };
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: widget.usePhoneArtwork
+              ? Image.asset(artwork, fit: BoxFit.cover)
+              : CustomPaint(
+                  painter: _SkyPainter(widget.kind, widget.customColor),
+                ),
+        ),
+        Positioned.fill(child: widget.child),
+      ],
+    );
+  }
 }
 
 class _SkyPainter extends CustomPainter {
