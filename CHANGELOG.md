@@ -1,3 +1,10 @@
+## 0.15.1+51 — Sunset contrast and Device Time default
+
+- Use black panels and white text for Sunset only in the new Android artwork mode; keep classic Sunset unchanged in “Lagacy Theme”.
+- Default brand-new installs to Device Time while preserving saved theme choices for existing users.
+- Make the Settings glass background slightly more transparent.
+- Refresh “What’s New?” and add Arabic translations for the release highlights.
+
 ## 0.15.0+50 — Full-screen Android theme artwork
 
 - Use the supplied Day, Sunset, and Night images as the Android app-wide backgrounds, including startup, rather than limiting them to the splash screen.

@@ -33,10 +33,21 @@ AppThemeKind resolvedThemeKind(AppThemeKind kind, [DateTime? now]) {
 abstract final class AppTheme {
   static const _seed = Color(0xFF008F72);
 
-  static ThemeData forKind(AppThemeKind kind, {Color? customColor, Color? textColor}) {
+  static ThemeData forKind(
+    AppThemeKind kind, {
+    Color? customColor,
+    Color? textColor,
+    bool darkenSunset = false,
+  }) {
     final visualKind = resolvedThemeKind(kind);
     final seed = kind == AppThemeKind.customColor && customColor != null ? customColor : _seed;
-    final brightness = visualKind == AppThemeKind.night || (kind == AppThemeKind.customColor && customColor != null && HSLColor.fromColor(customColor).lightness < .38) ? Brightness.dark : Brightness.light;
+    final brightness = visualKind == AppThemeKind.night ||
+            (darkenSunset && visualKind == AppThemeKind.sunset) ||
+            (kind == AppThemeKind.customColor &&
+                customColor != null &&
+                HSLColor.fromColor(customColor).lightness < .38)
+        ? Brightness.dark
+        : Brightness.light;
     final preferredText = textColor ?? (brightness == Brightness.dark ? Colors.white : Colors.black87);
     final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness).copyWith(tertiary: const Color(0xFF00BFA5), onSurface: preferredText, onSurfaceVariant: preferredText.withAlpha(190));
     final panel = (brightness == Brightness.dark ? Colors.black : Colors.white).withAlpha(190);

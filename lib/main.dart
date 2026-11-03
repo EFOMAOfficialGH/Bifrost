@@ -27,7 +27,8 @@ import 'core/platform/shared_file_bridge.dart';
 import 'core/platform/windows_startup_service.dart';
 import 'core/updates/update_service.dart';
 
-final appThemeProvider = StateProvider<AppThemeKind>((ref) => AppThemeKind.day);
+final appThemeProvider =
+    StateProvider<AppThemeKind>((ref) => AppThemeKind.deviceTime);
 final legacyThemeProvider = StateProvider<bool>((ref) => false);
 final appLanguageProvider = StateProvider<String>((ref) => 'en');
 final deviceNameProvider = StateProvider<String>(
@@ -37,7 +38,7 @@ final customThemeColorProvider = StateProvider<Color>(
   (ref) => const Color(0xFF3154B8),
 );
 final textColorProvider = StateProvider<Color?>((ref) => null);
-const bifrostVersion = '0.15.0+50';
+const bifrostVersion = '0.15.1+51';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -119,11 +120,17 @@ class _BifrostAppState extends ConsumerState<BifrostApp>
     with WidgetsBindingObserver {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   String? _readyPromptShownFor;
+  Timer? _themeRefreshTimer;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _themeRefreshTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted && ref.read(appThemeProvider) == AppThemeKind.deviceTime) {
+        setState(() {});
+      }
+    });
     TransferNotifications.instance.onUpdateNotificationTapped =
         _openLatestCachedUpdate;
     _loadAppearance();
@@ -135,6 +142,7 @@ class _BifrostAppState extends ConsumerState<BifrostApp>
 
   @override
   void dispose() {
+    _themeRefreshTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -142,6 +150,9 @@ class _BifrostAppState extends ConsumerState<BifrostApp>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      if (ref.read(appThemeProvider) == AppThemeKind.deviceTime) {
+        setState(() {});
+      }
       _checkForReadyCachedUpdate();
     }
   }
@@ -198,6 +209,7 @@ class _BifrostAppState extends ConsumerState<BifrostApp>
         kind,
         customColor: customColor,
         textColor: textColor,
+        darkenSunset: Platform.isAndroid && !legacyTheme,
       ),
       themeMode: ThemeMode.light,
       builder: (context, child) => ThemeBackdrop(
@@ -1849,8 +1861,8 @@ class _SettingsGlassSurface extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final glassColor = Color.alphaBlend(
-      Colors.black.withValues(alpha: .08),
-      colors.surface.withValues(alpha: .82),
+      Colors.black.withValues(alpha: .06),
+      colors.surface.withValues(alpha: .75),
     );
     return ClipRect(
       child: BackdropFilter(
@@ -2560,19 +2572,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             mainAxisSize: MainAxisSize.min,
             children: const [
               _WhatsNewItem(
-                'The updated logo now appears in the Windows app and installer icons.',
+                'New installs now start with Device Time.',
               ),
               _WhatsNewItem(
-                'Day, Sunset, and Night images now theme the entire Android app, not only startup.',
+                'In the new Android themes, Sunset uses dark menus and white text like Night.',
               ),
               _WhatsNewItem(
-                'The startup screen now shares the selected app theme background.',
+                'Legacy Sunset keeps its classic styling.',
               ),
               _WhatsNewItem(
-                'Turn on “Lagacy Theme” for the classic backgrounds and Custom Color option.',
-              ),
-              _WhatsNewItem(
-                'Custom Color is disabled unless “Lagacy Theme” is on.',
+                'The Settings background is slightly more transparent.',
               ),
             ],
           ),

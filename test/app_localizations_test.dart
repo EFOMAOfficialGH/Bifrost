@@ -112,6 +112,34 @@ void main() {
       ),
       'فعّل «المظهر الكلاسيكي» لاستعادة الخلفيات الكلاسيكية وخيار اللون المخصص.',
     );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'New installs now start with Device Time.',
+      ),
+      'تبدأ التثبيتات الجديدة الآن بمظهر وقت الجهاز.',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'In the new Android themes, Sunset uses dark menus and white text like Night.',
+      ),
+      'في المظاهر الجديدة على أندرويد، يستخدم الغروب قوائم داكنة ونصوصًا بيضاء مثل مظهر الليل.',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Legacy Sunset keeps its classic styling.',
+      ),
+      'يحافظ مظهر الغروب الكلاسيكي على تصميمه كما كان.',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'The Settings background is slightly more transparent.',
+      ),
+      'أصبحت خلفية الإعدادات أكثر شفافية قليلًا.',
+    );
   });
 
   test('English locale remains unchanged', () {

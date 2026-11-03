@@ -794,6 +794,30 @@
       "context": "What's New highlight"
     },
     {
+      "key": "whats_new.device_time_default",
+      "en": "New installs now start with Device Time.",
+      "ar": "تبدأ التثبيتات الجديدة الآن بمظهر وقت الجهاز.",
+      "context": "What's New highlight"
+    },
+    {
+      "key": "whats_new.sunset_dark_chrome",
+      "en": "In the new Android themes, Sunset uses dark menus and white text like Night.",
+      "ar": "في المظاهر الجديدة على أندرويد، يستخدم الغروب قوائم داكنة ونصوصًا بيضاء مثل مظهر الليل.",
+      "context": "What's New highlight"
+    },
+    {
+      "key": "whats_new.legacy_sunset_unchanged",
+      "en": "Legacy Sunset keeps its classic styling.",
+      "ar": "يحافظ مظهر الغروب الكلاسيكي على تصميمه كما كان.",
+      "context": "What's New highlight"
+    },
+    {
+      "key": "whats_new.settings_transparency",
+      "en": "The Settings background is slightly more transparent.",
+      "ar": "أصبحت خلفية الإعدادات أكثر شفافية قليلًا.",
+      "context": "What's New highlight"
+    },
+    {
       "key": "common.done",
       "en": "Done",
       "ar": "تم",

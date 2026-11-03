@@ -3,6 +3,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:bifrost/core/theme/app_theme.dart';
 
 void main() {
+  group('AppTheme', () {
+    test('darkens Sunset only when requested by the new theme mode', () {
+      final classicSunset = AppTheme.forKind(AppThemeKind.sunset);
+      final artworkSunset = AppTheme.forKind(
+        AppThemeKind.sunset,
+        darkenSunset: true,
+      );
+
+      expect(classicSunset.colorScheme.brightness, Brightness.light);
+      expect(classicSunset.colorScheme.onSurface, Colors.black87);
+      expect(artworkSunset.colorScheme.brightness, Brightness.dark);
+      expect(artworkSunset.colorScheme.onSurface, Colors.white);
+    });
+  });
+
   group('ThemeBackdrop', () {
     testWidgets('uses the selected artwork as its full-screen background', (
       tester,

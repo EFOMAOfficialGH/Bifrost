@@ -198,7 +198,7 @@ class AppStorage {
   Future<void> setAutomaticUpdateChecks(bool enabled) async =>
       (await _preferences).setBool('automaticUpdateChecks', enabled);
   Future<String> themeChoice() async =>
-      (await _preferences).getString('themeChoice') ?? 'day';
+      (await _preferences).getString('themeChoice') ?? 'deviceTime';
   Future<void> setThemeChoice(String choice) async =>
       (await _preferences).setString('themeChoice', choice);
   Future<bool> legacyTheme() async =>

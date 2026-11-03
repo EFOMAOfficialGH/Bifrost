@@ -2,9 +2,9 @@
 
 Bifrost is a private, local-network file-sharing app for **Android and Windows**. It transfers files directly between nearby devices without accounts, cloud storage, ads, telemetry, or an internet connection for core transfers.
 
-> **Current version: v0.15.0+50**
+> **Current version: v0.15.1+51**
 >
-> Version 0.15.0 carries the refreshed logo through the Windows app and installer icons, and uses the supplied Day, Sunset, and Night artwork as full-screen Android themes. “Lagacy Theme” restores the classic backgrounds and Custom Color option.
+> Version 0.15.1 keeps Sunset's classic style in “Lagacy Theme”, gives the new Android Sunset theme dark menus with white text, defaults fresh installs to Device Time, and makes the Settings glass more transparent. The supplied artwork remains the full-screen Android theme background, and the refreshed logo is used for Windows app and installer icons.
 
 ## Highlights
 
@@ -194,21 +194,21 @@ They build and publish releases automatically.
 The workflows read the version from `pubspec.yaml`:
 
 ```yaml
-version: 0.15.0+50
+version: 0.15.1+51
 ```
 
 When the versioned source is pushed to `main`, the workflows automatically create or update:
 
 ```text
-Bifrost v0.15.0+50
+Bifrost v0.15.1+51
 ```
 
 The release receives assets similar to:
 
 ```text
-Bifrost-Android-0.15.0+50.apk
-Bifrost-Windows-0.15.0+50.exe
-Bifrost-Windows-0.15.0+50-portable.zip
+Bifrost-Android-0.15.1+51.apk
+Bifrost-Windows-0.15.1+51.exe
+Bifrost-Windows-0.15.1+51-portable.zip
 ```
 
 The Windows workflow builds and uploads its packages first. The Android workflow then downloads those matching packages, embeds the Windows installer into the APK, and publishes the Android APK, Windows installer, and Windows portable ZIP together with the release notes.

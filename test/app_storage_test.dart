@@ -12,6 +12,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final storage = AppStorage.instance;
 
+    expect(await storage.themeChoice(), 'deviceTime');
     expect(await storage.legacyTheme(), isFalse);
     await storage.setLegacyTheme(true);
     expect(await storage.legacyTheme(), isTrue);
