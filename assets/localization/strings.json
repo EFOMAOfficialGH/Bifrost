@@ -801,7 +801,7 @@
     },
     {
       "key": "whats_new.windows_legacy_theme",
-      "en": "Turn on “Lagacy Theme” to restore classic painter themes and Custom Color.",
+      "en": "Turn on “Legacy Theme” to restore classic painter themes and Custom Color.",
       "ar": "فعّل «المظهر الكلاسيكي» لاستعادة السمات المرسومة وخيار اللون المخصص.",
       "context": "What's New highlight"
     },
@@ -809,6 +809,24 @@
       "key": "whats_new.app_picker_three_columns",
       "en": "Installed-app transfer now opens with a 3-column grid on Android.",
       "ar": "تفتح شاشة نقل التطبيقات المثبتة الآن بعرض شبكي من ثلاثة أعمدة على أندرويد.",
+      "context": "What's New highlight"
+    },
+    {
+      "key": "whats_new.legacy_spelling",
+      "en": "Legacy Theme is now spelled correctly throughout the app.",
+      "ar": "تم تصحيح كتابة اسم «المظهر الكلاسيكي» في التطبيق بالكامل.",
+      "context": "What's New highlight"
+    },
+    {
+      "key": "whats_new.windows_file_location",
+      "en": "Windows Open File Location now opens the folder where the file is saved.",
+      "ar": "يفتح خيار فتح موقع الملف في ويندوز الآن المجلد الذي حُفظ فيه الملف.",
+      "context": "What's New highlight"
+    },
+    {
+      "key": "whats_new.android_original_filenames",
+      "en": "Android sharing keeps the original filename when adding files from Files.",
+      "ar": "يحافظ أندرويد على اسم الملف الأصلي عند إضافته من تطبيق الملفات عبر المشاركة.",
       "context": "What's New highlight"
     },
     {
@@ -867,13 +885,13 @@
     },
     {
       "key": "whats_new.legacy_theme_custom_color",
-      "en": "Turn on “Lagacy Theme” for the classic backgrounds and Custom Color option.",
+      "en": "Turn on “Legacy Theme” for the classic backgrounds and Custom Color option.",
       "ar": "فعّل «المظهر الكلاسيكي» لاستعادة الخلفيات الكلاسيكية وخيار اللون المخصص.",
       "context": "What's New highlight"
     },
     {
       "key": "whats_new.custom_color_disabled",
-      "en": "Custom Color is disabled unless “Lagacy Theme” is on.",
+      "en": "Custom Color is disabled unless “Legacy Theme” is on.",
       "ar": "يكون خيار اللون المخصص معطّلًا ما لم يتم تفعيل «المظهر الكلاسيكي».",
       "context": "What's New highlight"
     },
@@ -969,7 +987,7 @@
     },
     {
       "key": "theme.legacy_theme",
-      "en": "Lagacy Theme",
+      "en": "Legacy Theme",
       "ar": "المظهر الكلاسيكي",
       "context": "Android and Windows switch for restoring classic theme styles"
     },
@@ -981,7 +999,7 @@
     },
     {
       "key": "theme.custom_color_legacy_only",
-      "en": "Available when Lagacy Theme is on",
+      "en": "Available when Legacy Theme is on",
       "ar": "متاح عند تفعيل «المظهر الكلاسيكي»",
       "context": "Disabled Custom Color theme option on Android"
     },

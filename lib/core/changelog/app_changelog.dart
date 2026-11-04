@@ -12,6 +12,15 @@ class AppChangelogEntry {
 
 const appChangelogEntries = <AppChangelogEntry>[
   AppChangelogEntry(
+    version: '1.0.1+54',
+    status: 'Android + Windows release',
+    highlights: [
+      'Corrected the Legacy Theme spelling throughout the app.',
+      'Fixed Windows Open File Location to open the folder containing the saved file.',
+      'Preserved original filenames when files are shared to Bifrost on Android.',
+    ],
+  ),
+  AppChangelogEntry(
     version: '1.0.0+53',
     status: 'Android + Windows release',
     highlights: [

@@ -9,6 +9,7 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
+import java.util.UUID
 
 class MainActivity : FlutterActivity() {
     private val sharedFiles = mutableListOf<String>()
@@ -103,8 +104,20 @@ class MainActivity : FlutterActivity() {
     private fun copyToShareCache(uri: Uri): String? {
         return try {
             val originalName = queryDisplayName(uri) ?: "shared-file"
-            val safeName = originalName.replace(Regex("[^a-zA-Z0-9._ -]"), "_").ifBlank { "shared-file" }
-            val target = File(cacheDir, "bifrost-share-${System.currentTimeMillis()}-$safeName")
+            val sanitizedName = originalName
+                .replace(Regex("[\\\\/:*?\"<>|\\p{Cntrl}]"), "_")
+                .trim()
+            val safeName = sanitizedName
+                .takeUnless { it.isBlank() || it == "." || it == ".." }
+                ?: "shared-file"
+            val targetDirectory = File(
+                File(cacheDir, "bifrost-share"),
+                UUID.randomUUID().toString(),
+            )
+            if (!targetDirectory.mkdirs() && !targetDirectory.isDirectory) return null
+            // Keep the display name as the file's basename; isolate each incoming
+            // item in a unique directory so duplicate names never overwrite.
+            val target = File(targetDirectory, safeName)
             contentResolver.openInputStream(uri)?.use { input -> target.outputStream().use { output -> input.copyTo(output) } }
             if (target.exists() && target.length() > 0) target.absolutePath else null
         } catch (_: Exception) {

@@ -24,6 +24,7 @@ import 'core/storage/app_storage.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/localization/localized_text.dart';
 import 'core/platform/shared_file_bridge.dart';
+import 'core/platform/windows_file_location.dart';
 import 'core/platform/windows_startup_service.dart';
 import 'core/updates/update_service.dart';
 import 'core/changelog/app_changelog.dart';
@@ -39,7 +40,7 @@ final customThemeColorProvider = StateProvider<Color>(
   (ref) => const Color(0xFF3154B8),
 );
 final textColorProvider = StateProvider<Color?>((ref) => null);
-const bifrostVersion = '1.0.0+53';
+const bifrostVersion = '1.0.1+54';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -1492,12 +1493,17 @@ class _HistoryPageState extends State<HistoryPage> {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(result.message)));
     } else if (action == 'location' && Platform.isWindows) {
-      final windowsPath = record.path!.replaceAll('/', '\\');
-      final parent = File(windowsPath).parent.path;
-      await Process.run('explorer.exe', ['/select,$windowsPath']);
+      final parent = windowsContainingFolder(record.path!);
+      final result = await Process.run('explorer.exe', [parent]);
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Opened file location: $parent')),
+          SnackBar(
+            content: Text(
+              result.exitCode == 0
+                  ? 'Opened file location: $parent'
+                  : 'Could not open file location: $parent',
+            ),
+          ),
         );
     } else if (action == 'delete') {
       if (record.generatedAppPackage && record.path != null) {
@@ -2277,7 +2283,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               const Divider(height: 8),
               SwitchListTile(
                 value: legacyTheme,
-                title: const Text('Lagacy Theme'),
+                title: const Text('Legacy Theme'),
                 subtitle: const Text(
                   'Turn on to restore classic theme styles and enable Custom Color.',
                 ),
@@ -2338,7 +2344,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         title: Text(kind.label),
         subtitle: Text(
           customUnavailable
-              ? 'Available when Lagacy Theme is on'
+              ? 'Available when Legacy Theme is on'
               : kind.description,
         ),
       ),
@@ -2596,10 +2602,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 'Windows now uses the new full-screen Day, Sunset, and Night artwork themes.',
               ),
               _WhatsNewItem(
-                'Turn on “Lagacy Theme” to restore classic painter themes and Custom Color.',
+                'Legacy Theme is now spelled correctly throughout the app.',
               ),
               _WhatsNewItem(
-                'Installed-app transfer now opens with a 3-column grid on Android.',
+                'Windows Open File Location now opens the folder where the file is saved.',
+              ),
+              _WhatsNewItem(
+                'Android sharing keeps the original filename when adding files from Files.',
               ),
             ],
           ),

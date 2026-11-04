@@ -126,11 +126,11 @@ void main() {
       'اضغط على شعار بايفروست في صفحة الأجهزة القريبة للتبديل بين المظاهر.',
     );
     expect(
-      AppLocalizations.translateFor('ar', 'Lagacy Theme'),
+      AppLocalizations.translateFor('ar', 'Legacy Theme'),
       'المظهر الكلاسيكي',
     );
     expect(
-      AppLocalizations.translateFor('ar', 'Available when Lagacy Theme is on'),
+      AppLocalizations.translateFor('ar', 'Available when Legacy Theme is on'),
       'متاح عند تفعيل «المظهر الكلاسيكي»',
     );
     expect(
@@ -157,14 +157,14 @@ void main() {
     expect(
       AppLocalizations.translateFor(
         'ar',
-        'Custom Color is disabled unless “Lagacy Theme” is on.',
+        'Custom Color is disabled unless “Legacy Theme” is on.',
       ),
       'يكون خيار اللون المخصص معطّلًا ما لم يتم تفعيل «المظهر الكلاسيكي».',
     );
     expect(
       AppLocalizations.translateFor(
         'ar',
-        'Turn on “Lagacy Theme” for the classic backgrounds and Custom Color option.',
+        'Turn on “Legacy Theme” for the classic backgrounds and Custom Color option.',
       ),
       'فعّل «المظهر الكلاسيكي» لاستعادة الخلفيات الكلاسيكية وخيار اللون المخصص.',
     );
@@ -206,7 +206,7 @@ void main() {
     expect(
       AppLocalizations.translateFor(
         'ar',
-        'Turn on “Lagacy Theme” to restore classic painter themes and Custom Color.',
+        'Turn on “Legacy Theme” to restore classic painter themes and Custom Color.',
       ),
       'فعّل «المظهر الكلاسيكي» لاستعادة السمات المرسومة وخيار اللون المخصص.',
     );
@@ -216,6 +216,27 @@ void main() {
         'Installed-app transfer now opens with a 3-column grid on Android.',
       ),
       'تفتح شاشة نقل التطبيقات المثبتة الآن بعرض شبكي من ثلاثة أعمدة على أندرويد.',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Legacy Theme is now spelled correctly throughout the app.',
+      ),
+      'تم تصحيح كتابة اسم «المظهر الكلاسيكي» في التطبيق بالكامل.',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Windows Open File Location now opens the folder where the file is saved.',
+      ),
+      'يفتح خيار فتح موقع الملف في ويندوز الآن المجلد الذي حُفظ فيه الملف.',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Android sharing keeps the original filename when adding files from Files.',
+      ),
+      'يحافظ أندرويد على اسم الملف الأصلي عند إضافته من تطبيق الملفات عبر المشاركة.',
     );
   });
 

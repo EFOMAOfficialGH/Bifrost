@@ -1,7 +1,14 @@
+## 1.0.1+54 — Bug fixes
+
+- Correct the “Legacy Theme” spelling throughout the app and release documentation.
+- Fix Windows History’s **Open File Location** action so it opens the folder containing the received file, including custom save locations and paths with spaces.
+- Preserve original filenames when receiving files through Android’s Files share flow; use isolated cache folders to prevent same-name collisions.
+- Add Windows path handling regression tests and update Arabic What's New translations.
+
 ## 1.0.0+53 — Bifrost 1.0
 
 - Bring the new Day, Sunset, and Night artwork themes to Windows with dedicated landscape backgrounds; Device Time uses the matching desktop artwork.
-- Add the persisted “Lagacy Theme” switch on Windows to restore the classic painter styles and Custom Color option, matching Android behavior.
+- Add the persisted “Legacy Theme” switch on Windows to restore the classic painter styles and Custom Color option, matching Android behavior.
 - Make Sunset menus dark with white text in new artwork mode, while preserving its classic styling in Legacy Theme.
 - Default Android installed-app transfer to a 3-column grid, with Auto and 4-column choices still available.
 - Add regression coverage for desktop backgrounds and the app-picker default; refresh the release notes and Arabic What's New translations.
@@ -14,7 +21,7 @@
 
 ## 0.15.1+51 — Sunset contrast and Device Time default
 
-- Use black panels and white text for Sunset only in the new Android artwork mode; keep classic Sunset unchanged in “Lagacy Theme”.
+- Use black panels and white text for Sunset only in the new Android artwork mode; keep classic Sunset unchanged in “Legacy Theme”.
 - Default brand-new installs to Device Time while preserving saved theme choices for existing users.
 - Make the Settings glass background slightly more transparent.
 - Refresh “What’s New?” and add Arabic translations for the release highlights.
@@ -22,7 +29,7 @@
 ## 0.15.0+50 — Full-screen Android theme artwork
 
 - Use the supplied Day, Sunset, and Night images as the Android app-wide backgrounds, including startup, rather than limiting them to the splash screen.
-- Keep the existing painter-based themes behind “Lagacy Theme”; disable Custom Color in the new artwork mode and restore it in legacy mode.
+- Keep the existing painter-based themes behind “Legacy Theme”; disable Custom Color in the new artwork mode and restore it in legacy mode.
 - Fall back to Day if a saved Custom Color theme is encountered with legacy mode off.
 - Refresh “What’s New?” with the current theme changes and translate the Legacy Theme switch copy and highlights into Arabic.
 - Carry the refreshed logo through the Windows runner/taskbar icon and Windows installer icon.
@@ -30,7 +37,7 @@
 ## 0.14.10+48 — New branding and Android splash themes
 
 - Replace the Bifrost logo across app icons, the Nearby header, and the startup welcome screen.
-- Add Day, Sunset, and Night splash artwork on Android, with a persisted “Lagacy Theme” switch to restore the classic appearance.
+- Add Day, Sunset, and Night splash artwork on Android, with a persisted “Legacy Theme” switch to restore the classic appearance.
 - Add a darker translucent blur treatment behind Settings for improved readability across themes.
 
 ## 0.14.3+41 — App picker and Windows drop fixes

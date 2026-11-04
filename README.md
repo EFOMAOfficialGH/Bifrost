@@ -2,9 +2,9 @@
 
 Bifrost is a private, local-network file-sharing app for **Android and Windows**. It transfers files directly between nearby devices without accounts, cloud storage, ads, telemetry, or an internet connection for core transfers.
 
-> **Current version: v1.0.0+53**
+> **Current version: v1.0.1+54**
 >
-> Bifrost 1.0 brings the Day, Sunset, and Night artwork themes to Windows, adds a Legacy Theme option to restore classic painter themes and Custom Color, and sets Android's installed-app transfer grid to three columns by default.
+> Bifrost 1.0.1 fixes Windows' Open File Location action, preserves original filenames when sharing files from Android's Files app, and corrects the Legacy Theme spelling.
 
 ## Highlights
 
@@ -124,7 +124,7 @@ Bifrost includes these theme options:
 - **Use Device Time** — switches between the illustrated themes based on the clock
 - **Custom Color** — creates a coordinated atmosphere from a selected color
 
-Day, Sunset, and Night use full-screen illustrated backgrounds on Android and Windows; each platform uses artwork sized for its screen orientation. Sunset uses dark menus with white text in the new artwork themes. Select **Lagacy Theme** in the theme chooser to restore the classic painter-based appearance and re-enable Custom Color.
+Day, Sunset, and Night use full-screen illustrated backgrounds on Android and Windows; each platform uses artwork sized for its screen orientation. Sunset uses dark menus with white text in the new artwork themes. Select **Legacy Theme** in the theme chooser to restore the classic painter-based appearance and re-enable Custom Color.
 
 Text color can be configured independently in Settings. The splash screen uses the Bifrost branding, Mistical Spring title font, Helvetica-style subtitle, and warm yellow glow.
 
@@ -196,21 +196,21 @@ They build and publish releases automatically.
 The workflows read the version from `pubspec.yaml`:
 
 ```yaml
-version: 1.0.0+53
+version: 1.0.1+54
 ```
 
 When the versioned source is pushed to `main`, the workflows automatically create or update:
 
 ```text
-Bifrost v1.0.0+53
+Bifrost v1.0.1+54
 ```
 
 The release receives assets similar to:
 
 ```text
-Bifrost-Android-1.0.0+53.apk
-Bifrost-Windows-1.0.0+53.exe
-Bifrost-Windows-1.0.0+53-portable.zip
+Bifrost-Android-1.0.1+54.apk
+Bifrost-Windows-1.0.1+54.exe
+Bifrost-Windows-1.0.1+54-portable.zip
 ```
 
 The Windows workflow builds and uploads its packages first. The Android workflow then downloads those matching packages, embeds the Windows installer into the APK, and publishes the Android APK, Windows installer, and Windows portable ZIP together with the release notes.
