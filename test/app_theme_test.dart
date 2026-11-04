@@ -33,7 +33,7 @@ void main() {
           MaterialApp(
             home: ThemeBackdrop(
               kind: kind,
-              usePhoneArtwork: true,
+              useArtwork: true,
               child: const SizedBox.expand(),
             ),
           ),
@@ -45,6 +45,32 @@ void main() {
       }
     });
 
+    testWidgets('uses supplied landscape artwork for desktop themes', (
+      tester,
+    ) async {
+      const cases = <(AppThemeKind, String)>[
+        (AppThemeKind.day, 'assets/splash_day_pc.png'),
+        (AppThemeKind.sunset, 'assets/splash_sunset_pc.png'),
+        (AppThemeKind.night, 'assets/splash_night_pc.png'),
+      ];
+
+      for (final (kind, asset) in cases) {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: ThemeBackdrop(
+              kind: kind,
+              useArtwork: true,
+              useDesktopArtwork: true,
+              child: const SizedBox.expand(),
+            ),
+          ),
+        );
+
+        final image = tester.widget<Image>(find.byType(Image));
+        expect((image.image as AssetImage).assetName, asset);
+      }
+    });
+
     testWidgets('maps a stale Custom Color to Day artwork in phone mode', (
       tester,
     ) async {
@@ -52,7 +78,7 @@ void main() {
         MaterialApp(
           home: ThemeBackdrop(
             kind: AppThemeKind.customColor,
-            usePhoneArtwork: true,
+            useArtwork: true,
             child: const SizedBox.expand(),
           ),
         ),
@@ -62,6 +88,24 @@ void main() {
       expect((image.image as AssetImage).assetName, 'assets/splash_day.png');
     });
 
+    testWidgets('maps stale Custom Color to Day artwork in desktop mode', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ThemeBackdrop(
+            kind: AppThemeKind.customColor,
+            useArtwork: true,
+            useDesktopArtwork: true,
+            child: const SizedBox.expand(),
+          ),
+        ),
+      );
+
+      final image = tester.widget<Image>(find.byType(Image));
+      expect((image.image as AssetImage).assetName, 'assets/splash_day_pc.png');
+    });
+
     testWidgets('keeps the painter-based background in legacy mode', (
       tester,
     ) async {
@@ -69,7 +113,7 @@ void main() {
         MaterialApp(
           home: ThemeBackdrop(
             kind: AppThemeKind.night,
-            usePhoneArtwork: false,
+            useArtwork: false,
             child: const SizedBox.expand(),
           ),
         ),

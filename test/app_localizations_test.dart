@@ -136,9 +136,9 @@ void main() {
     expect(
       AppLocalizations.translateFor(
         'ar',
-        'Turn on for the classic theme style options and the costum color option',
+        'Turn on to restore classic theme styles and enable Custom Color.',
       ),
-      'فعّل هذا الخيار لاستخدام خيارات نمط المظهر الكلاسيكي وخيار اللون المخصص.',
+      'فعّل هذا الخيار لاستعادة أنماط المظهر الكلاسيكية وتفعيل خيار اللون المخصص.',
     );
     expect(
       AppLocalizations.translateFor(
@@ -195,6 +195,27 @@ void main() {
         'The Settings background is slightly more transparent.',
       ),
       'أصبحت خلفية الإعدادات أكثر شفافية قليلًا.',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Windows now uses the new full-screen Day, Sunset, and Night artwork themes.',
+      ),
+      'يستخدم ويندوز الآن الخلفيات الفنية الجديدة لسمات النهار والغروب والليل على كامل الشاشة.',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Turn on “Lagacy Theme” to restore classic painter themes and Custom Color.',
+      ),
+      'فعّل «المظهر الكلاسيكي» لاستعادة السمات المرسومة وخيار اللون المخصص.',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Installed-app transfer now opens with a 3-column grid on Android.',
+      ),
+      'تفتح شاشة نقل التطبيقات المثبتة الآن بعرض شبكي من ثلاثة أعمدة على أندرويد.',
     );
   });
 

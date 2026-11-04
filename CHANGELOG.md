@@ -1,3 +1,11 @@
+## 1.0.0+53 — Bifrost 1.0
+
+- Bring the new Day, Sunset, and Night artwork themes to Windows with dedicated landscape backgrounds; Device Time uses the matching desktop artwork.
+- Add the persisted “Lagacy Theme” switch on Windows to restore the classic painter styles and Custom Color option, matching Android behavior.
+- Make Sunset menus dark with white text in new artwork mode, while preserving its classic styling in Legacy Theme.
+- Default Android installed-app transfer to a 3-column grid, with Auto and 4-column choices still available.
+- Add regression coverage for desktop backgrounds and the app-picker default; refresh the release notes and Arabic What's New translations.
+
 ## 0.15.2+52 — Searchable build history
 
 - Add an in-app Changelog that covers all 45 earlier versions with at least one successful Android or Windows build.

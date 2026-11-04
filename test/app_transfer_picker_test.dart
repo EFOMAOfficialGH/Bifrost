@@ -93,7 +93,7 @@ void main() {
     expect(find.text('Transfer apps'), findsNothing);
   });
 
-  testWidgets('grid menu provides current, three, and four column choices', (
+  testWidgets('defaults to three columns and keeps other choices', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -108,6 +108,18 @@ void main() {
 
     expect(find.byType(Checkbox), findsNothing);
     expect(find.text('org.example.widget'), findsNothing);
+    expect(
+      tester.widget<PopupMenuButton<int>>(
+        find.byType(PopupMenuButton<int>),
+      ).initialValue,
+      3,
+    );
+    final grid = tester.widget<GridView>(find.byType(GridView));
+    expect(
+      (grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount)
+          .crossAxisCount,
+      3,
+    );
     await tester.tap(find.text('Widget App'));
     await tester.pump();
     expect(find.text('Send 1 selected'), findsOneWidget);
@@ -116,7 +128,7 @@ void main() {
 
     await tester.tap(find.byType(PopupMenuButton<int>));
     await tester.pumpAndSettle();
-    expect(find.text('Auto columns (current)'), findsOneWidget);
+    expect(find.text('Auto columns'), findsOneWidget);
     expect(find.text('3 columns'), findsOneWidget);
     expect(find.text('4 columns'), findsOneWidget);
 

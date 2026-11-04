@@ -66,10 +66,18 @@ abstract final class AppTheme {
 }
 
 class ThemeBackdrop extends StatefulWidget {
-  const ThemeBackdrop({required this.kind, required this.child, this.customColor, this.usePhoneArtwork = false, super.key});
+  const ThemeBackdrop({
+    required this.kind,
+    required this.child,
+    this.customColor,
+    this.useArtwork = false,
+    this.useDesktopArtwork = false,
+    super.key,
+  });
   final AppThemeKind kind;
   final Color? customColor;
-  final bool usePhoneArtwork;
+  final bool useArtwork;
+  final bool useDesktopArtwork;
   final Widget child;
   @override State<ThemeBackdrop> createState() => _ThemeBackdropState();
 }
@@ -77,22 +85,39 @@ class ThemeBackdrop extends StatefulWidget {
 class _ThemeBackdropState extends State<ThemeBackdrop> {
   Timer? _clock;
   @override void initState() { super.initState(); _clock = Timer.periodic(const Duration(minutes: 1), (_) { if (mounted && widget.kind == AppThemeKind.deviceTime) setState(() {}); }); }
-  @override void didUpdateWidget(covariant ThemeBackdrop oldWidget) { super.didUpdateWidget(oldWidget); if (oldWidget.kind != widget.kind || oldWidget.customColor != widget.customColor || oldWidget.usePhoneArtwork != widget.usePhoneArtwork) setState(() {}); }
+  @override
+  void didUpdateWidget(covariant ThemeBackdrop oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.kind != widget.kind ||
+        oldWidget.customColor != widget.customColor ||
+        oldWidget.useArtwork != widget.useArtwork ||
+        oldWidget.useDesktopArtwork != widget.useDesktopArtwork) {
+      setState(() {});
+    }
+  }
   @override void dispose() { _clock?.cancel(); super.dispose(); }
   @override
   Widget build(BuildContext context) {
     final visualKind = resolvedThemeKind(widget.kind);
     final artwork = switch (visualKind) {
-      AppThemeKind.day => 'assets/splash_day.png',
-      AppThemeKind.sunset => 'assets/splash_sunset.png',
-      AppThemeKind.night => 'assets/splash_night.png',
+      AppThemeKind.day => widget.useDesktopArtwork
+          ? 'assets/splash_day_pc.png'
+          : 'assets/splash_day.png',
+      AppThemeKind.sunset => widget.useDesktopArtwork
+          ? 'assets/splash_sunset_pc.png'
+          : 'assets/splash_sunset.png',
+      AppThemeKind.night => widget.useDesktopArtwork
+          ? 'assets/splash_night_pc.png'
+          : 'assets/splash_night.png',
       AppThemeKind.deviceTime || AppThemeKind.customColor =>
-        'assets/splash_day.png',
+        widget.useDesktopArtwork
+            ? 'assets/splash_day_pc.png'
+            : 'assets/splash_day.png',
     };
     return Stack(
       children: [
         Positioned.fill(
-          child: widget.usePhoneArtwork
+          child: widget.useArtwork
               ? Image.asset(artwork, fit: BoxFit.cover)
               : CustomPaint(
                   painter: _SkyPainter(widget.kind, widget.customColor),

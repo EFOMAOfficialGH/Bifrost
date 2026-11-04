@@ -2,9 +2,9 @@
 
 Bifrost is a private, local-network file-sharing app for **Android and Windows**. It transfers files directly between nearby devices without accounts, cloud storage, ads, telemetry, or an internet connection for core transfers.
 
-> **Current version: v0.15.2+52**
+> **Current version: v1.0.0+53**
 >
-> Version 0.15.2 adds a searchable in-app history for all 45 earlier successful build versions, including platform-only and unpublished builds, with platform and publication status labels.
+> Bifrost 1.0 brings the Day, Sunset, and Night artwork themes to Windows, adds a Legacy Theme option to restore classic painter themes and Custom Color, and sets Android's installed-app transfer grid to three columns by default.
 
 ## Highlights
 
@@ -21,7 +21,7 @@ Bifrost is a private, local-network file-sharing app for **Android and Windows**
 - Compact, reorderable transfer queue
 - Windows minimize-to-tray with Send files, Check for updates, and Exit actions
 - Windows launch-at-sign-in, minimized to tray by default and configurable in Settings
-- Adjustable app-picker grid (automatic, 3-column, or 4-column) and list views
+- Android installed-app picker defaults to a 3-column grid, with Auto, 4-column, and list-view alternatives
 - Android Share target integration
 - Personal-use Android app export/import, with All/APK/APK & OBB filters and optional OBB confirmation
 - Accept or decline incoming transfers
@@ -124,6 +124,8 @@ Bifrost includes these theme options:
 - **Use Device Time** — switches between the illustrated themes based on the clock
 - **Custom Color** — creates a coordinated atmosphere from a selected color
 
+Day, Sunset, and Night use full-screen illustrated backgrounds on Android and Windows; each platform uses artwork sized for its screen orientation. Sunset uses dark menus with white text in the new artwork themes. Select **Lagacy Theme** in the theme chooser to restore the classic painter-based appearance and re-enable Custom Color.
+
 Text color can be configured independently in Settings. The splash screen uses the Bifrost branding, Mistical Spring title font, Helvetica-style subtitle, and warm yellow glow.
 
 The text-color picker includes a color wheel above the existing color suggestions. Choosing a different theme resets text color to the selected theme's automatic default; **Use theme default** also clears any saved custom text color.
@@ -194,21 +196,21 @@ They build and publish releases automatically.
 The workflows read the version from `pubspec.yaml`:
 
 ```yaml
-version: 0.15.2+52
+version: 1.0.0+53
 ```
 
 When the versioned source is pushed to `main`, the workflows automatically create or update:
 
 ```text
-Bifrost v0.15.2+52
+Bifrost v1.0.0+53
 ```
 
 The release receives assets similar to:
 
 ```text
-Bifrost-Android-0.15.2+52.apk
-Bifrost-Windows-0.15.2+52.exe
-Bifrost-Windows-0.15.2+52-portable.zip
+Bifrost-Android-1.0.0+53.apk
+Bifrost-Windows-1.0.0+53.exe
+Bifrost-Windows-1.0.0+53-portable.zip
 ```
 
 The Windows workflow builds and uploads its packages first. The Android workflow then downloads those matching packages, embeds the Windows installer into the APK, and publishes the Android APK, Windows installer, and Windows portable ZIP together with the release notes.

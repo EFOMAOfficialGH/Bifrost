@@ -25,7 +25,7 @@ class _AppTransferPickerState extends State<AppTransferPicker> {
   final Set<String> _selected = {};
   bool _loading = true;
   bool _gridView = true;
-  int _gridColumns = 0;
+  int _gridColumns = 3;
   bool _preparing = false;
   String? _error;
   String _query = '';
@@ -303,7 +303,7 @@ class _AppTransferPickerState extends State<AppTransferPicker> {
               initialValue: _gridColumns,
               onSelected: (value) => setState(() => _gridColumns = value),
               itemBuilder: (context) => const [
-                PopupMenuItem(value: 0, child: Text('Auto columns (current)')),
+                PopupMenuItem(value: 0, child: Text('Auto columns')),
                 PopupMenuItem(value: 3, child: Text('3 columns')),
                 PopupMenuItem(value: 4, child: Text('4 columns')),
               ],

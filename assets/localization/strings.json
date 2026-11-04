@@ -794,6 +794,24 @@
       "context": "What's New highlight"
     },
     {
+      "key": "whats_new.windows_theme_artwork",
+      "en": "Windows now uses the new full-screen Day, Sunset, and Night artwork themes.",
+      "ar": "يستخدم ويندوز الآن الخلفيات الفنية الجديدة لسمات النهار والغروب والليل على كامل الشاشة.",
+      "context": "What's New highlight"
+    },
+    {
+      "key": "whats_new.windows_legacy_theme",
+      "en": "Turn on “Lagacy Theme” to restore classic painter themes and Custom Color.",
+      "ar": "فعّل «المظهر الكلاسيكي» لاستعادة السمات المرسومة وخيار اللون المخصص.",
+      "context": "What's New highlight"
+    },
+    {
+      "key": "whats_new.app_picker_three_columns",
+      "en": "Installed-app transfer now opens with a 3-column grid on Android.",
+      "ar": "تفتح شاشة نقل التطبيقات المثبتة الآن بعرض شبكي من ثلاثة أعمدة على أندرويد.",
+      "context": "What's New highlight"
+    },
+    {
       "key": "whats_new.smooth_progress",
       "en": "Live transfer progress moves more smoothly.",
       "ar": "أصبح عرض تقدّم نقل الملفات أكثر سلاسة.",
@@ -953,13 +971,13 @@
       "key": "theme.legacy_theme",
       "en": "Lagacy Theme",
       "ar": "المظهر الكلاسيكي",
-      "context": "Android switch for restoring the classic theme style options"
+      "context": "Android and Windows switch for restoring classic theme styles"
     },
     {
       "key": "theme.legacy_description",
-      "en": "Turn on for the classic theme style options and the costum color option",
-      "ar": "فعّل هذا الخيار لاستخدام خيارات نمط المظهر الكلاسيكي وخيار اللون المخصص.",
-      "context": "Android Legacy Theme switch description"
+      "en": "Turn on to restore classic theme styles and enable Custom Color.",
+      "ar": "فعّل هذا الخيار لاستعادة أنماط المظهر الكلاسيكية وتفعيل خيار اللون المخصص.",
+      "context": "Android and Windows Legacy Theme switch description"
     },
     {
       "key": "theme.custom_color_legacy_only",

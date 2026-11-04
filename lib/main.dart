@@ -39,7 +39,7 @@ final customThemeColorProvider = StateProvider<Color>(
   (ref) => const Color(0xFF3154B8),
 );
 final textColorProvider = StateProvider<Color?>((ref) => null);
-const bifrostVersion = '0.15.2+52';
+const bifrostVersion = '1.0.0+53';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -195,6 +195,8 @@ class _BifrostAppState extends ConsumerState<BifrostApp>
     final legacyTheme = ref.watch(legacyThemeProvider);
     final customColor = ref.watch(customThemeColorProvider);
     final textColor = ref.watch(textColorProvider);
+    final useThemeArtwork =
+        (Platform.isAndroid || Platform.isWindows) && !legacyTheme;
     return MaterialApp(
       navigatorKey: _navigatorKey,
       title: language == 'ar' ? 'بايفروست' : 'Bifrost',
@@ -210,13 +212,14 @@ class _BifrostAppState extends ConsumerState<BifrostApp>
         kind,
         customColor: customColor,
         textColor: textColor,
-        darkenSunset: Platform.isAndroid && !legacyTheme,
+        darkenSunset: useThemeArtwork,
       ),
       themeMode: ThemeMode.light,
       builder: (context, child) => ThemeBackdrop(
         kind: kind,
         customColor: customColor,
-        usePhoneArtwork: Platform.isAndroid && !legacyTheme,
+        useArtwork: useThemeArtwork,
+        useDesktopArtwork: Platform.isWindows,
         child: child ?? const SizedBox.shrink(),
       ),
       home: BifrostSplash(
@@ -239,7 +242,7 @@ class _BifrostAppState extends ConsumerState<BifrostApp>
     var kind = AppThemeKind.values
         .where((item) => item.name == saved)
         .firstOrNull;
-    if (Platform.isAndroid &&
+    if ((Platform.isAndroid || Platform.isWindows) &&
         !legacyTheme &&
         kind == AppThemeKind.customColor) {
       kind = AppThemeKind.day;
@@ -603,7 +606,10 @@ class _BifrostShellState extends ConsumerState<BifrostShell> {
   }
 
   Future<void> _cycleTheme() async {
-    final themes = Platform.isAndroid && !ref.read(legacyThemeProvider)
+    final usesArtworkThemes =
+        (Platform.isAndroid || Platform.isWindows) &&
+        !ref.read(legacyThemeProvider);
+    final themes = usesArtworkThemes
         ? AppThemeKind.values
               .where((kind) => kind != AppThemeKind.customColor)
               .toList(growable: false)
@@ -2267,13 +2273,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           children: [
             for (final kind in AppThemeKind.values)
               _themeOption(dialogContext, kind, legacyTheme: legacyTheme),
-            if (Platform.isAndroid) ...[
+            if (Platform.isAndroid || Platform.isWindows) ...[
               const Divider(height: 8),
               SwitchListTile(
                 value: legacyTheme,
                 title: const Text('Lagacy Theme'),
                 subtitle: const Text(
-                  'Turn on for the classic theme style options and the costum color option',
+                  'Turn on to restore classic theme styles and enable Custom Color.',
                 ),
                 onChanged: (enabled) {
                   if (!enabled &&
@@ -2312,7 +2318,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     required bool legacyTheme,
   }) {
     final customUnavailable =
-        Platform.isAndroid &&
+        (Platform.isAndroid || Platform.isWindows) &&
         !legacyTheme &&
         kind == AppThemeKind.customColor;
     final icon = switch (kind) {
@@ -2587,7 +2593,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 'Search the full history of successful builds by version or feature.',
               ),
               _WhatsNewItem(
-                'See platform coverage and whether each build was published.',
+                'Windows now uses the new full-screen Day, Sunset, and Night artwork themes.',
+              ),
+              _WhatsNewItem(
+                'Turn on “Lagacy Theme” to restore classic painter themes and Custom Color.',
+              ),
+              _WhatsNewItem(
+                'Installed-app transfer now opens with a 3-column grid on Android.',
               ),
             ],
           ),

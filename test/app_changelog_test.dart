@@ -3,6 +3,7 @@ import 'package:bifrost/core/changelog/app_changelog.dart';
 
 void main() {
   const expectedVersions = <String>[
+    '1.0.0+53',
     '0.15.2+52',
     '0.15.1+51',
     '0.15.0+50',

@@ -12,6 +12,16 @@ class AppChangelogEntry {
 
 const appChangelogEntries = <AppChangelogEntry>[
   AppChangelogEntry(
+    version: '1.0.0+53',
+    status: 'Android + Windows release',
+    highlights: [
+      'Added full-screen Day, Sunset, and Night artwork themes to Windows.',
+      'Added the Windows Legacy Theme switch to restore classic painter themes and Custom Color.',
+      'Made Sunset menus dark in artwork mode while preserving classic Sunset in Legacy Theme.',
+      'Set Android installed-app transfer to use a 3-column grid by default.',
+    ],
+  ),
+  AppChangelogEntry(
     version: '0.15.2+52',
     status: 'Android + Windows release',
     highlights: [
