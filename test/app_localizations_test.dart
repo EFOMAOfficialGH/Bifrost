@@ -62,6 +62,62 @@ void main() {
       AppLocalizations.translateFor('ar', 'Highlights for version 0.14.9+47'),
       'أبرز الإضافات في الإصدار 0.14.9+47',
     );
+    expect(AppLocalizations.translateFor('ar', 'Changelog'), 'سجل التغييرات');
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'All successful builds and their features',
+      ),
+      'جميع الإصدارات المبنية بنجاح وميزاتها',
+    );
+    expect(
+      AppLocalizations.translateFor('ar', 'Filter versions or features'),
+      'ابحث عن إصدار أو ميزة',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'No build versions match your search.',
+      ),
+      'لا توجد إصدارات بناء تطابق بحثك.',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Android + Windows build only (not published)',
+      ),
+      'بناء ناجح لأندرويد وويندوز (غير منشور)',
+    );
+    expect(
+      AppLocalizations.translateFor('ar', 'Android + Windows release'),
+      'إصدار أندرويد وويندوز',
+    );
+    expect(
+      AppLocalizations.translateFor('ar', 'Android + Windows pre-release'),
+      'إصدار تجريبي لأندرويد وويندوز',
+    );
+    expect(
+      AppLocalizations.translateFor('ar', 'Windows-only build (not published)'),
+      'بناء ويندوز فقط (غير منشور)',
+    );
+    expect(
+      AppLocalizations.translateFor('ar', 'Android-only build (not published)'),
+      'بناء أندرويد فقط (غير منشور)',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'Search the full history of successful builds by version or feature.',
+      ),
+      'ابحث في سجل كل عمليات البناء الناجحة حسب الإصدار أو الميزة.',
+    );
+    expect(
+      AppLocalizations.translateFor(
+        'ar',
+        'See platform coverage and whether each build was published.',
+      ),
+      'اطّلع على المنصات التي نجح بناؤها وما إذا كان كل إصدار قد نُشر.',
+    );
     expect(
       AppLocalizations.translateFor(
         'ar',

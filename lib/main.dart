@@ -26,6 +26,7 @@ import 'core/localization/localized_text.dart';
 import 'core/platform/shared_file_bridge.dart';
 import 'core/platform/windows_startup_service.dart';
 import 'core/updates/update_service.dart';
+import 'core/changelog/app_changelog.dart';
 
 final appThemeProvider =
     StateProvider<AppThemeKind>((ref) => AppThemeKind.deviceTime);
@@ -38,7 +39,7 @@ final customThemeColorProvider = StateProvider<Color>(
   (ref) => const Color(0xFF3154B8),
 );
 final textColorProvider = StateProvider<Color?>((ref) => null);
-const bifrostVersion = '0.15.1+51';
+const bifrostVersion = '0.15.2+52';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -2217,6 +2218,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ),
           onTap: _showWhatsNew,
         ),
+        ListTile(
+          leading: const Icon(Icons.history_outlined),
+          title: const Text('Changelog'),
+          subtitle: const Text('All successful builds and their features'),
+          trailing: Icon(
+            Directionality.of(context) == TextDirection.rtl
+                ? Icons.chevron_left
+                : Icons.chevron_right,
+          ),
+          onTap: _showChangelog,
+        ),
         const Divider(height: 32),
         if (Platform.isAndroid)
           ListTile(
@@ -2572,16 +2584,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             mainAxisSize: MainAxisSize.min,
             children: const [
               _WhatsNewItem(
-                'New installs now start with Device Time.',
+                'Search the full history of successful builds by version or feature.',
               ),
               _WhatsNewItem(
-                'In the new Android themes, Sunset uses dark menus and white text like Night.',
-              ),
-              _WhatsNewItem(
-                'Legacy Sunset keeps its classic styling.',
-              ),
-              _WhatsNewItem(
-                'The Settings background is slightly more transparent.',
+                'See platform coverage and whether each build was published.',
               ),
             ],
           ),
@@ -2595,6 +2601,125 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ],
     ),
   );
+
+  Future<void> _showChangelog() async {
+    final searchController = TextEditingController();
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            final query = searchController.text.trim().toLowerCase();
+            final visibleEntries = appChangelogEntries.where((entry) {
+              if (query.isEmpty ||
+                  entry.version.toLowerCase().contains(query) ||
+                  entry.status.toLowerCase().contains(query)) {
+                return true;
+              }
+              return entry.highlights.any(
+                (highlight) => highlight.toLowerCase().contains(query),
+              );
+            }).toList(growable: false);
+
+            return AlertDialog(
+              title: const Text('Changelog'),
+              content: SizedBox(
+                width: 520,
+                height: MediaQuery.sizeOf(dialogContext).height * 0.55,
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: searchController,
+                      onChanged: (_) => setDialogState(() {}),
+                      decoration: InputDecoration(
+                        hintText: AppLocalizations.translate(
+                          dialogContext,
+                          'Filter versions or features',
+                        ),
+                        prefixIcon: const Icon(Icons.search),
+                        border: const OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: visibleEntries.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'No build versions match your search.',
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: visibleEntries.length,
+                              itemBuilder: (context, index) {
+                                final entry = visibleEntries[index];
+                                return Card(
+                                  margin: const EdgeInsets.symmetric(
+                                    vertical: 3,
+                                  ),
+                                  child: ExpansionTile(
+                                    key: ValueKey(entry.version),
+                                    initiallyExpanded:
+                                        index == 0 && query.isEmpty,
+                                    title: Text(
+                                      'Bifrost ${entry.version}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    subtitle: Text(entry.status),
+                                    childrenPadding:
+                                        const EdgeInsets.fromLTRB(16, 0, 16, 14),
+                                    children: [
+                                      for (final highlight in entry.highlights)
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 5,
+                                          ),
+                                          child: Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                  top: 7,
+                                                ),
+                                                child: Icon(
+                                                  Icons.circle,
+                                                  size: 7,
+                                                  color: Theme.of(
+                                                    dialogContext,
+                                                  ).colorScheme.primary,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(child: Text(highlight)),
+                                            ],
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Done'),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+    } finally {
+      searchController.dispose();
+    }
+  }
 
   Future<void> _downloadAndInstall(BifrostRelease release, String url) async {
     if (!mounted) return;

@@ -1,3 +1,9 @@
+## 0.15.2+52 — Searchable build history
+
+- Add an in-app Changelog that covers all 45 earlier versions with at least one successful Android or Windows build.
+- Show platform coverage and whether each build was published; clearly label platform-only, unpublished, and pre-release builds.
+- Add search by version or feature, refresh “What’s New?”, and translate the Changelog UI/status labels into Arabic.
+
 ## 0.15.1+51 — Sunset contrast and Device Time default
 
 - Use black panels and white text for Sunset only in the new Android artwork mode; keep classic Sunset unchanged in “Lagacy Theme”.

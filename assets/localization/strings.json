@@ -728,6 +728,72 @@
       "context": "What's New subtitle; {version} is the app version"
     },
     {
+      "key": "settings.changelog",
+      "en": "Changelog",
+      "ar": "سجل التغييرات",
+      "context": "Settings entry and dialog title"
+    },
+    {
+      "key": "settings.changelog_description",
+      "en": "All successful builds and their features",
+      "ar": "جميع الإصدارات المبنية بنجاح وميزاتها",
+      "context": "Settings entry subtitle"
+    },
+    {
+      "key": "changelog.filter",
+      "en": "Filter versions or features",
+      "ar": "ابحث عن إصدار أو ميزة",
+      "context": "Changelog search placeholder"
+    },
+    {
+      "key": "changelog.no_results",
+      "en": "No build versions match your search.",
+      "ar": "لا توجد إصدارات بناء تطابق بحثك.",
+      "context": "Changelog empty search state"
+    },
+    {
+      "key": "changelog.status.release",
+      "en": "Android + Windows release",
+      "ar": "إصدار أندرويد وويندوز",
+      "context": "Build status label"
+    },
+    {
+      "key": "changelog.status.prerelease",
+      "en": "Android + Windows pre-release",
+      "ar": "إصدار تجريبي لأندرويد وويندوز",
+      "context": "Build status label"
+    },
+    {
+      "key": "changelog.status.unpublished",
+      "en": "Android + Windows build only (not published)",
+      "ar": "بناء ناجح لأندرويد وويندوز (غير منشور)",
+      "context": "Build status label"
+    },
+    {
+      "key": "changelog.status.windows_only",
+      "en": "Windows-only build (not published)",
+      "ar": "بناء ويندوز فقط (غير منشور)",
+      "context": "Build status label"
+    },
+    {
+      "key": "changelog.status.android_only",
+      "en": "Android-only build (not published)",
+      "ar": "بناء أندرويد فقط (غير منشور)",
+      "context": "Build status label"
+    },
+    {
+      "key": "whats_new.changelog_search",
+      "en": "Search the full history of successful builds by version or feature.",
+      "ar": "ابحث في سجل كل عمليات البناء الناجحة حسب الإصدار أو الميزة.",
+      "context": "What's New highlight"
+    },
+    {
+      "key": "whats_new.changelog_status",
+      "en": "See platform coverage and whether each build was published.",
+      "ar": "اطّلع على المنصات التي نجح بناؤها وما إذا كان كل إصدار قد نُشر.",
+      "context": "What's New highlight"
+    },
+    {
       "key": "whats_new.smooth_progress",
       "en": "Live transfer progress moves more smoothly.",
       "ar": "أصبح عرض تقدّم نقل الملفات أكثر سلاسة.",
